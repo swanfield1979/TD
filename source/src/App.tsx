@@ -178,20 +178,20 @@ function App() {
             <span>Dashboard</span>
           </a>
           <a
-            className={`nav-item${currentPage === 'stocks' ? ' nav-item--active' : ''}`}
-            href="#stocks"
-            aria-current={currentPage === 'stocks' ? 'page' : undefined}
-          >
-            <DataTrendingRegular aria-hidden="true" />
-            <span>Stocks</span>
-          </a>
-          <a
             className={`nav-item${currentPage === 'options' ? ' nav-item--active' : ''}`}
             href="#options"
             aria-current={currentPage === 'options' ? 'page' : undefined}
           >
             <ArrowSwapRegular aria-hidden="true" />
             <span>Options</span>
+          </a>
+          <a
+            className={`nav-item${currentPage === 'stocks' ? ' nav-item--active' : ''}`}
+            href="#stocks"
+            aria-current={currentPage === 'stocks' ? 'page' : undefined}
+          >
+            <DataTrendingRegular aria-hidden="true" />
+            <span>Stocks</span>
           </a>
         </nav>
         <IbkrConnectionControl onSnapshot={handleLiveSnapshot} />
