@@ -27,7 +27,7 @@ De lijngrafiek toont voor alle twaalf kalendermaanden het verschil tussen het la
 
 Alle geldbedragen worden uitsluitend met het `$`-teken getoond. De totalen uit het Flex-rapport worden als dollars geïnterpreteerd; het dashboard voert geen aanvullende valutaconversie uit.
 
-Een positief bedrag krijgt het label `Positief` en een groen accent. Een negatief bedrag krijgt `Negatief` en een rood accent. De tekst en pijliconen zorgen dat betekenis niet alleen via kleur wordt overgebracht.
+Een positief resultaat of een opbrengst wordt groen weergegeven. Een negatief resultaat of een kostenpost wordt rood weergegeven. Terugkoop en commissie krijgen daarom een minteken en rode kleur. Tekst en tekens zorgen dat betekenis niet alleen via kleur wordt overgebracht.
 
 ## Data verversen
 

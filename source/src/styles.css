@@ -404,8 +404,6 @@ button:focus-visible, a:focus-visible {
   font-variant-numeric: tabular-nums;
 }
 
-.premium-card__value { color: var(--z365-status-success); }
-
 .activity-card__value small {
   font-family: "Segoe UI Variable", "Segoe UI", sans-serif;
   font-size: 11px;

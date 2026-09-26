@@ -1,5 +1,10 @@
 # Versiehistorie
 
+## 0.5.2 — 26 september 2026
+
+- Positieve resultaten en opbrengsten consequent groen weergegeven.
+- Negatieve resultaten, terugkoop en commissie consequent rood met minteken weergegeven.
+
 ## 0.5.1 — 26 september 2026
 
 - Tekst, kaarthoogtes en tussenruimtes compacter gemaakt.

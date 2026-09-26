@@ -9,6 +9,10 @@ interface TradingActivityCardsProps {
 
 const numberFormatter = new Intl.NumberFormat('nl-NL')
 
+function directionFor(value: number) {
+  return value > 0 ? 'positive' : value < 0 ? 'negative' : 'neutral'
+}
+
 function formatCurrency(value: number, currency: string, signDisplay: 'auto' | 'always' = 'auto') {
   return new Intl.NumberFormat('nl-NL', {
     style: 'currency',
@@ -37,18 +41,22 @@ function PremiumPeriodCard({
   currency: string
   isCurrent?: boolean
 }) {
-  const netDirection = premium.net > 0 ? 'positive' : premium.net < 0 ? 'negative' : 'neutral'
-  const receivedDirection = premium.received > 0 ? 'positive' : 'neutral'
+  const netDirection = directionFor(premium.net)
+  const receivedDirection = directionFor(premium.received)
+  const buybackDirection = premium.buyback > 0 ? 'negative' : 'neutral'
+  const commissionDirection = premium.commission > 0 ? 'negative' : 'neutral'
 
   return (
     <article className={`premium-card premium-card--${receivedDirection}${isCurrent ? ' premium-card--current' : ''}`}>
       <h2>{label}</h2>
-      <p className="premium-card__value">{formatCurrency(premium.received, currency, 'always')}</p>
+      <p className={`premium-card__value metric--${receivedDirection}`}>
+        {formatCurrency(premium.received, currency, 'always')}
+      </p>
       <p className="premium-card__breakdown">
         {formatMonth(premium.month)}<span aria-hidden="true"> · </span>
-        terugkoop {formatCurrency(premium.buyback, currency)}
+        terugkoop <strong className={`metric--${buybackDirection}`}>{formatCurrency(-premium.buyback, currency)}</strong>
         <span aria-hidden="true"> · </span>
-        commissie {formatCurrency(premium.commission, currency)}
+        commissie <strong className={`metric--${commissionDirection}`}>{formatCurrency(-premium.commission, currency)}</strong>
         <span aria-hidden="true"> · </span>
         netto <strong className={`metric--${netDirection}`}>{formatCurrency(premium.net, currency, 'always')}</strong>
       </p>
@@ -68,6 +76,7 @@ export default function TradingActivityCards({
       : activity.premiumCapturePercentage < 0
         ? 'negative'
         : 'neutral'
+  const grossPremiumDirection = directionFor(activity.grossPremium)
 
   return (
       <section className="activity-grid" aria-label="Handelsactiviteit en optiepremie">
@@ -87,7 +96,10 @@ export default function TradingActivityCards({
             {activity.premiumCapturePercentage.toLocaleString('nl-NL', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%
           </p>
           <p className="activity-card__context">
-            {formatCurrency(activity.grossPremium, premiumCurrency)} ontvangen brutopremie
+            <strong className={`metric--${grossPremiumDirection}`}>
+              {formatCurrency(activity.grossPremium, premiumCurrency)}
+            </strong>{' '}
+            ontvangen brutopremie
           </p>
         </article>
 
