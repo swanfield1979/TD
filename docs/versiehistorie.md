@@ -1,5 +1,11 @@
 # Versiehistorie
 
+## 0.4.0 — 26 september 2026
+
+- Alle dashboardstatistieken in compacte, gelijkmatige kaarten geplaatst.
+- Gecentreerde titel, waarde en toelichting met een semantische linker accentlijn.
+- Responsieve indeling met vijf, twee of één kaart per rij, afhankelijk van de beschikbare breedte.
+
 ## 0.3.1 — 26 september 2026
 
 - Saldo, winst, jaargrafiek en optiepremies consequent als dollars weergegeven.

@@ -1,9 +1,3 @@
-import {
-  ClockRegular,
-  DataPieRegular,
-  MoneyHandRegular,
-  PulseRegular,
-} from '@fluentui/react-icons'
 import type { PremiumPeriod, TradingActivitySummary } from './types'
 
 interface TradingActivityCardsProps {
@@ -44,21 +38,15 @@ function PremiumPeriodCard({
   isCurrent?: boolean
 }) {
   const netDirection = premium.net > 0 ? 'positive' : premium.net < 0 ? 'negative' : 'neutral'
+  const receivedDirection = premium.received > 0 ? 'positive' : 'neutral'
 
   return (
-    <article className={`premium-card${isCurrent ? ' premium-card--current' : ''}`}>
-      <div className="premium-card__header">
-        <span className="activity-card__icon activity-card__icon--premium" aria-hidden="true">
-          <MoneyHandRegular />
-        </span>
-        <div>
-          <h2>{label}</h2>
-          <p>{formatMonth(premium.month)}</p>
-        </div>
-      </div>
+    <article className={`premium-card premium-card--${receivedDirection}${isCurrent ? ' premium-card--current' : ''}`}>
+      <h2>{label}</h2>
       <p className="premium-card__value">{formatCurrency(premium.received, currency, 'always')}</p>
       <p className="premium-card__breakdown">
-        Terugkoop {formatCurrency(premium.buyback, currency)}
+        {formatMonth(premium.month)}<span aria-hidden="true"> · </span>
+        terugkoop {formatCurrency(premium.buyback, currency)}
         <span aria-hidden="true"> · </span>
         commissie {formatCurrency(premium.commission, currency)}
         <span aria-hidden="true"> · </span>
@@ -82,13 +70,9 @@ export default function TradingActivityCards({
         : 'neutral'
 
   return (
-    <>
-      <section className="activity-grid" aria-label="Handelsactiviteit">
-        <article className="activity-card">
-          <div className="activity-card__header">
-            <span className="activity-card__icon" aria-hidden="true"><PulseRegular /></span>
-            <h2>Totaal trades</h2>
-          </div>
+      <section className="activity-grid" aria-label="Handelsactiviteit en optiepremie">
+        <article className="activity-card activity-card--trades">
+          <h2>Totaal trades</h2>
           <p className="activity-card__value">{numberFormatter.format(activity.totalTrades)}</p>
           <p className="activity-card__context">
             {numberFormatter.format(activity.closedTrades)} gesloten
@@ -97,11 +81,8 @@ export default function TradingActivityCards({
           </p>
         </article>
 
-        <article className="activity-card">
-          <div className="activity-card__header">
-            <span className="activity-card__icon activity-card__icon--premium" aria-hidden="true"><DataPieRegular /></span>
-            <h2>Premie behouden</h2>
-          </div>
+        <article className={`activity-card activity-card--${captureDirection}`}>
+          <h2>Premie behouden</h2>
           <p className={`activity-card__value metric--${captureDirection}`}>
             {activity.premiumCapturePercentage.toLocaleString('nl-NL', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%
           </p>
@@ -110,11 +91,8 @@ export default function TradingActivityCards({
           </p>
         </article>
 
-        <article className="activity-card">
-          <div className="activity-card__header">
-            <span className="activity-card__icon" aria-hidden="true"><ClockRegular /></span>
-            <h2>Gemiddeld aangehouden</h2>
-          </div>
+        <article className="activity-card activity-card--duration">
+          <h2>Gemiddeld aangehouden</h2>
           <p className="activity-card__value">
             {activity.averageDaysHeld.toLocaleString('nl-NL', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
             <small> dagen</small>
@@ -124,9 +102,6 @@ export default function TradingActivityCards({
             <span className="activity-card__sample"> · {activity.measuredClosedTrades} gemeten</span>
           </p>
         </article>
-      </section>
-
-      <section className="premium-grid" aria-label="Ontvangen optiepremie per maand">
         <PremiumPeriodCard
           label="Ontvangen premie deze maand"
           premium={currentPremium}
@@ -139,6 +114,5 @@ export default function TradingActivityCards({
           currency={premiumCurrency}
         />
       </section>
-    </>
   )
 }

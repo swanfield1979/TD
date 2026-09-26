@@ -1,14 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
-  ArrowDownRegular,
-  ArrowTrendingRegular,
-  ArrowUpRegular,
-  CalendarMonthRegular,
-  DataTrendingRegular,
   DismissRegular,
   HomeRegular,
   NavigationRegular,
-  WalletRegular,
 } from '@fluentui/react-icons'
 import type { MetricDirection, PortfolioMetric, PortfolioSummary } from './types'
 import MonthlyBalanceChart from './MonthlyBalanceChart'
@@ -16,13 +10,14 @@ import TradingActivityCards from './TradingActivityCards'
 
 const DATA_URL = '/data/portfolio-summary.json'
 
-const currencyFormatter = (currency: string) =>
+const currencyFormatter = (currency: string, showSign = false) =>
   new Intl.NumberFormat('nl-NL', {
     style: 'currency',
     currency,
     currencyDisplay: 'narrowSymbol',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
+    signDisplay: showSign ? 'always' : 'auto',
   })
 
 const formatDate = (value: string) =>
@@ -44,35 +39,17 @@ interface StatCardProps {
   currency: string
   context: string
   prominent?: boolean
-  icon: React.ReactNode
 }
 
-function StatCard({ label, metric, currency, context, prominent = false, icon }: StatCardProps) {
-  const DirectionIcon =
-    metric.direction === 'positive'
-      ? ArrowUpRegular
-      : metric.direction === 'negative'
-        ? ArrowDownRegular
-        : ArrowTrendingRegular
-
+function StatCard({ label, metric, currency, context, prominent = false }: StatCardProps) {
   return (
-    <article className={`stat-card${prominent ? ' stat-card--prominent' : ''}`}>
-      <div className="stat-card__header">
-        <span className="stat-card__icon" aria-hidden="true">{icon}</span>
-        <h2>{label}</h2>
-      </div>
+    <article className={`stat-card stat-card--${prominent ? 'balance' : metric.direction}`}>
+      <h2>{label}</h2>
       <p className={`stat-card__value metric--${metric.direction}`}>
-        {currencyFormatter(currency).format(metric.value)}
+        {currencyFormatter(currency, !prominent).format(metric.value)}
       </p>
-      <div className="stat-card__footer">
-        {!prominent && (
-          <span className={`direction direction--${metric.direction}`}>
-            <DirectionIcon aria-hidden="true" />
-            {directionLabel[metric.direction]}
-          </span>
-        )}
-        <span className="stat-card__context">{context}</span>
-      </div>
+      <p className="stat-card__context">{context}</p>
+      {!prominent && <span className="visually-hidden">{directionLabel[metric.direction]}</span>}
     </article>
   )
 }
@@ -204,35 +181,30 @@ function App() {
                 currency={summary.currency}
                 context={`Netto liquidatiewaarde op ${formatDate(summary.balance.toDate)}`}
                 prominent
-                icon={<WalletRegular />}
               />
               <StatCard
                 label="Winst 2026"
                 metric={summary.yearProfit}
                 currency={summary.currency}
                 context={`Sinds ${formatDate(summary.yearProfit.fromDate!)}`}
-                icon={<DataTrendingRegular />}
               />
               <StatCard
                 label="Winst deze maand"
                 metric={summary.currentMonthProfit}
                 currency={summary.currency}
                 context={`${formatDate(summary.currentMonthProfit.fromDate!)} – ${formatDate(summary.currentMonthProfit.toDate)}`}
-                icon={<CalendarMonthRegular />}
               />
               <StatCard
                 label="Winst vorige maand"
                 metric={summary.previousMonthProfit}
                 currency={summary.currency}
                 context={`${formatDate(summary.previousMonthProfit.fromDate!)} – ${formatDate(summary.previousMonthProfit.toDate)}`}
-                icon={<CalendarMonthRegular />}
               />
               <StatCard
                 label="Gemiddeld per maand"
                 metric={summary.averageMonthlyProfit}
                 currency={summary.currency}
                 context={`Gemiddelde over ${summary.averageMonthlyProfit.monthCount} kalendermaanden`}
-                icon={<ArrowTrendingRegular />}
               />
             </section>
             {summary.tradingActivity && summary.premiumPeriods && (
