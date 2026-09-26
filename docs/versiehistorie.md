@@ -1,5 +1,11 @@
 # Versiehistorie
 
+## 0.5.1 — 26 september 2026
+
+- Tekst, kaarthoogtes en tussenruimtes compacter gemaakt.
+- Brede statistiekkolommen begrensd zodat ze niet langer over het volledige scherm uitrekken.
+- Navigatie en paginamarges verkleind voor evenwichtigere dashboardverhoudingen.
+
 ## 0.5.0 — 26 september 2026
 
 - Donutgrafiek met aandelen, opties en geld/overig naast het saldo toegevoegd.

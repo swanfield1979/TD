@@ -2,7 +2,7 @@
 
 Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voortgang op basis van Interactive Brokers Flex-rapporten.
 
-**Versie/status:** 0.5.0, lokaal dashboard gebaseerd op Flex-data tot en met 24 september 2026. Een rechtstreekse IBKR-koppeling volgt later.
+**Versie/status:** 0.5.1, lokaal dashboard gebaseerd op Flex-data tot en met 24 september 2026. Een rechtstreekse IBKR-koppeling volgt later.
 
 | Map | Inhoud |
 | --- | --- |
