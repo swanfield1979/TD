@@ -12,6 +12,7 @@ import {
 } from '@fluentui/react-icons'
 import type { MetricDirection, PortfolioMetric, PortfolioSummary } from './types'
 import MonthlyBalanceChart from './MonthlyBalanceChart'
+import TradingActivityCards from './TradingActivityCards'
 
 const DATA_URL = '/data/portfolio-summary.json'
 
@@ -233,6 +234,14 @@ function App() {
                 icon={<ArrowTrendingRegular />}
               />
             </section>
+            {summary.tradingActivity && summary.premiumPeriods && (
+              <TradingActivityCards
+                activity={summary.tradingActivity}
+                currentPremium={summary.premiumPeriods.currentMonth}
+                previousPremium={summary.premiumPeriods.previousMonth}
+                premiumCurrency={summary.premiumCurrency ?? 'USD'}
+              />
+            )}
             <MonthlyBalanceChart
               data={summary.monthlyBalanceChanges ?? []}
               currency={summary.currency}

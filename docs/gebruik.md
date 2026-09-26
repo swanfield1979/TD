@@ -12,6 +12,15 @@ Het dashboard toont vijf bedragen uit `flex_net_liq_into_db.xml`:
 
 De lijngrafiek toont voor alle twaalf kalendermaanden het verschil tussen het laatste beschikbare saldo van een maand en het laatste saldo van de voorgaande maand. De lijn verbindt alleen beschikbare maandresultaten. Toekomstige maanden blijven op de tijdas staan met de status `Nog geen data`.
 
+## Handelsactiviteit en optiepremie
+
+- **Totaal trades:** afgeronde en nog open optiecycli, gegroepeerd per IBKR-optiecontract. Een cyclus begint bij de eerste opening en eindigt wanneer de positie weer nul is. Contracten die vóór de rapportperiode zijn geopend maar binnen de periode sluiten, tellen als gesloten trade.
+- **Premie behouden:** netto optiepremie gedeeld door alle ontvangen brutopremie. Netto is ontvangen premie minus terugkoopkosten en commissies.
+- **Gemiddeld aangehouden:** gemiddelde kalenderduur van gesloten optiecycli waarvan zowel de openings- als sluitingsdatum in het rapport staat. Het getoonde bereik gebruikt dezelfde gemeten trades.
+- **Ontvangen premie per maand:** brutopremie van verkochte openingsopties. Terugkoop, commissie en netto worden afzonderlijk onder het bedrag vermeld.
+
+Optiepremies worden in USD getoond, omdat de aangeleverde optiecontracten in dollars noteren. De netto liquidatiewaarde blijft in EUR.
+
 Een positief bedrag krijgt het label `Positief` en een groen accent. Een negatief bedrag krijgt `Negatief` en een rood accent. De tekst en pijliconen zorgen dat betekenis niet alleen via kleur wordt overgebracht.
 
 ## Data verversen

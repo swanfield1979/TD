@@ -47,6 +47,107 @@ function elapsedMonthCount(startDate, endDate) {
   return Math.max(1, (end.getUTCFullYear() - start.getUTCFullYear()) * MONTHS_IN_YEAR + end.getUTCMonth() - start.getUTCMonth())
 }
 
+function round(value, decimals = 2) {
+  return Number(value.toFixed(decimals))
+}
+
+function normalizeOptionTrades(trades) {
+  return trades
+    .filter((trade) => trade.assetCategory === 'OPT')
+    .map((trade) => ({
+      conid: trade.conid,
+      dateTime: trade.dateTime,
+      quantity: Number(trade.quantity),
+      tradePrice: Number(trade.tradePrice),
+      commission: Number(trade.ibCommission),
+      openClose: trade.openCloseIndicator,
+    }))
+    .filter((trade) => trade.conid && trade.dateTime && Number.isFinite(trade.quantity) && Number.isFinite(trade.tradePrice))
+    .sort((left, right) => left.dateTime.localeCompare(right.dateTime))
+}
+
+function premiumSummary(optionTrades) {
+  const received = optionTrades
+    .filter((trade) => trade.openClose === 'O' && trade.quantity < 0)
+    .reduce((sum, trade) => sum + -trade.quantity * trade.tradePrice * 100, 0)
+  const buyback = optionTrades
+    .filter((trade) => trade.openClose === 'C' && trade.quantity > 0)
+    .reduce((sum, trade) => sum + trade.quantity * trade.tradePrice * 100, 0)
+  const rawCommission = optionTrades.reduce(
+    (sum, trade) => sum + (Number.isFinite(trade.commission) ? trade.commission : 0),
+    0,
+  )
+
+  return {
+    received: round(received),
+    buyback: round(buyback),
+    commission: round(Math.abs(rawCommission)),
+    net: round(received - buyback + rawCommission),
+  }
+}
+
+function calendarDaysBetween(startDateTime, endDateTime) {
+  const start = new Date(`${startDateTime.slice(0, 10)}T00:00:00Z`)
+  const end = new Date(`${endDateTime.slice(0, 10)}T00:00:00Z`)
+  return Math.round((end.getTime() - start.getTime()) / 86_400_000)
+}
+
+function tradingActivitySummary(optionTrades) {
+  const tradesByContract = Map.groupBy(optionTrades, (trade) => trade.conid)
+  const closedDurations = []
+  let closedTrades = 0
+  let openTrades = 0
+
+  for (const contractTrades of tradesByContract.values()) {
+    let position = 0
+    let openedAt
+    let hasPriorPeriodClose = false
+
+    for (const trade of contractTrades) {
+      if (trade.openClose === 'O') {
+        if (Math.abs(position) < 0.000_001) openedAt = trade.dateTime
+        position += trade.quantity
+        continue
+      }
+
+      if (trade.openClose !== 'C') continue
+      if (Math.abs(position) < 0.000_001) {
+        hasPriorPeriodClose = true
+        continue
+      }
+
+      position += trade.quantity
+      if (Math.abs(position) < 0.000_001) {
+        closedTrades += 1
+        if (openedAt) closedDurations.push(calendarDaysBetween(openedAt, trade.dateTime))
+        position = 0
+        openedAt = undefined
+      }
+    }
+
+    if (hasPriorPeriodClose) closedTrades += 1
+    if (Math.abs(position) >= 0.000_001) openTrades += 1
+  }
+
+  const premium = premiumSummary(optionTrades)
+  const averageDaysHeld = closedDurations.length
+    ? closedDurations.reduce((sum, days) => sum + days, 0) / closedDurations.length
+    : 0
+
+  return {
+    totalTrades: closedTrades + openTrades,
+    closedTrades,
+    openTrades,
+    premiumCapturePercentage: premium.received ? round((premium.net / premium.received) * 100, 1) : 0,
+    grossPremium: premium.received,
+    netPremium: premium.net,
+    averageDaysHeld: round(averageDaysHeld, 1),
+    minimumDaysHeld: closedDurations.length ? Math.min(...closedDurations) : 0,
+    maximumDaysHeld: closedDurations.length ? Math.max(...closedDurations) : 0,
+    measuredClosedTrades: closedDurations.length,
+  }
+}
+
 function monthlyBalanceChanges(rows, start, latest) {
   const year = latest.date.slice(0, 4)
   let previous = start
@@ -75,8 +176,10 @@ function monthlyBalanceChanges(rows, start, latest) {
   })
 }
 
-export function createPortfolioSummary({ equityXml, tradesXml, optionXml, currency = 'EUR', generatedAt = new Date().toISOString() }) {
+export function createPortfolioSummary({ equityXml, tradesXml, optionXml, currency = 'EUR', premiumCurrency = 'USD', generatedAt = new Date().toISOString() }) {
   const statement = extractTags(equityXml, 'FlexStatement')[0]
+  const trades = extractTags(tradesXml, 'Trade')
+  const optionTrades = normalizeOptionTrades(trades)
   const rows = extractTags(equityXml, 'EquitySummaryByReportDateInBase')
     .map((attributes) => ({ date: attributes.reportDate, total: Number(attributes.total) }))
     .filter((row) => row.date && Number.isFinite(row.total))
@@ -96,14 +199,21 @@ export function createPortfolioSummary({ equityXml, tradesXml, optionXml, curren
 
   const yearProfit = latest.total - start.total
   const monthCount = elapsedMonthCount(start.date, latest.date)
+  const currentMonth = latest.date.slice(0, 7)
+  const previousMonth = shiftMonth(`${currentMonth}-01`, -1).slice(0, 7)
+  const premiumForMonth = (month) => ({
+    month,
+    ...premiumSummary(optionTrades.filter((trade) => trade.dateTime.startsWith(month))),
+  })
 
   return {
     generatedAt,
     sourceUpdatedAt: statement?.whenGenerated ?? latest.date,
     currency,
+    premiumCurrency,
     sourceCounts: {
       equityDays: rows.length,
-      trades: extractTags(tradesXml, 'Trade').length,
+      trades: trades.length,
       optionEvents: extractTags(optionXml, 'OptionEAE').length,
     },
     balance: metric(latest.total, undefined, latest.date),
@@ -112,5 +222,10 @@ export function createPortfolioSummary({ equityXml, tradesXml, optionXml, curren
     previousMonthProfit: metric(currentMonthBase.total - previousMonthBase.total, previousMonthBase.date, currentMonthBase.date),
     averageMonthlyProfit: { ...metric(yearProfit / monthCount, start.date, latest.date), monthCount },
     monthlyBalanceChanges: monthlyBalanceChanges(rows, start, latest),
+    tradingActivity: tradingActivitySummary(optionTrades),
+    premiumPeriods: {
+      currentMonth: premiumForMonth(currentMonth),
+      previousMonth: premiumForMonth(previousMonth),
+    },
   }
 }

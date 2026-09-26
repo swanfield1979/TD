@@ -3,7 +3,7 @@
 Trading Monitor is voorlopig een statische React/TypeScript-app met Vite.
 
 1. De privé Flex XML-rapporten staan uitsluitend lokaal in `source/data/private/`.
-2. `source/scripts/import-flex.mjs` leest de rapporten en berekent een minimale samenvatting.
+2. `source/scripts/import-flex.mjs` leest de rapporten en berekent saldo-, maand-, trade-, looptijd- en premiestatistieken.
 3. De samenvatting wordt lokaal geschreven naar `source/public/data/portfolio-summary.json`.
 4. De React-app haalt dit JSON-bestand op en toont de statistieken.
 

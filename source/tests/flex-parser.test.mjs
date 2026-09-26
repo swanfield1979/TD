@@ -41,3 +41,45 @@ test('berekent dashboardstatistieken uit dagsaldi', () => {
   )
   assert.equal(result.monthlyBalanceChanges.length, 12)
 })
+
+test('berekent optieactiviteit en maandpremies', () => {
+  const equityXml = `<FlexQueryResponse><FlexStatement whenGenerated="2026-03-20 10:00:00">
+    <EquitySummaryByReportDateInBase reportDate="2025-12-31" total="1000" />
+    <EquitySummaryByReportDateInBase reportDate="2026-01-31" total="1100" />
+    <EquitySummaryByReportDateInBase reportDate="2026-02-28" total="1150" />
+    <EquitySummaryByReportDateInBase reportDate="2026-03-20" total="1200" />
+  </FlexStatement></FlexQueryResponse>`
+  const tradesXml = `<Trades>
+    <Trade assetCategory="OPT" conid="1" dateTime="2026-02-01 10:00:00" quantity="-1" tradePrice="2" ibCommission="-1" openCloseIndicator="O" />
+    <Trade assetCategory="OPT" conid="1" dateTime="2026-02-11 10:00:00" quantity="1" tradePrice="0.5" ibCommission="-1" openCloseIndicator="C" />
+    <Trade assetCategory="OPT" conid="2" dateTime="2026-03-01 10:00:00" quantity="-2" tradePrice="1.5" ibCommission="-1.5" openCloseIndicator="O" />
+  </Trades>`
+  const result = createPortfolioSummary({ equityXml, tradesXml, optionXml: '<Options />' })
+
+  assert.deepEqual(result.tradingActivity, {
+    totalTrades: 2,
+    closedTrades: 1,
+    openTrades: 1,
+    premiumCapturePercentage: 89.3,
+    grossPremium: 500,
+    netPremium: 446.5,
+    averageDaysHeld: 10,
+    minimumDaysHeld: 10,
+    maximumDaysHeld: 10,
+    measuredClosedTrades: 1,
+  })
+  assert.deepEqual(result.premiumPeriods.currentMonth, {
+    month: '2026-03',
+    received: 300,
+    buyback: 0,
+    commission: 1.5,
+    net: 298.5,
+  })
+  assert.deepEqual(result.premiumPeriods.previousMonth, {
+    month: '2026-02',
+    received: 200,
+    buyback: 50,
+    commission: 2,
+    net: 148,
+  })
+})

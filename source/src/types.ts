@@ -17,10 +17,32 @@ export interface MonthlyBalanceChange {
   direction: MetricDirection | null
 }
 
+export interface PremiumPeriod {
+  month: string
+  received: number
+  buyback: number
+  commission: number
+  net: number
+}
+
+export interface TradingActivitySummary {
+  totalTrades: number
+  closedTrades: number
+  openTrades: number
+  premiumCapturePercentage: number
+  grossPremium: number
+  netPremium: number
+  averageDaysHeld: number
+  minimumDaysHeld: number
+  maximumDaysHeld: number
+  measuredClosedTrades: number
+}
+
 export interface PortfolioSummary {
   generatedAt: string
   sourceUpdatedAt: string
   currency: string
+  premiumCurrency: string
   sourceCounts: {
     equityDays: number
     trades: number
@@ -34,4 +56,9 @@ export interface PortfolioSummary {
     monthCount: number
   }
   monthlyBalanceChanges: MonthlyBalanceChange[]
+  tradingActivity: TradingActivitySummary
+  premiumPeriods: {
+    currentMonth: PremiumPeriod
+    previousMonth: PremiumPeriod
+  }
 }

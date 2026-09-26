@@ -18,6 +18,7 @@ Zie [`docs/installatie.md`](docs/installatie.md) voor de installatie en [`source
 
 - Donker, responsief dashboard met het Trading Monitor-logo.
 - Saldo en winststatistieken uit lokale IBKR Flex XML-rapporten.
+- Optietrades, premiebehoud, gemiddelde looptijd en ontvangen maandpremies.
 - Positieve en negatieve resultaten met tekst, pictogram en kleur.
 - Lokale verwerking: de ruwe financiële bestanden worden niet aan Git toegevoegd.
 

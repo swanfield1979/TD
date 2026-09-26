@@ -18,4 +18,6 @@ De eerste versie wordt gecontroleerd met:
 - Jaargrafiek: januari–september met bronwaarden gecontroleerd; oktober–december tonen expliciet dat data ontbreekt.
 - Opgeschoonde jaargrafiek: samenvattingsbalk en uitklapbare maandtabel zijn niet meer aanwezig.
 - Vereenvoudigde dashboardkop: bovenlabel en toelichtingszin zijn niet meer aanwezig; titel en gegevensstatus blijven uitgelijnd.
-- Schone browsercontrole na de grafiekwijziging: geen fouten of waarschuwingen.
+- Optieactiviteit: 181 tradecycli, 171 gesloten en 10 open; 167 gesloten cycli hebben een meetbare looptijd.
+- Premies: YTD en de huidige/vorige rapportmaand gecontroleerd tegen de sommen uit het Flex-tradesrapport.
+- Schone browsercontrole na de dashboarduitbreiding: geen fouten of waarschuwingen.

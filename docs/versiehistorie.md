@@ -1,5 +1,12 @@
 # Versiehistorie
 
+## 0.3.0 — 26 september 2026
+
+- Blokken toegevoegd voor totaal trades, gesloten/open trades en gemiddelde aanhoudduur.
+- Premiebehoud en ontvangen brutopremie voor het jaar toegevoegd.
+- Ontvangen premie, terugkoop, commissie en netto toegevoegd voor de huidige en vorige maand.
+- Bestaande statistiekblokken compacter gemaakt voor de uitgebreidere dashboardindeling.
+
 ## 0.2.2 — 26 september 2026
 
 - Bovenlabel `Portfolio-overzicht` uit de dashboardkop verwijderd.
