@@ -5,10 +5,10 @@ const round = (value: number, decimals = 2) => Number(value.toFixed(decimals))
 
 export function mergeLiveSnapshot(summary: PortfolioSummary, snapshot: IbkrLiveSnapshot): PortfolioSummary {
   const stockPositions = snapshot.positions.filter((position) => position.assetCategory === 'STK')
+  const optionPositions = snapshot.positions.filter((position) => position.assetCategory === 'OPT')
+  const hasCoveredCallMetadata = optionPositions.every((position) => Object.hasOwn(position, 'optionRight'))
   const stockValue = stockPositions.reduce((sum, position) => sum + Math.abs(position.currentValue), 0)
-  const optionValue = snapshot.positions
-    .filter((position) => position.assetCategory === 'OPT')
-    .reduce((sum, position) => sum + Math.abs(position.currentValue), 0)
+  const optionValue = optionPositions.reduce((sum, position) => sum + Math.abs(position.currentValue), 0)
   const cashValue = snapshot.totalCashValue === null
     ? Math.max(0, snapshot.netLiquidation - stockValue - optionValue)
     : Math.max(0, snapshot.totalCashValue)
@@ -42,7 +42,7 @@ export function mergeLiveSnapshot(summary: PortfolioSummary, snapshot: IbkrLiveS
       currentValue: position.currentValue,
       difference: position.difference,
       differencePercentage: position.differencePercentage,
-      coveredCallCoverage: calculateCoveredCallCoverage(position, snapshot.positions),
+      coveredCallCoverage: hasCoveredCallMetadata ? calculateCoveredCallCoverage(position, snapshot.positions) : null,
     })),
     portfolioAllocation: {
       isEstimated: false,
