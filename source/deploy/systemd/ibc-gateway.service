@@ -10,7 +10,8 @@ User=gerard
 Group=gerard
 WorkingDirectory=/opt/ibc
 Environment=DISPLAY=:10
-ExecStart=/bin/bash /opt/ibc/gatewaystart.sh
+# Inline houdt IBC op de voorgrond zodat systemd het proces kan bewaken.
+ExecStart=/bin/bash /opt/ibc/gatewaystart.sh -inline
 Restart=on-failure
 RestartSec=10
 UMask=0077
