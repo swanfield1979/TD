@@ -1,0 +1,25 @@
+{
+  "name": "trading-monitor",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "test": "node --test tests/*.test.mjs",
+    "import:flex": "node scripts/import-flex.mjs"
+  },
+  "dependencies": {
+    "@fluentui/react-icons": "2.0.343",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "latest",
+    "typescript": "7.0.2",
+    "vite": "8.3.1"
+  }
+}

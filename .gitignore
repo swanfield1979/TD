@@ -1,0 +1,15 @@
+# Dependencies and build output
+source/node_modules/
+source/dist/
+
+# Private IBKR input and generated private dashboard data
+source/data/private/
+source/public/data/*.json
+
+# Local environment and editor files
+.env
+.env.*
+!.env.example
+.DS_Store
+Thumbs.db
+*.log
