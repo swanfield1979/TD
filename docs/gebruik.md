@@ -18,6 +18,12 @@ De huidige Flex-bestanden bevatten geen actuele marktwaarde per afzonderlijke po
 
 De lijngrafiek toont voor alle twaalf kalendermaanden het verschil tussen het laatste beschikbare saldo van een maand en het laatste saldo van de voorgaande maand. De lijn verbindt alleen beschikbare maandresultaten. Toekomstige maanden blijven op de tijdas staan met de status `Nog geen data`.
 
+## Stocks
+
+De pagina **Stocks** toont alle open aandelenposities die uit de aangeleverde Flex-trades kunnen worden gereconstrueerd. Per aandeel worden symbool, naam, aantal, gemiddelde resterende FIFO-aankoopprijs en aankoopwaarde getoond.
+
+De huidige Flex-bestanden bevatten geen actuele marktprijzen. Daarom blijven **Huidige prijs**, **Huidige waarde** en **Verschil** leeg totdat actuele positiegegevens via een IBKR-koppeling of Open Positions-rapport beschikbaar zijn. Een oude transactieprijs wordt bewust niet als actuele koers gebruikt.
+
 ## Handelsactiviteit en optiepremie
 
 - **Totaal trades:** afgeronde en nog open optiecycli, gegroepeerd per IBKR-optiecontract. Een cyclus begint bij de eerste opening en eindigt wanneer de positie weer nul is. Contracten die vóór de rapportperiode zijn geopend maar binnen de periode sluiten, tellen als gesloten trade.

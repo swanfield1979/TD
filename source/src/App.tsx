@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
+  DataTrendingRegular,
   DismissRegular,
   HomeRegular,
   NavigationRegular,
@@ -7,9 +8,13 @@ import {
 import type { MetricDirection, PortfolioMetric, PortfolioSummary } from './types'
 import MonthlyBalanceChart from './MonthlyBalanceChart'
 import PortfolioAllocationCard from './PortfolioAllocationCard'
+import StocksPage from './StocksPage'
 import TradingActivityCards from './TradingActivityCards'
 
 const DATA_URL = '/data/portfolio-summary.json'
+type Page = 'dashboard' | 'stocks'
+
+const pageFromHash = (): Page => window.location.hash === '#stocks' ? 'stocks' : 'dashboard'
 
 const currencyFormatter = (currency: string, showSign = false) =>
   new Intl.NumberFormat('nl-NL', {
@@ -72,6 +77,7 @@ function App() {
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [currentPage, setCurrentPage] = useState<Page>(pageFromHash)
 
   const loadSummary = useCallback(async () => {
     setIsLoading(true)
@@ -93,6 +99,19 @@ function App() {
   useEffect(() => {
     void loadSummary()
   }, [loadSummary])
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      setCurrentPage(pageFromHash())
+      setIsMenuOpen(false)
+    }
+    window.addEventListener('hashchange', handleHashChange)
+    return () => window.removeEventListener('hashchange', handleHashChange)
+  }, [])
+
+  useEffect(() => {
+    document.title = `${currentPage === 'dashboard' ? 'Dashboard' : 'Stocks'} · Trading Monitor`
+  }, [currentPage])
 
   useEffect(() => {
     if (!isMenuOpen) return
@@ -130,9 +149,21 @@ function App() {
         </div>
         <nav>
           <p className="nav-label">Overzicht</p>
-          <a className="nav-item nav-item--active" href="/" aria-current="page">
+          <a
+            className={`nav-item${currentPage === 'dashboard' ? ' nav-item--active' : ''}`}
+            href="#dashboard"
+            aria-current={currentPage === 'dashboard' ? 'page' : undefined}
+          >
             <HomeRegular aria-hidden="true" />
             <span>Dashboard</span>
+          </a>
+          <a
+            className={`nav-item${currentPage === 'stocks' ? ' nav-item--active' : ''}`}
+            href="#stocks"
+            aria-current={currentPage === 'stocks' ? 'page' : undefined}
+          >
+            <DataTrendingRegular aria-hidden="true" />
+            <span>Stocks</span>
           </a>
         </nav>
         <div className="side-nav__status">
@@ -147,7 +178,7 @@ function App() {
       <main className="main-content">
         <header className="page-header">
           <div>
-            <h1>Dashboard</h1>
+            <h1>{currentPage === 'dashboard' ? 'Dashboard' : 'Stocks'}</h1>
           </div>
           {summary && (
             <div className="data-freshness" title={`Bronbestand gegenereerd op ${summary.sourceUpdatedAt}`}>
@@ -173,7 +204,7 @@ function App() {
           </section>
         )}
 
-        {!isLoading && summary && (
+        {!isLoading && summary && currentPage === 'dashboard' && (
           <>
             <section className="portfolio-summary" aria-label="Saldo en portefeuilleverdeling">
               <StatCard
@@ -230,6 +261,10 @@ function App() {
               year={summary.balance.toDate.slice(0, 4)}
             />
           </>
+        )}
+
+        {!isLoading && summary && currentPage === 'stocks' && (
+          <StocksPage holdings={summary.stockHoldings ?? []} currency={summary.currency} />
         )}
       </main>
     </div>

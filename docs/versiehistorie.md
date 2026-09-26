@@ -1,5 +1,12 @@
 # Versiehistorie
 
+## 0.6.0 — 26 september 2026
+
+- Tweede navigatiepagina `Stocks` toegevoegd.
+- Open aandelenposities met aantallen, FIFO-aankoopprijs en aankoopwaarde uit Flex-trades berekend.
+- Kolommen voor huidige prijs, huidige waarde en verschil voorbereid op de toekomstige IBKR-koppeling.
+- Responsieve, horizontaal begrensde aandelentabel en lege toestand toegevoegd.
+
 ## 0.5.2 — 26 september 2026
 
 - Positieve resultaten en opbrengsten consequent groen weergegeven.

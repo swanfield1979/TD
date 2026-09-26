@@ -1,0 +1,129 @@
+import type { StockHolding } from './types'
+
+interface StocksPageProps {
+  holdings: StockHolding[]
+  currency: string
+}
+
+const numberFormatter = new Intl.NumberFormat('nl-NL', { maximumFractionDigits: 4 })
+
+function formatCurrency(value: number, currency: string) {
+  return new Intl.NumberFormat('nl-NL', {
+    style: 'currency',
+    currency,
+    currencyDisplay: 'narrowSymbol',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value)
+}
+
+function UnavailableValue() {
+  return <span className="stocks-table__unavailable" title="Beschikbaar na koppeling met actuele positiegegevens">—</span>
+}
+
+export default function StocksPage({ holdings, currency }: StocksPageProps) {
+  const totalQuantity = holdings.reduce((sum, holding) => sum + holding.quantity, 0)
+  const totalPurchaseValue = holdings.reduce((sum, holding) => sum + holding.purchaseValue, 0)
+  const holdingsWithPrice = holdings.filter((holding) => holding.currentPrice !== null).length
+
+  return (
+    <div className="stocks-page">
+      <section className="stocks-summary" aria-label="Samenvatting aandelen">
+        <article className="stocks-summary__card">
+          <span>Open aandelen</span>
+          <strong>{numberFormatter.format(holdings.length)}</strong>
+          <small>Verschillende posities</small>
+        </article>
+        <article className="stocks-summary__card">
+          <span>Totaal aantal</span>
+          <strong>{numberFormatter.format(totalQuantity)}</strong>
+          <small>Aandelen in portefeuille</small>
+        </article>
+        <article className="stocks-summary__card">
+          <span>Aankoopwaarde</span>
+          <strong>{formatCurrency(totalPurchaseValue, currency)}</strong>
+          <small>Resterende FIFO-kostprijs</small>
+        </article>
+        <article className="stocks-summary__card stocks-summary__card--pending">
+          <span>Actuele prijzen</span>
+          <strong>{holdingsWithPrice}/{holdings.length}</strong>
+          <small>Wacht op IBKR-koppeling</small>
+        </article>
+      </section>
+
+      <section className="stocks-data" aria-labelledby="stocks-table-title">
+        <header className="stocks-data__header">
+          <div>
+            <h2 id="stocks-table-title">Aandelenposities</h2>
+            <p>Open posities op basis van de aangeleverde Flex-trades.</p>
+          </div>
+          <span className="stocks-data__status">Actuele koersen nog niet gekoppeld</span>
+        </header>
+
+        {holdings.length === 0 ? (
+          <div className="stocks-empty">
+            <h3>Geen open aandelen gevonden</h3>
+            <p>Importeer een Flex-rapport met aandelentrades om posities te tonen.</p>
+          </div>
+        ) : (
+          <div className="stocks-table-region" tabIndex={0} aria-label="Aandelenposities; horizontaal scrollbaar op een klein scherm">
+            <table className="stocks-table">
+              <caption className="visually-hidden">Open aandelenposities met aankoop- en actuele waardes</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Aandeel</th>
+                  <th scope="col" className="stocks-table__number">Aantal</th>
+                  <th scope="col" className="stocks-table__number">Gem. aankoop</th>
+                  <th scope="col" className="stocks-table__number">Aankoopwaarde</th>
+                  <th scope="col" className="stocks-table__number">Huidige prijs</th>
+                  <th scope="col" className="stocks-table__number">Huidige waarde</th>
+                  <th scope="col" className="stocks-table__number">Verschil</th>
+                </tr>
+              </thead>
+              <tbody>
+                {holdings.map((holding) => (
+                  <tr key={holding.conid}>
+                    <th scope="row">
+                      <strong>{holding.symbol}</strong>
+                      <small>{holding.name}</small>
+                    </th>
+                    <td className="stocks-table__number">{numberFormatter.format(holding.quantity)}</td>
+                    <td className="stocks-table__number">{formatCurrency(holding.averagePurchasePrice, currency)}</td>
+                    <td className="stocks-table__number stocks-table__purchase-value">{formatCurrency(holding.purchaseValue, currency)}</td>
+                    <td className="stocks-table__number">
+                      {holding.currentPrice === null ? <UnavailableValue /> : formatCurrency(holding.currentPrice, currency)}
+                    </td>
+                    <td className="stocks-table__number">
+                      {holding.currentValue === null ? <UnavailableValue /> : formatCurrency(holding.currentValue, currency)}
+                    </td>
+                    <td className="stocks-table__number">
+                      {holding.difference === null ? (
+                        <UnavailableValue />
+                      ) : (
+                        <span className={`metric--${holding.difference > 0 ? 'positive' : holding.difference < 0 ? 'negative' : 'neutral'}`}>
+                          {formatCurrency(holding.difference, currency)}
+                          <small>{holding.differencePercentage?.toLocaleString('nl-NL', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%</small>
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <th scope="row">Totaal</th>
+                  <td className="stocks-table__number">{numberFormatter.format(totalQuantity)}</td>
+                  <td />
+                  <td className="stocks-table__number">{formatCurrency(totalPurchaseValue, currency)}</td>
+                  <td />
+                  <td />
+                  <td />
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        )}
+      </section>
+    </div>
+  )
+}

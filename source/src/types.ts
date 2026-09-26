@@ -50,6 +50,19 @@ export interface PortfolioAllocation {
   categories: PortfolioAllocationCategory[]
 }
 
+export interface StockHolding {
+  conid: string
+  symbol: string
+  name: string
+  quantity: number
+  averagePurchasePrice: number
+  purchaseValue: number
+  currentPrice: number | null
+  currentValue: number | null
+  difference: number | null
+  differencePercentage: number | null
+}
+
 export interface PortfolioSummary {
   generatedAt: string
   sourceUpdatedAt: string
@@ -71,6 +84,7 @@ export interface PortfolioSummary {
   monthlyBalanceChanges: MonthlyBalanceChange[]
   tradingActivity: TradingActivitySummary
   portfolioAllocation: PortfolioAllocation
+  stockHoldings: StockHolding[]
   premiumPeriods: {
     currentMonth: PremiumPeriod
     previousMonth: PremiumPeriod

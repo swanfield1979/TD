@@ -148,11 +148,13 @@ function tradingActivitySummary(optionTrades) {
   }
 }
 
-function openStockCostBasis(trades) {
+function stockHoldingsSummary(trades) {
   const stockTrades = trades
     .filter((trade) => trade.assetCategory === 'STK')
     .map((trade) => ({
       conid: trade.conid,
+      symbol: trade.underlyingSymbol,
+      name: trade.description,
       dateTime: trade.dateTime,
       quantity: Number(trade.quantity),
       tradePrice: Number(trade.tradePrice),
@@ -162,9 +164,9 @@ function openStockCostBasis(trades) {
     .sort((left, right) => left.dateTime.localeCompare(right.dateTime))
 
   const lotsByContract = Map.groupBy(stockTrades, (trade) => trade.conid)
-  let costBasis = 0
+  const holdings = []
 
-  for (const contractTrades of lotsByContract.values()) {
+  for (const [conid, contractTrades] of lotsByContract) {
     const lots = []
 
     for (const trade of contractTrades) {
@@ -185,14 +187,30 @@ function openStockCostBasis(trades) {
       }
     }
 
-    costBasis += lots.reduce((sum, lot) => sum + lot.quantity * lot.unitCost, 0)
+    const quantity = lots.reduce((sum, lot) => sum + lot.quantity, 0)
+    if (quantity <= 0.000_001) continue
+
+    const purchaseValue = lots.reduce((sum, lot) => sum + lot.quantity * lot.unitCost, 0)
+    const metadata = contractTrades.at(-1)
+    holdings.push({
+      conid,
+      symbol: metadata.symbol || metadata.name || conid,
+      name: metadata.name || metadata.symbol || conid,
+      quantity: round(quantity, 4),
+      averagePurchasePrice: round(purchaseValue / quantity, 4),
+      purchaseValue: round(purchaseValue),
+      currentPrice: null,
+      currentValue: null,
+      difference: null,
+      differencePercentage: null,
+    })
   }
 
-  return round(costBasis)
+  return holdings.sort((left, right) => left.symbol.localeCompare(right.symbol))
 }
 
-function portfolioAllocation(trades, latest) {
-  const stocks = openStockCostBasis(trades)
+function portfolioAllocation(stockHoldings, latest) {
+  const stocks = round(stockHoldings.reduce((sum, holding) => sum + holding.purchaseValue, 0))
   const options = round(Math.abs(latest.totalShort))
   const cashOther = round(Math.max(0, latest.total - stocks + options))
   const grossTotal = stocks + options + cashOther
@@ -271,6 +289,7 @@ export function createPortfolioSummary({ equityXml, tradesXml, optionXml, curren
   const monthCount = elapsedMonthCount(start.date, latest.date)
   const currentMonth = latest.date.slice(0, 7)
   const previousMonth = shiftMonth(`${currentMonth}-01`, -1).slice(0, 7)
+  const stockHoldings = stockHoldingsSummary(trades)
   const premiumForMonth = (month) => ({
     month,
     ...premiumSummary(optionTrades.filter((trade) => trade.dateTime.startsWith(month))),
@@ -294,7 +313,8 @@ export function createPortfolioSummary({ equityXml, tradesXml, optionXml, curren
     averageMonthlyProfit: { ...metric(yearProfit / monthCount, start.date, latest.date), monthCount },
     monthlyBalanceChanges: monthlyBalanceChanges(rows, start, latest),
     tradingActivity: tradingActivitySummary(optionTrades),
-    portfolioAllocation: portfolioAllocation(trades, latest),
+    stockHoldings,
+    portfolioAllocation: portfolioAllocation(stockHoldings, latest),
     premiumPeriods: {
       currentMonth: premiumForMonth(currentMonth),
       previousMonth: premiumForMonth(previousMonth),

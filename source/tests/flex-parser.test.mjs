@@ -59,7 +59,7 @@ test('berekent optieactiviteit en maandpremies', () => {
     <Trade assetCategory="OPT" conid="1" dateTime="2026-02-01 10:00:00" quantity="-1" tradePrice="2" ibCommission="-1" openCloseIndicator="O" />
     <Trade assetCategory="OPT" conid="1" dateTime="2026-02-11 10:00:00" quantity="1" tradePrice="0.5" ibCommission="-1" openCloseIndicator="C" />
     <Trade assetCategory="OPT" conid="2" dateTime="2026-03-01 10:00:00" quantity="-2" tradePrice="1.5" ibCommission="-1.5" openCloseIndicator="O" />
-    <Trade assetCategory="STK" conid="3" dateTime="2026-03-02 10:00:00" quantity="10" tradePrice="20" ibCommission="-1" openCloseIndicator="O" />
+    <Trade assetCategory="STK" conid="3" underlyingSymbol="TEST" description="Test aandeel" dateTime="2026-03-02 10:00:00" quantity="10" tradePrice="20" ibCommission="-1" openCloseIndicator="O" />
   </Trades>`
   const result = createPortfolioSummary({ equityXml, tradesXml, optionXml: '<Options />' })
 
@@ -93,5 +93,19 @@ test('berekent optieactiviteit en maandpremies', () => {
     { key: 'stocks', label: 'Aandelen', value: 200, percentage: 16 },
     { key: 'options', label: 'Opties', value: 25, percentage: 2 },
     { key: 'cash', label: 'Geld / overig', value: 1025, percentage: 82 },
+  ])
+  assert.deepEqual(result.stockHoldings, [
+    {
+      conid: '3',
+      symbol: 'TEST',
+      name: 'Test aandeel',
+      quantity: 10,
+      averagePurchasePrice: 20,
+      purchaseValue: 200,
+      currentPrice: null,
+      currentValue: null,
+      difference: null,
+      differencePercentage: null,
+    },
   ])
 })
