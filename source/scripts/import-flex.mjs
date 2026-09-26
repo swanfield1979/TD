@@ -17,4 +17,4 @@ await mkdir(outputDirectory, { recursive: true })
 await writeFile(outputPath, `${JSON.stringify(summary, null, 2)}\n`, 'utf8')
 
 console.log(`Portfolio-overzicht geschreven naar ${outputPath}`)
-console.log(`Saldo: ${summary.currency} ${summary.balance.value.toFixed(2)} (${summary.balance.toDate})`)
+console.log(`Saldo: $ ${summary.balance.value.toFixed(2)} (${summary.balance.toDate})`)

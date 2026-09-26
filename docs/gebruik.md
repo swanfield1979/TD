@@ -19,7 +19,7 @@ De lijngrafiek toont voor alle twaalf kalendermaanden het verschil tussen het la
 - **Gemiddeld aangehouden:** gemiddelde kalenderduur van gesloten optiecycli waarvan zowel de openings- als sluitingsdatum in het rapport staat. Het getoonde bereik gebruikt dezelfde gemeten trades.
 - **Ontvangen premie per maand:** brutopremie van verkochte openingsopties. Terugkoop, commissie en netto worden afzonderlijk onder het bedrag vermeld.
 
-Alle geldbedragen worden in USD met het `$`-teken getoond. De totalen uit het Flex-rapport worden daarbij als USD geïnterpreteerd; het dashboard voert geen aanvullende valutaconversie uit.
+Alle geldbedragen worden uitsluitend met het `$`-teken getoond. De totalen uit het Flex-rapport worden als dollars geïnterpreteerd; het dashboard voert geen aanvullende valutaconversie uit.
 
 Een positief bedrag krijgt het label `Positief` en een groen accent. Een negatief bedrag krijgt `Negatief` en een rood accent. De tekst en pijliconen zorgen dat betekenis niet alleen via kleur wordt overgebracht.
 

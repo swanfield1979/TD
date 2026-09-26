@@ -2,7 +2,7 @@
 
 ## 0.3.1 — 26 september 2026
 
-- Saldo, winst, jaargrafiek en optiepremies consequent in USD weergegeven.
+- Saldo, winst, jaargrafiek en optiepremies consequent als dollars weergegeven.
 - Compact `$`-teken gebruikt voor alle geldbedragen.
 
 ## 0.3.0 — 26 september 2026
