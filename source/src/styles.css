@@ -225,7 +225,7 @@ button:focus-visible, a:focus-visible {
 
 .portfolio-summary {
   display: grid;
-  grid-template-columns: minmax(300px, 2fr) minmax(520px, 3fr);
+  grid-template-columns: minmax(210px, 1fr) minmax(220px, 1.08fr) minmax(520px, 3.1fr);
   gap: var(--dashboard-grid-gap);
   width: 100%;
 }
@@ -431,7 +431,29 @@ button:focus-visible, a:focus-visible {
   font-variant-numeric: tabular-nums;
 }
 
-.stat-card--balance .stat-card__value { color: var(--z365-text-primary); }
+.daily-profit-card__values {
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  margin: 8px 0 7px;
+}
+
+.daily-profit-card__values .stat-card__value { margin: 0; }
+
+.daily-profit-card__percentage {
+  margin: 0;
+  font-family: Bahnschrift, "Segoe UI Variable", sans-serif;
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-card--balance .stat-card__value {
+  color: var(--z365-text-primary);
+  font-size: clamp(27px, 2vw, 34px);
+  line-height: 0.95;
+}
 .metric--positive { color: var(--z365-status-success); }
 .metric--negative { color: var(--z365-status-danger); }
 .metric--neutral { color: var(--z365-status-neutral); }
@@ -530,6 +552,13 @@ button:focus-visible, a:focus-visible {
 .legend-dot--positive { background: var(--z365-status-success); }
 .legend-dot--negative { background: var(--z365-status-danger); }
 .legend-dot--missing { background: var(--z365-text-muted); }
+.legend-bar {
+  width: 9px;
+  height: 12px;
+  border-radius: 2px;
+  background: var(--z365-status-neutral);
+}
+.legend-bar--reference { opacity: 0.7; }
 
 .balance-chart__scroll {
   margin-top: 16px;
@@ -572,6 +601,21 @@ button:focus-visible, a:focus-visible {
   vector-effect: non-scaling-stroke;
 }
 
+.chart-reference-bar {
+  fill: var(--z365-status-neutral);
+  opacity: 0.22;
+  stroke: var(--z365-status-neutral);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.chart-reference-value {
+  fill: var(--z365-text-muted);
+  font-size: 9px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
 .chart-point {
   stroke: var(--z365-surface-1);
   stroke-width: 3;
@@ -596,7 +640,168 @@ button:focus-visible, a:focus-visible {
 
 .balance-chart--empty { color: var(--z365-text-secondary); }
 
-.stocks-page, .options-page, .goals-page, .trades-page { min-width: 0; }
+.stocks-page, .options-page, .goals-page, .stats-page, .trades-page { min-width: 0; }
+
+.stats-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--dashboard-grid-gap);
+}
+
+.stats-kpi-grid article {
+  min-width: 0;
+  min-height: 112px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 10px;
+  border: 1px solid var(--z365-stroke);
+  border-radius: var(--z365-radius-card);
+  background: var(--z365-surface-1);
+  text-align: center;
+}
+
+.stats-kpi-grid span { color: var(--z365-text-secondary); font-size: 10px; font-weight: 600; }
+.stats-kpi-grid strong {
+  margin-top: 8px;
+  font-family: Bahnschrift, "Segoe UI Variable", sans-serif;
+  font-size: clamp(18px, 1.25vw, 23px);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.stats-kpi-grid small { margin-top: 8px; color: var(--z365-text-muted); font-size: 9px; }
+
+.stats-grid {
+  display: grid;
+  gap: var(--dashboard-grid-gap);
+  margin-top: var(--dashboard-grid-gap);
+}
+.stats-grid--primary { grid-template-columns: minmax(0, 2fr) minmax(260px, 0.8fr); }
+.stats-grid--secondary { grid-template-columns: minmax(0, 1.45fr) minmax(300px, 0.75fr); }
+
+.stats-panel {
+  min-width: 0;
+  min-height: 330px;
+  padding: 16px;
+  border: 1px solid var(--z365-stroke);
+  border-radius: var(--z365-radius-card);
+  background: var(--z365-surface-1);
+}
+
+.stats-panel__header {
+  min-height: 48px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--z365-stroke);
+}
+.stats-panel__header span { display: flex; align-items: center; gap: 6px; color: var(--z365-accent-brand); font-size: 10px; font-weight: 650; }
+.stats-panel__header span svg { width: 14px; height: 14px; }
+.stats-panel__header h2 { margin: 3px 0 0; font-size: 15px; line-height: 20px; }
+.stats-panel__header small { padding-top: 5px; color: var(--z365-text-muted); font-size: 10px; white-space: nowrap; }
+
+.stats-chart-scroll { width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; }
+.stats-chart-scroll:focus-visible { outline: 2px solid var(--z365-accent-primary); outline-offset: -2px; }
+.stats-monthly-chart { display: block; width: 100%; min-width: 680px; height: auto; }
+.stats-chart-gridline { stroke: rgba(154, 170, 181, 0.12); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.stats-chart-gridline--zero { stroke: var(--z365-text-muted); }
+.stats-chart-axis, .stats-chart-month, .stats-chart-value { fill: var(--z365-text-secondary); font-size: 10px; font-variant-numeric: tabular-nums; }
+.stats-chart-month { fill: var(--z365-text-primary); font-weight: 600; }
+.stats-chart-value { font-size: 9px; font-weight: 650; }
+.stats-chart-value--positive { fill: var(--z365-status-success); }
+.stats-chart-value--negative { fill: var(--z365-status-danger); }
+.stats-monthly-chart__bar--positive { fill: var(--z365-status-success); }
+.stats-monthly-chart__bar--negative { fill: var(--z365-status-danger); }
+.stats-monthly-chart__bar--neutral { fill: var(--z365-status-neutral); opacity: 0.55; }
+
+.stats-outcome-chart {
+  position: relative;
+  width: 154px;
+  height: 154px;
+  margin: 18px auto 8px;
+}
+.stats-outcome-chart svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.stats-outcome-chart circle { fill: none; stroke-width: 14; }
+.stats-outcome-chart__track { stroke: var(--z365-stroke); }
+.stats-outcome-chart__wins { stroke: var(--z365-status-success); }
+.stats-outcome-chart__losses { stroke: var(--z365-status-danger); }
+.stats-outcome-chart > div { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.stats-outcome-chart strong { font-family: Bahnschrift, "Segoe UI Variable", sans-serif; font-size: 24px; font-variant-numeric: tabular-nums; }
+.stats-outcome-chart span { margin-top: 2px; color: var(--z365-text-secondary); font-size: 10px; }
+
+.stats-outcome-legend { margin: 0; display: grid; gap: 6px; }
+.stats-outcome-legend div { display: flex; justify-content: space-between; align-items: center; padding: 5px 8px; border-radius: var(--z365-radius-control); background: var(--z365-surface-2); }
+.stats-outcome-legend dt { display: flex; align-items: center; gap: 7px; color: var(--z365-text-secondary); font-size: 10px; }
+.stats-outcome-legend dd { margin: 0; font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.stats-underlying-list, .stats-duration-list { display: grid; gap: 8px; margin-top: 16px; }
+.stats-underlying-row {
+  display: grid;
+  grid-template-columns: 68px minmax(80px, 1fr) 108px;
+  align-items: center;
+  gap: 12px;
+  min-height: 24px;
+}
+.stats-underlying-row > div:first-child { min-width: 0; display: flex; align-items: baseline; gap: 5px; }
+.stats-underlying-row > div:first-child strong { font-size: 11px; }
+.stats-underlying-row > div:first-child small { color: var(--z365-text-muted); font-size: 8px; white-space: nowrap; }
+.stats-underlying-row > strong { font-size: 10px; text-align: right; font-variant-numeric: tabular-nums; }
+.stats-underlying-row__scale { height: 8px; overflow: hidden; border-radius: 4px; background: var(--z365-surface-2); }
+.stats-underlying-row__bar { display: block; width: var(--stats-bar-size); height: 100%; border-radius: inherit; }
+.stats-underlying-row__bar--positive { background: var(--z365-status-success); }
+.stats-underlying-row__bar--negative { background: var(--z365-status-danger); }
+.stats-underlying-row__bar--neutral { background: var(--z365-status-neutral); }
+
+.stats-duration-list > div { display: grid; grid-template-columns: 78px minmax(80px, 1fr) 28px; align-items: center; gap: 10px; }
+.stats-duration-list span { color: var(--z365-text-secondary); font-size: 10px; }
+.stats-duration-list > div > div { height: 10px; overflow: hidden; border-radius: 5px; background: var(--z365-surface-2); }
+.stats-duration-list i { display: block; width: var(--stats-bar-size); height: 100%; border-radius: inherit; background: var(--z365-accent-primary); }
+.stats-duration-list strong { font-size: 10px; text-align: right; font-variant-numeric: tabular-nums; }
+
+.trades-year-filter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--z365-stroke);
+  border-radius: var(--z365-radius-card);
+  background: var(--z365-surface-1);
+}
+.trades-year-filter > div:first-child { display: grid; gap: 2px; }
+.trades-year-filter span { color: var(--z365-text-primary); font-size: 12px; font-weight: 700; }
+.trades-year-filter small { color: var(--z365-text-secondary); font-size: 10px; }
+.trades-year-filter__options {
+  display: inline-flex;
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid var(--z365-stroke);
+  border-radius: var(--z365-radius-control);
+  background: var(--z365-surface-2);
+}
+.trades-year-filter__options button {
+  min-width: 68px;
+  min-height: 36px;
+  padding: 7px 14px;
+  border: 1px solid transparent;
+  border-radius: calc(var(--z365-radius-control) - 2px);
+  background: transparent;
+  color: var(--z365-text-secondary);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.trades-year-filter__options button:hover { color: var(--z365-text-primary); }
+.trades-year-filter__options button.trades-year-filter__active {
+  border-color: rgba(76, 164, 255, 0.52);
+  background: rgba(76, 164, 255, 0.14);
+  color: var(--z365-text-primary);
+}
 
 .goals-summary {
   display: grid;
@@ -1110,11 +1315,12 @@ button:focus-visible, a:focus-visible {
 @keyframes spin { to { transform: rotate(360deg); } }
 
 @media (min-width: 1024px) and (max-width: 1399px) {
-  .portfolio-summary { grid-template-columns: minmax(260px, 2fr) minmax(440px, 3fr); }
+  .portfolio-summary { grid-template-columns: minmax(200px, 1fr) minmax(210px, 1.05fr) minmax(440px, 2.35fr); }
   .dashboard-grid--performance { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .activity-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
   .activity-grid > :nth-child(-n+3) { grid-column: span 2; }
   .activity-grid > :nth-child(n+4) { grid-column: span 3; }
+  .stats-kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 @media (max-width: 1023px) {
@@ -1122,7 +1328,8 @@ button:focus-visible, a:focus-visible {
   .side-nav { width: 220px; }
   .brand { height: 94px; }
   .main-content { padding-inline: 24px; }
-  .portfolio-summary { grid-template-columns: minmax(0, 1fr); }
+  .portfolio-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .portfolio-summary .allocation-card { grid-column: 1 / -1; }
   .dashboard-grid, .activity-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .dashboard-grid--performance { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .activity-grid > :last-child:nth-child(odd) { grid-column: 1 / -1; }
@@ -1130,6 +1337,8 @@ button:focus-visible, a:focus-visible {
   .balance-chart__legend { justify-content: flex-start; margin-top: 16px; }
   .positions-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .goals-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stats-kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .stats-grid--primary, .stats-grid--secondary { grid-template-columns: minmax(0, 1fr); }
 }
 
 @media (max-width: 700px) {
@@ -1170,6 +1379,7 @@ button:focus-visible, a:focus-visible {
   .page-header { display: block; padding-right: 48px; }
   .data-freshness { min-width: 0; margin-top: 22px; }
   .portfolio-summary { grid-template-columns: minmax(0, 1fr); }
+  .portfolio-summary .allocation-card { grid-column: auto; }
   .dashboard-grid, .activity-grid { grid-template-columns: minmax(0, 1fr); }
   .stat-card, .activity-card, .premium-card { min-height: 144px; }
   .portfolio-summary .stat-card { min-height: 144px; }
@@ -1189,6 +1399,10 @@ button:focus-visible, a:focus-visible {
   .positions-summary { grid-template-columns: minmax(0, 1fr); }
   .positions-data__header { align-items: flex-start; flex-direction: column; }
   .goals-summary { grid-template-columns: minmax(0, 1fr); }
+  .stats-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stats-panel { min-height: 0; padding: 14px; }
+  .stats-panel__header { align-items: flex-start; flex-direction: column; gap: 4px; }
+  .stats-underlying-row { grid-template-columns: 60px minmax(70px, 1fr) 100px; gap: 8px; }
   .goal-progress { padding: 18px 16px; }
   .goal-progress__header, .goal-plan > header { align-items: flex-start; flex-direction: column; }
   .goal-progress__status { width: 100%; text-align: left; }
@@ -1196,6 +1410,8 @@ button:focus-visible, a:focus-visible {
   .goal-progress__amounts > div:last-child { text-align: left; }
   .goal-progress__details { grid-template-columns: minmax(0, 1fr); }
   .trades-pagination { align-items: flex-start; flex-direction: column; }
+  .trades-year-filter { align-items: stretch; flex-direction: column; }
+  .trades-year-filter__options { align-self: flex-start; }
 }
 
 @media (prefers-reduced-motion: reduce) {

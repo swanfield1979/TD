@@ -12,8 +12,10 @@ const PLOT_HEIGHT = CHART_HEIGHT - PLOT_TOP - PLOT_BOTTOM
 
 interface MonthlyBalanceChartProps {
   data: MonthlyBalanceChange[]
+  referenceData?: MonthlyBalanceChange[]
   currency: string
   year: string
+  referenceYear?: string
 }
 
 function compactCurrency(value: number, currency: string) {
@@ -45,12 +47,26 @@ function niceMaximum(value: number) {
   return ceiling * magnitude
 }
 
-export default function MonthlyBalanceChart({ data = [], currency, year }: MonthlyBalanceChartProps) {
+export default function MonthlyBalanceChart({
+  data = [],
+  referenceData = [],
+  currency,
+  year,
+  referenceYear,
+}: MonthlyBalanceChartProps) {
   const availableData = data.filter(
     (item): item is MonthlyBalanceChange & { value: number; balance: number; toDate: string } =>
       item.value !== null && item.balance !== null && Boolean(item.toDate),
   )
-  const maximum = niceMaximum(Math.max(...availableData.map((item) => Math.abs(item.value)), 0))
+  const availableReferenceData = referenceData.filter(
+    (item): item is MonthlyBalanceChange & { value: number; balance: number; toDate: string } =>
+      item.value !== null && item.balance !== null && Boolean(item.toDate),
+  )
+  const maximum = niceMaximum(Math.max(
+    ...availableData.map((item) => Math.abs(item.value)),
+    ...availableReferenceData.map((item) => Math.abs(item.value)),
+    0,
+  ))
   const xForIndex = (index: number) => PLOT_LEFT + (index / 11) * PLOT_WIDTH
   const yForValue = (value: number) => PLOT_TOP + ((maximum - value) / (maximum * 2)) * PLOT_HEIGHT
   const zeroY = yForValue(0)
@@ -80,6 +96,7 @@ export default function MonthlyBalanceChart({ data = [], currency, year }: Month
         <div className="balance-chart__legend" aria-label="Legenda">
           <span><i className="legend-dot legend-dot--positive" /> Positief</span>
           <span><i className="legend-dot legend-dot--negative" /> Negatief</span>
+          {availableReferenceData.length > 0 && <span><i className="legend-bar legend-bar--reference" /> {referenceYear} referentie</span>}
           <span><i className="legend-dot legend-dot--missing" /> Nog geen data</span>
         </div>
       </header>
@@ -93,7 +110,7 @@ export default function MonthlyBalanceChart({ data = [], currency, year }: Month
         >
           <title id="balance-chart-svg-title">Maandelijkse saldoverandering in {year}</title>
           <desc id="balance-chart-svg-description">
-            Een lijn verbindt de beschikbare maandresultaten. Groene punten zijn positief, rode punten negatief en grijze punten hebben nog geen data.
+            Een lijn verbindt de beschikbare maandresultaten van {year}. Grijze balken tonen dezelfde maanden van {referenceYear} als referentie.
           </desc>
 
           {[maximum, 0, -maximum].map((value) => {
@@ -109,6 +126,29 @@ export default function MonthlyBalanceChart({ data = [], currency, year }: Month
                 />
                 <text className="chart-axis-value" x={PLOT_LEFT - 12} y={y + 4} textAnchor="end">
                   {compactCurrency(value, currency)}
+                </text>
+              </g>
+            )
+          })}
+
+          {referenceData.map((item, index) => {
+            if (item.value === null) return null
+            const x = xForIndex(index)
+            const y = yForValue(item.value)
+            const barY = Math.min(y, zeroY)
+            const barHeight = Math.max(2, Math.abs(zeroY - y))
+            return (
+              <g key={`reference-${item.month}`}>
+                <rect className="chart-reference-bar" x={x - 18} y={barY} width={36} height={barHeight} rx={4}>
+                  <title>{referenceYear} {item.label}: {exactCurrency(item.value, currency)}</title>
+                </rect>
+                <text
+                  className="chart-reference-value"
+                  x={x}
+                  y={item.value >= 0 ? y - 8 : y + 16}
+                  textAnchor="middle"
+                >
+                  {compactCurrency(item.value, currency)}
                 </text>
               </g>
             )

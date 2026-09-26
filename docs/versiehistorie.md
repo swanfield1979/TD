@@ -1,5 +1,34 @@
 # Versiehistorie
 
+## 0.15.0 – statistiekenpagina
+
+- Stats is als menuoptie tussen Goals en Trades toegevoegd.
+- Een jaarkeuze schakelt alle analyses tussen 2025 en 2026.
+- Zes kerncijfers tonen trades, winratio, nettoresultaat, gemiddeld resultaat, profit factor en gemiddelde looptijd.
+- Grafieken tonen maandresultaten, winst/verliesverdeling, resultaatimpact per onderliggende waarde en de verdeling van de aanhoudduur.
+
+## 0.14.2 – navigatievolgorde
+
+- Het hoofdmenu staat nu in de volgorde Dashboard, Stocks, Options, Goals en Trades.
+
+## 0.14.1 – saldo-opmaak
+
+- De primaire saldowaarde is vergroot voor een duidelijkere visuele hiërarchie en betere benutting van de kaart.
+
+## 0.14.0 – dagelijkse winst en verlies
+
+- Tussen Saldo en Portefeuilleverdeling staat een afzonderlijke kaart voor Dagelijkse W&V.
+- De kaart toont het dagresultaat in dollars en als percentage van het saldo van de vorige handelsdag.
+- Positieve, negatieve en ongewijzigde dagresultaten gebruiken dezelfde semantische statusweergave als de rest van het dashboard.
+- De kleine dubbele dagwaarde is uit het midden van de portefeuilledonut verwijderd.
+
+## 0.13.0 – meerjarige trades en jaarreferentie
+
+- De importer leest meerdere jaarbestanden per Flex-brontype en voorkomt dubbeltellingen van overlappende saldodagen en IBKR-executies.
+- De trades uit 2025 zijn toegevoegd naast 2026; de Trades-pagina heeft een jaarkeuze en eigen samenvatting en paginering per jaar.
+- Jaarverloop toont de maandbedragen van 2025 als grijze referentiebalken achter de lijn van 2026.
+- De meerjarige import is gecontroleerd met 453 unieke saldodagen, 1.430 uitvoeringen en 390 afgesloten optiecycli.
+
 ## 0.12.0 – afgesloten trades
 
 - Trades is als laatste navigatieoptie toegevoegd.

@@ -418,16 +418,17 @@ function portfolioAllocation(stockHoldings, latest) {
   }
 }
 
-function monthlyBalanceChanges(rows, start, latest) {
-  const year = latest.date.slice(0, 4)
-  let previous = start
+function monthlyBalanceChangesForYear(rows, year) {
+  const yearStartDate = `${year}-01-01`
+  const yearRows = rows.filter((row) => row.date.startsWith(`${year}-`))
+  let previous = lastBefore(rows, yearStartDate) ?? yearRows[0]
 
   return MONTH_LABELS.map((label, monthIndex) => {
     const month = `${year}-${String(monthIndex + 1).padStart(2, '0')}`
     const monthRows = rows.filter((row) => row.date.startsWith(month))
     const monthEnd = monthRows.at(-1)
 
-    if (!monthEnd || month > latest.date.slice(0, 7)) {
+    if (!previous || !monthEnd) {
       return { month, label, value: null, balance: null, direction: null }
     }
 
@@ -479,10 +480,20 @@ function goalPlanSummary(rows, latest) {
 }
 
 export function createPortfolioSummary({ equityXml, tradesXml, optionXml, currency = 'USD', premiumCurrency = 'USD', generatedAt = new Date().toISOString() }) {
-  const statement = extractTags(equityXml, 'FlexStatement')[0]
-  const trades = extractTags(tradesXml, 'Trade')
+  const statements = extractTags(`${equityXml}\n${tradesXml}\n${optionXml}`, 'FlexStatement')
+  const statement = statements
+    .filter(({ whenGenerated }) => whenGenerated)
+    .sort((left, right) => left.whenGenerated.localeCompare(right.whenGenerated))
+    .at(-1)
+  const seenExecutionIds = new Set()
+  const trades = extractTags(tradesXml, 'Trade').filter((trade) => {
+    if (!trade.ibExecID) return true
+    if (seenExecutionIds.has(trade.ibExecID)) return false
+    seenExecutionIds.add(trade.ibExecID)
+    return true
+  })
   const optionTrades = normalizeOptionTrades(trades)
-  const rows = extractTags(equityXml, 'EquitySummaryByReportDateInBase')
+  const rowsByDate = new Map(extractTags(equityXml, 'EquitySummaryByReportDateInBase')
     .map((attributes) => ({
       date: attributes.reportDate,
       total: Number(attributes.total),
@@ -490,7 +501,8 @@ export function createPortfolioSummary({ equityXml, tradesXml, optionXml, curren
       totalShort: Number(attributes.totalShort ?? 0),
     }))
     .filter((row) => row.date && Number.isFinite(row.total))
-    .sort((left, right) => left.date.localeCompare(right.date))
+    .map((row) => [row.date, row]))
+  const rows = [...rowsByDate.values()].sort((left, right) => left.date.localeCompare(right.date))
 
   if (rows.length === 0) throw new Error('Geen dagsaldi gevonden in het Flex-rapport.')
 
@@ -532,7 +544,11 @@ export function createPortfolioSummary({ equityXml, tradesXml, optionXml, curren
     currentMonthProfit: metric(latest.total - currentMonthBase.total, currentMonthBase.date, latest.date),
     previousMonthProfit: metric(currentMonthBase.total - previousMonthBase.total, previousMonthBase.date, currentMonthBase.date),
     averageMonthlyProfit: { ...metric(yearProfit / monthCount, start.date, latest.date), monthCount },
-    monthlyBalanceChanges: monthlyBalanceChanges(rows, start, latest),
+    monthlyBalanceChanges: monthlyBalanceChangesForYear(rows, latest.date.slice(0, 4)),
+    previousYearMonthlyBalanceChanges: monthlyBalanceChangesForYear(
+      rows,
+      String(Number(latest.date.slice(0, 4)) - 1),
+    ),
     tradingActivity: tradingActivitySummary(optionTrades),
     stockHoldings,
     optionHoldings,

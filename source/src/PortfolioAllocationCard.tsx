@@ -3,7 +3,6 @@ import type { PortfolioAllocation, PortfolioMetric } from './types'
 interface PortfolioAllocationCardProps {
   allocation: PortfolioAllocation
   balance: PortfolioMetric
-  dailyProfit: PortfolioMetric
   currency: string
 }
 
@@ -20,7 +19,6 @@ const formatCurrency = (value: number, currency: string, showSign = false) =>
 export default function PortfolioAllocationCard({
   allocation,
   balance,
-  dailyProfit,
   currency,
 }: PortfolioAllocationCardProps) {
   let offset = 0
@@ -53,9 +51,7 @@ export default function PortfolioAllocationCard({
         </svg>
         <div className="allocation-card__total">
           <strong>{formatCurrency(balance.value, currency)}</strong>
-          <span className={`metric--${dailyProfit.direction}`}>
-            {formatCurrency(dailyProfit.value, currency, true)} vandaag
-          </span>
+          <span>Netto saldo</span>
         </div>
       </div>
 

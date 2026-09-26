@@ -12,6 +12,8 @@ test('haalt zelfsluitende tags uit een Flex-rapport', () => {
 
 test('berekent dashboardstatistieken uit dagsaldi', () => {
   const equityXml = `<FlexQueryResponse><FlexStatement whenGenerated="2026-03-20 10:00:00">
+    <EquitySummaryByReportDateInBase reportDate="2024-12-31" total="900" />
+    <EquitySummaryByReportDateInBase reportDate="2025-01-31" total="950" />
     <EquitySummaryByReportDateInBase reportDate="2025-12-31" total="1000" />
     <EquitySummaryByReportDateInBase reportDate="2026-01-31" total="1100" />
     <EquitySummaryByReportDateInBase reportDate="2026-02-28" total="1050" />
@@ -41,6 +43,23 @@ test('berekent dashboardstatistieken uit dagsaldi', () => {
     ],
   )
   assert.equal(result.monthlyBalanceChanges.length, 12)
+  assert.deepEqual(
+    result.previousYearMonthlyBalanceChanges.map(({ month, value }) => ({ month, value })),
+    [
+      { month: '2025-01', value: 50 },
+      { month: '2025-02', value: null },
+      { month: '2025-03', value: null },
+      { month: '2025-04', value: null },
+      { month: '2025-05', value: null },
+      { month: '2025-06', value: null },
+      { month: '2025-07', value: null },
+      { month: '2025-08', value: null },
+      { month: '2025-09', value: null },
+      { month: '2025-10', value: null },
+      { month: '2025-11', value: null },
+      { month: '2025-12', value: 50 },
+    ],
+  )
   assert.deepEqual(result.portfolioAllocation.categories, [
     { key: 'stocks', label: 'Aandelen', value: 0, percentage: 0 },
     { key: 'options', label: 'Opties', value: 0, percentage: 0 },
@@ -60,6 +79,29 @@ test('berekent dashboardstatistieken uit dagsaldi', () => {
       { year: 2030, startValue: 10280.5, growthValue: 3084.15, contribution: 1200, targetValue: 14564.65 },
     ],
   })
+})
+
+test('dedupliceert overlappende saldodagen en IBKR-uitvoeringen bij meerjarige bronnen', () => {
+  const equityXml = `<FlexStatement whenGenerated="2025-12-31 10:00:00">
+    <EquitySummaryByReportDateInBase reportDate="2024-12-31" total="900" />
+    <EquitySummaryByReportDateInBase reportDate="2025-12-31" total="1000" />
+  </FlexStatement>
+  <FlexStatement whenGenerated="2026-02-28 10:00:00">
+    <EquitySummaryByReportDateInBase reportDate="2025-12-31" total="1000" />
+    <EquitySummaryByReportDateInBase reportDate="2026-01-31" total="1100" />
+    <EquitySummaryByReportDateInBase reportDate="2026-02-28" total="1200" />
+  </FlexStatement>`
+  const tradesXml = `<Trades>
+    <Trade ibExecID="same" assetCategory="OPT" conid="1" dateTime="2025-01-01 10:00:00" quantity="-1" tradePrice="2" openCloseIndicator="O" />
+    <Trade ibExecID="same" assetCategory="OPT" conid="1" dateTime="2025-01-01 10:00:00" quantity="-1" tradePrice="2" openCloseIndicator="O" />
+    <Trade ibExecID="close" assetCategory="OPT" conid="1" dateTime="2025-01-11 10:00:00" quantity="1" tradePrice="1" openCloseIndicator="C" />
+  </Trades>`
+  const result = createPortfolioSummary({ equityXml, tradesXml, optionXml: '<Options />' })
+
+  assert.equal(result.sourceCounts.equityDays, 4)
+  assert.equal(result.sourceCounts.trades, 2)
+  assert.equal(result.sourceUpdatedAt, '2026-02-28 10:00:00')
+  assert.equal(result.closedTrades.length, 1)
 })
 
 test('berekent optieactiviteit, afgesloten trades en maandpremies', () => {

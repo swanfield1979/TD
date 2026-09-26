@@ -8,9 +8,10 @@ Na verbinding toont de bediening **IBKR verbonden**. Met **Vernieuwen** worden d
 
 Wanneer de koppeling niet beschikbaar is, blijven de laatst geïmporteerde Flex-gegevens zichtbaar. Er worden via deze koppeling geen orders geplaatst.
 
-Het dashboard toont vijf bedragen uit `flex_net_liq_into_db.xml`:
+Het dashboard toont vijf bedragen uit de lokale `flex_net_liq_into_db*.xml`-bronnen:
 
 - **Saldo:** het laatste beschikbare totaal van `EquitySummaryByReportDateInBase`.
+- **Dagelijkse W&V:** het verschil tussen de twee laatste beschikbare handelsdagsaldi, zowel in dollars als als percentage van het saldo van de vorige handelsdag.
 - **Nettoresultaat 2026:** laatste netto liquidatiewaarde minus de startwaarde van 2026. Waar aanwezig wordt 31 december 2025 als nulmeting gebruikt.
 - **Nettoresultaat deze maand:** laatste netto liquidatiewaarde minus de laatste beschikbare waarde vóór de eerste dag van de huidige rapportmaand.
 - **Nettoresultaat vorige maand:** netto liquidatiewaarde aan het einde van de vorige maand minus die van de maand daarvoor.
@@ -18,13 +19,14 @@ Het dashboard toont vijf bedragen uit `flex_net_liq_into_db.xml`:
 
 ## Portefeuilleverdeling
 
-Naast het saldo staat een donutgrafiek met aandelen, opties en geld/overig. Het nettosaldo in het midden komt rechtstreeks uit het laatste Flex-dagsaldo. De kleine waarde eronder is het verschil met de vorige handelsdag.
+Naast het saldo staat een donutgrafiek met aandelen, opties en geld/overig. Het nettosaldo in het midden komt rechtstreeks uit het laatste Flex-dagsaldo.
+Tussen het saldo en de donut staat **Dagelijkse W&V** als afzonderlijke kaart. Positief, negatief en ongewijzigd worden met zowel kleur als een expliciet teken en tekstalternatief weergegeven.
 
 De huidige Flex-bestanden bevatten geen actuele marktwaarde per afzonderlijke positie. Daarom is de verdeling indicatief: aandelen gebruiken de resterende FIFO-kostprijs van open aandelentrades, opties gebruiken de absolute `totalShort`-waarde uit het laatste saldorapport en geld/overig is het resterende bedrag. Zodra een Open Positions-rapport beschikbaar is, kan deze berekening worden vervangen door actuele marktwaarden.
 
 ## Jaarverloop
 
-De lijngrafiek toont voor alle twaalf kalendermaanden het verschil tussen het laatste beschikbare saldo van een maand en het laatste saldo van de voorgaande maand. De lijn verbindt alleen beschikbare maandresultaten. Toekomstige maanden blijven op de tijdas staan met de status `Nog geen data`.
+De lijngrafiek toont voor alle twaalf kalendermaanden het verschil tussen het laatste beschikbare saldo van een maand en het laatste saldo van de voorgaande maand. De lijn verbindt alleen beschikbare maandresultaten. Toekomstige maanden blijven op de tijdas staan met de status `Nog geen data`. Grijze balken achter de lijn tonen per kalendermaand het bedrag van het voorgaande jaar als vaste referentie op dezelfde schaal.
 
 ## Stocks
 
@@ -71,7 +73,7 @@ Een positief resultaat of een opbrengst wordt groen weergegeven. Een negatief re
 
 ## Trades
 
-De pagina **Trades** toont alle afgesloten optiecycli, gesorteerd van nieuw naar oud en verdeeld over pagina's van maximaal 50 regels. Per trade staan de onderliggende waarde, long/short en call/put, strike, openings- en sluitingsdatum, aanhoudduur, openingspremie en netto winst of verlies.
+De pagina **Trades** toont alle afgesloten optiecycli, gesorteerd van nieuw naar oud en verdeeld over pagina's van maximaal 50 regels. Met de jaarkeuze wissel je tussen 2025 en 2026; aantallen, winstpercentage, gerealiseerd resultaat, gemiddelde aanhoudduur en paginering worden voor het gekozen sluitingsjaar opnieuw berekend. Per trade staan de onderliggende waarde, long/short en call/put, strike, openings- en sluitingsdatum, aanhoudduur, openingspremie en netto winst of verlies.
 
 Het nettoresultaat van een volledig gemeten trade is de som van alle verkoop- en aankoopstromen plus commissies binnen de cyclus. **Rendement** is dit resultaat gedeeld door de absolute openingspremie. Daarmee is de berekening consistent voor zowel gekochte als geschreven opties.
 
@@ -83,9 +85,24 @@ Voor een trade die op dezelfde kalenderdag opent en sluit, wordt voor de jaaromr
 
 Van trades die vóór het beschikbare Flex-bereik zijn geopend, zijn het gerealiseerde dollarresultaat en de sluitingsgegevens wel zichtbaar. Openingspremie, aanhoudduur en percentages blijven dan `—`, omdat de ontbrekende opening niet wordt geschat.
 
+## Stats
+
+De pagina **Stats** staat tussen Goals en Trades. Met **Analysejaar** wissel je tussen 2025 en 2026; alle cijfers en grafieken volgen direct dezelfde selectie.
+
+De zes kerncijfers tonen het aantal afgesloten trades, de winratio, het gerealiseerde nettoresultaat, het gemiddelde resultaat per trade, de profit factor en de gemiddelde looptijd. De profit factor is de totale brutowinst gedeeld door het absolute brutoverlies.
+
+De grafieken tonen:
+
+- gerealiseerde winst of verlies per sluitingsmaand;
+- het aantal winst-, verlies- en neutrale trades;
+- de acht onderliggende waarden met de grootste absolute resultaatimpact;
+- de verdeling van volledig gemeten trades over vijf looptijdcategorieën.
+
+Alle resultaten zijn gebaseerd op de afsluitdatum en nettocashflow van de gesloten optiecycli. Hierdoor sluiten de Stats-jaarkeuze en de Trades-jaarkeuze inhoudelijk op elkaar aan.
+
 ## Data verversen
 
-Vervang de XML-bestanden in `source/data/private/` en voer vanuit `source/` opnieuw uit:
+Vervang of voeg de XML-bestanden in `source/data/private/` toe en voer vanuit `source/` opnieuw uit. Jaarbestanden mogen bijvoorbeeld `_2025` achter het vaste voorvoegsel krijgen; alle passende bestanden worden samengevoegd en overlappende bronregels worden gededupliceerd.
 
 ```powershell
 npm run import:flex

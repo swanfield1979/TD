@@ -46,34 +46,71 @@ function paginationItems(currentPage: number, pageCount: number): Array<number |
 }
 
 export default function TradesPage({ trades, currency }: TradesPageProps) {
+  const years = useMemo(
+    () => [...new Set(trades.map((trade) => trade.closedAt.slice(0, 4)))].sort((left, right) => right.localeCompare(left)),
+    [trades],
+  )
+  const [selectedYear, setSelectedYear] = useState(() => years[0] ?? '')
   const [currentPage, setCurrentPage] = useState(1)
-  const pageCount = Math.max(1, Math.ceil(trades.length / PAGE_SIZE))
+  const filteredTrades = useMemo(
+    () => trades.filter((trade) => trade.closedAt.startsWith(selectedYear)),
+    [selectedYear, trades],
+  )
+  const pageCount = Math.max(1, Math.ceil(filteredTrades.length / PAGE_SIZE))
+
+  useEffect(() => {
+    if (!years.includes(selectedYear)) setSelectedYear(years[0] ?? '')
+  }, [selectedYear, years])
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [selectedYear])
 
   useEffect(() => {
     setCurrentPage((page) => Math.min(page, pageCount))
   }, [pageCount])
 
   const pageTrades = useMemo(
-    () => trades.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
-    [currentPage, trades],
+    () => filteredTrades.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
+    [currentPage, filteredTrades],
   )
-  const winningTrades = trades.filter((trade) => trade.profit > 0).length
-  const measuredDurations = trades.filter((trade): trade is ClosedTrade & { daysHeld: number } => trade.daysHeld !== null)
-  const totalProfit = trades.reduce((sum, trade) => sum + trade.profit, 0)
+  const winningTrades = filteredTrades.filter((trade) => trade.profit > 0).length
+  const measuredDurations = filteredTrades.filter((trade): trade is ClosedTrade & { daysHeld: number } => trade.daysHeld !== null)
+  const totalProfit = filteredTrades.reduce((sum, trade) => sum + trade.profit, 0)
   const averageDays = measuredDurations.length
     ? measuredDurations.reduce((sum, trade) => sum + trade.daysHeld, 0) / measuredDurations.length
     : 0
-  const firstItem = trades.length ? (currentPage - 1) * PAGE_SIZE + 1 : 0
-  const lastItem = Math.min(currentPage * PAGE_SIZE, trades.length)
+  const firstItem = filteredTrades.length ? (currentPage - 1) * PAGE_SIZE + 1 : 0
+  const lastItem = Math.min(currentPage * PAGE_SIZE, filteredTrades.length)
 
   return (
     <div className="trades-page">
+      <section className="trades-year-filter" aria-labelledby="trades-year-filter-label">
+        <div>
+          <span id="trades-year-filter-label">Boekjaar</span>
+          <small>Kies welke afgesloten trades je wilt bekijken.</small>
+        </div>
+        <div className="trades-year-filter__options" role="group" aria-label="Kies een boekjaar">
+          {years.map((year) => (
+            <button
+              key={year}
+              type="button"
+              className={year === selectedYear ? 'trades-year-filter__active' : undefined}
+              aria-pressed={year === selectedYear}
+              onClick={() => setSelectedYear(year)}
+            >
+              {year}
+            </button>
+          ))}
+        </div>
+      </section>
+
       <section className="positions-summary" aria-label="Samenvatting afgesloten trades">
         <article className="positions-summary__card">
-          <span>Afgesloten trades</span><strong>{trades.length}</strong><small>Maximaal {PAGE_SIZE} per pagina</small>
+          <span>Afgesloten trades</span><strong>{filteredTrades.length}</strong><small>In {selectedYear || 'het gekozen jaar'}</small>
         </article>
         <article className="positions-summary__card positions-summary__card--positive">
-          <span>Winnende trades</span><strong>{trades.length ? formatPercentage((winningTrades / trades.length) * 100) : '0,0%'}</strong><small>{winningTrades} met positief resultaat</small>
+          <span>Winnende trades</span><strong>{filteredTrades.length ? formatPercentage((winningTrades / filteredTrades.length) * 100) : '0,0%'}</strong><small>{winningTrades} met positief resultaat</small>
         </article>
         <article className={`positions-summary__card positions-summary__card--${directionClass(totalProfit)}`}>
           <span>Gerealiseerd resultaat</span><strong className={`metric--${directionClass(totalProfit)}`}>{formatCurrency(totalProfit, currency, true)}</strong><small>Inclusief beschikbare commissies</small>
@@ -86,13 +123,13 @@ export default function TradesPage({ trades, currency }: TradesPageProps) {
       <section className="positions-data trades-data" aria-labelledby="closed-trades-title">
         <header className="positions-data__header">
           <div>
-            <h2 id="closed-trades-title">Afgesloten trades</h2>
+            <h2 id="closed-trades-title">Afgesloten trades {selectedYear}</h2>
             <p>Nettoresultaat, rendement op de openingspremie en lineair geannualiseerd rendement.</p>
           </div>
-          <span className="positions-data__status positions-data__status--live">{firstItem}–{lastItem} van {trades.length}</span>
+          <span className="positions-data__status positions-data__status--live">{firstItem}–{lastItem} van {filteredTrades.length}</span>
         </header>
 
-        {trades.length === 0 ? (
+        {filteredTrades.length === 0 ? (
           <div className="positions-empty">
             <h3>Nog geen afgesloten trades</h3>
             <p>Afgesloten optiecycli verschijnen na de volgende Flex-import.</p>

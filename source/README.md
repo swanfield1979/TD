@@ -9,11 +9,13 @@ De webapp staat volledig in deze map. Voer alle ontwikkel- en bouwcommando's van
 
 ## Lokale data klaarzetten
 
-Plaats de drie IBKR Flex-bestanden in `data/private/` met deze namen:
+Plaats de IBKR Flex-bestanden in `data/private/`. De importer leest alle XML-bestanden waarvan de naam met een van deze voorvoegsels begint:
 
 - `flex_net_liq_into_db.xml`
 - `flex_trades_into_db.xml`
 - `flex_optionEAE_into_db.xml`
+
+Voor extra jaren mag een achtervoegsel worden gebruikt, bijvoorbeeld `flex_trades_into_db_2025.xml`. Overlappende saldodagen en trades met dezelfde IBKR-executie-ID worden automatisch één keer verwerkt.
 
 Deze map en de gegenereerde dashboarddata zijn bewust uitgesloten van Git.
 

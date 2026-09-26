@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
   ArrowSwapRegular,
+  ChartMultipleRegular,
   DataTrendingRegular,
   DismissRegular,
   HomeRegular,
@@ -15,17 +16,19 @@ import StocksPage from './StocksPage'
 import OptionsPage from './OptionsPage'
 import GoalsPage from './GoalsPage'
 import TradesPage from './TradesPage'
+import StatsPage from './StatsPage'
 import TradingActivityCards from './TradingActivityCards'
 import IbkrConnectionControl from './IbkrConnectionControl'
 import { mergeLiveSnapshot } from './ibkr'
 
 const DATA_URL = '/data/portfolio-summary.json'
-type Page = 'dashboard' | 'stocks' | 'options' | 'goals' | 'trades'
+type Page = 'dashboard' | 'stocks' | 'options' | 'goals' | 'stats' | 'trades'
 
 const pageFromHash = (): Page => {
   if (window.location.hash === '#stocks') return 'stocks'
   if (window.location.hash === '#options') return 'options'
   if (window.location.hash === '#goals') return 'goals'
+  if (window.location.hash === '#stats') return 'stats'
   if (window.location.hash === '#trades') return 'trades'
   return 'dashboard'
 }
@@ -35,6 +38,7 @@ const pageTitles: Record<Page, string> = {
   stocks: 'Stocks',
   options: 'Options',
   goals: 'Goals',
+  stats: 'Stats',
   trades: 'Trades',
 }
 
@@ -47,6 +51,13 @@ const currencyFormatter = (currency: string, showSign = false) =>
     maximumFractionDigits: 2,
     signDisplay: showSign ? 'always' : 'auto',
   })
+
+const percentageFormatter = new Intl.NumberFormat('nl-NL', {
+  style: 'percent',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+  signDisplay: 'always',
+})
 
 const formatDate = (value: string) =>
   new Intl.DateTimeFormat('nl-NL', {
@@ -78,6 +89,35 @@ function StatCard({ label, metric, currency, context, prominent = false }: StatC
       </p>
       <p className="stat-card__context">{context}</p>
       {!prominent && <span className="visually-hidden">{directionLabel[metric.direction]}</span>}
+    </article>
+  )
+}
+
+interface DailyProfitCardProps {
+  metric: PortfolioMetric
+  balance: PortfolioMetric
+  currency: string
+}
+
+function DailyProfitCard({ metric, balance, currency }: DailyProfitCardProps) {
+  const previousBalance = balance.value - metric.value
+  const percentage = previousBalance === 0 ? 0 : metric.value / Math.abs(previousBalance)
+
+  return (
+    <article className={`stat-card daily-profit-card stat-card--${metric.direction}`}>
+      <h2>Dagelijkse W&amp;V</h2>
+      <div className="daily-profit-card__values">
+        <p className={`stat-card__value metric--${metric.direction}`}>
+          {currencyFormatter(currency, true).format(metric.value)}
+        </p>
+        <p className={`daily-profit-card__percentage metric--${metric.direction}`}>
+          {percentageFormatter.format(percentage)}
+        </p>
+      </div>
+      <p className="stat-card__context">
+        {metric.fromDate && `${formatDate(metric.fromDate)} – `}{formatDate(metric.toDate)}
+      </p>
+      <span className="visually-hidden">{directionLabel[metric.direction]} ten opzichte van de vorige handelsdag</span>
     </article>
   )
 }
@@ -186,6 +226,14 @@ function App() {
             <span>Dashboard</span>
           </a>
           <a
+            className={`nav-item${currentPage === 'stocks' ? ' nav-item--active' : ''}`}
+            href="#stocks"
+            aria-current={currentPage === 'stocks' ? 'page' : undefined}
+          >
+            <DataTrendingRegular aria-hidden="true" />
+            <span>Stocks</span>
+          </a>
+          <a
             className={`nav-item${currentPage === 'options' ? ' nav-item--active' : ''}`}
             href="#options"
             aria-current={currentPage === 'options' ? 'page' : undefined}
@@ -202,12 +250,12 @@ function App() {
             <span>Goals</span>
           </a>
           <a
-            className={`nav-item${currentPage === 'stocks' ? ' nav-item--active' : ''}`}
-            href="#stocks"
-            aria-current={currentPage === 'stocks' ? 'page' : undefined}
+            className={`nav-item${currentPage === 'stats' ? ' nav-item--active' : ''}`}
+            href="#stats"
+            aria-current={currentPage === 'stats' ? 'page' : undefined}
           >
-            <DataTrendingRegular aria-hidden="true" />
-            <span>Stocks</span>
+            <ChartMultipleRegular aria-hidden="true" />
+            <span>Stats</span>
           </a>
           <a
             className={`nav-item${currentPage === 'trades' ? ' nav-item--active' : ''}`}
@@ -252,7 +300,7 @@ function App() {
 
         {!isLoading && summary && currentPage === 'dashboard' && (
           <>
-            <section className="portfolio-summary" aria-label="Saldo en portefeuilleverdeling">
+            <section className="portfolio-summary" aria-label="Saldo, dagelijkse winst en verlies en portefeuilleverdeling">
               <StatCard
                 label="Saldo"
                 metric={summary.balance}
@@ -260,10 +308,14 @@ function App() {
                 context={`Netto liquidatiewaarde op ${formatDate(summary.balance.toDate)}`}
                 prominent
               />
+              <DailyProfitCard
+                metric={summary.dailyProfit}
+                balance={summary.balance}
+                currency={summary.currency}
+              />
               <PortfolioAllocationCard
                 allocation={summary.portfolioAllocation}
                 balance={summary.balance}
-                dailyProfit={summary.dailyProfit}
                 currency={summary.currency}
               />
             </section>
@@ -303,8 +355,10 @@ function App() {
             )}
             <MonthlyBalanceChart
               data={summary.monthlyBalanceChanges ?? []}
+              referenceData={summary.previousYearMonthlyBalanceChanges ?? []}
               currency={summary.currency}
               year={summary.balance.toDate.slice(0, 4)}
+              referenceYear={String(Number(summary.balance.toDate.slice(0, 4)) - 1)}
             />
           </>
         )}
@@ -327,6 +381,10 @@ function App() {
 
         {!isLoading && summary && currentPage === 'trades' && (
           <TradesPage trades={summary.closedTrades ?? []} currency={summary.premiumCurrency ?? summary.currency} />
+        )}
+
+        {!isLoading && summary && currentPage === 'stats' && (
+          <StatsPage trades={summary.closedTrades ?? []} currency={summary.premiumCurrency ?? summary.currency} />
         )}
       </main>
     </div>

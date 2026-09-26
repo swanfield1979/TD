@@ -182,6 +182,7 @@ export interface PortfolioSummary {
     monthCount: number
   }
   monthlyBalanceChanges: MonthlyBalanceChange[]
+  previousYearMonthlyBalanceChanges: MonthlyBalanceChange[]
   tradingActivity: TradingActivitySummary
   portfolioAllocation: PortfolioAllocation
   stockHoldings: StockHolding[]
