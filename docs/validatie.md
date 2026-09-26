@@ -17,4 +17,5 @@ De eerste versie wordt gecontroleerd met:
 - Compacte weergave: responsieve éénkolomsopmaak en overlaymenu zijn in de stylesheet afgedekt; een aparte gesimuleerde mobiele viewport was in de beschikbare browser niet actief.
 - Jaargrafiek: januari–september met bronwaarden gecontroleerd; oktober–december tonen expliciet dat data ontbreekt.
 - Opgeschoonde jaargrafiek: samenvattingsbalk en uitklapbare maandtabel zijn niet meer aanwezig.
+- Vereenvoudigde dashboardkop: bovenlabel en toelichtingszin zijn niet meer aanwezig; titel en gegevensstatus blijven uitgelijnd.
 - Schone browsercontrole na de grafiekwijziging: geen fouten of waarschuwingen.

@@ -167,9 +167,7 @@ function App() {
       <main className="main-content">
         <header className="page-header">
           <div>
-            <p className="page-kicker"><DataTrendingRegular aria-hidden="true" /> Portfolio-overzicht</p>
             <h1>Dashboard</h1>
-            <p>Volg je actuele saldo en resultaat per periode.</p>
           </div>
           {summary && (
             <div className="data-freshness" title={`Bronbestand gegenereerd op ${summary.sourceUpdatedAt}`}>

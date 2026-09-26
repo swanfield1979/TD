@@ -1,5 +1,10 @@
 # Versiehistorie
 
+## 0.2.2 — 26 september 2026
+
+- Bovenlabel `Portfolio-overzicht` uit de dashboardkop verwijderd.
+- Toelichtingszin onder de dashboardtitel verwijderd.
+
 ## 0.2.1 — 26 september 2026
 
 - Samenvattingsbalk met beste en laagste maand verwijderd.
