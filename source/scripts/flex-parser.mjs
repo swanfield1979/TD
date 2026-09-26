@@ -1,4 +1,5 @@
 const MONTHS_IN_YEAR = 12
+const MONTH_LABELS = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec']
 
 function decodeXml(value) {
   return value
@@ -46,6 +47,34 @@ function elapsedMonthCount(startDate, endDate) {
   return Math.max(1, (end.getUTCFullYear() - start.getUTCFullYear()) * MONTHS_IN_YEAR + end.getUTCMonth() - start.getUTCMonth())
 }
 
+function monthlyBalanceChanges(rows, start, latest) {
+  const year = latest.date.slice(0, 4)
+  let previous = start
+
+  return MONTH_LABELS.map((label, monthIndex) => {
+    const month = `${year}-${String(monthIndex + 1).padStart(2, '0')}`
+    const monthRows = rows.filter((row) => row.date.startsWith(month))
+    const monthEnd = monthRows.at(-1)
+
+    if (!monthEnd || month > latest.date.slice(0, 7)) {
+      return { month, label, value: null, balance: null, direction: null }
+    }
+
+    const value = monthEnd.total - previous.total
+    const result = {
+      month,
+      label,
+      value: Number(value.toFixed(2)),
+      balance: Number(monthEnd.total.toFixed(2)),
+      fromDate: previous.date,
+      toDate: monthEnd.date,
+      direction: value > 0 ? 'positive' : value < 0 ? 'negative' : 'neutral',
+    }
+    previous = monthEnd
+    return result
+  })
+}
+
 export function createPortfolioSummary({ equityXml, tradesXml, optionXml, currency = 'EUR', generatedAt = new Date().toISOString() }) {
   const statement = extractTags(equityXml, 'FlexStatement')[0]
   const rows = extractTags(equityXml, 'EquitySummaryByReportDateInBase')
@@ -82,5 +111,6 @@ export function createPortfolioSummary({ equityXml, tradesXml, optionXml, curren
     currentMonthProfit: metric(latest.total - currentMonthBase.total, currentMonthBase.date, latest.date),
     previousMonthProfit: metric(currentMonthBase.total - previousMonthBase.total, previousMonthBase.date, currentMonthBase.date),
     averageMonthlyProfit: { ...metric(yearProfit / monthCount, start.date, latest.date), monthCount },
+    monthlyBalanceChanges: monthlyBalanceChanges(rows, start, latest),
   }
 }

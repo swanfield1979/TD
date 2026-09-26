@@ -30,4 +30,14 @@ test('berekent dashboardstatistieken uit dagsaldi', () => {
   assert.equal(result.previousMonthProfit.value, -50)
   assert.equal(result.averageMonthlyProfit.value, 66.67)
   assert.equal(result.sourceCounts.trades, 2)
+  assert.deepEqual(
+    result.monthlyBalanceChanges.slice(0, 4).map(({ month, value, balance }) => ({ month, value, balance })),
+    [
+      { month: '2026-01', value: 100, balance: 1100 },
+      { month: '2026-02', value: -50, balance: 1050 },
+      { month: '2026-03', value: 150, balance: 1200 },
+      { month: '2026-04', value: null, balance: null },
+    ],
+  )
+  assert.equal(result.monthlyBalanceChanges.length, 12)
 })

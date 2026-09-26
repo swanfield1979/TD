@@ -11,6 +11,7 @@ import {
   WalletRegular,
 } from '@fluentui/react-icons'
 import type { MetricDirection, PortfolioMetric, PortfolioSummary } from './types'
+import MonthlyBalanceChart from './MonthlyBalanceChart'
 
 const DATA_URL = '/data/portfolio-summary.json'
 
@@ -195,44 +196,51 @@ function App() {
         )}
 
         {!isLoading && summary && (
-          <section className="dashboard-grid" aria-label="Portfoliostatistieken">
-            <StatCard
-              label="Saldo"
-              metric={summary.balance}
+          <>
+            <section className="dashboard-grid" aria-label="Portfoliostatistieken">
+              <StatCard
+                label="Saldo"
+                metric={summary.balance}
+                currency={summary.currency}
+                context={`Netto liquidatiewaarde op ${formatDate(summary.balance.toDate)}`}
+                prominent
+                icon={<WalletRegular />}
+              />
+              <StatCard
+                label="Winst 2026"
+                metric={summary.yearProfit}
+                currency={summary.currency}
+                context={`Sinds ${formatDate(summary.yearProfit.fromDate!)}`}
+                icon={<DataTrendingRegular />}
+              />
+              <StatCard
+                label="Winst deze maand"
+                metric={summary.currentMonthProfit}
+                currency={summary.currency}
+                context={`${formatDate(summary.currentMonthProfit.fromDate!)} – ${formatDate(summary.currentMonthProfit.toDate)}`}
+                icon={<CalendarMonthRegular />}
+              />
+              <StatCard
+                label="Winst vorige maand"
+                metric={summary.previousMonthProfit}
+                currency={summary.currency}
+                context={`${formatDate(summary.previousMonthProfit.fromDate!)} – ${formatDate(summary.previousMonthProfit.toDate)}`}
+                icon={<CalendarMonthRegular />}
+              />
+              <StatCard
+                label="Gemiddeld per maand"
+                metric={summary.averageMonthlyProfit}
+                currency={summary.currency}
+                context={`Gemiddelde over ${summary.averageMonthlyProfit.monthCount} kalendermaanden`}
+                icon={<ArrowTrendingRegular />}
+              />
+            </section>
+            <MonthlyBalanceChart
+              data={summary.monthlyBalanceChanges ?? []}
               currency={summary.currency}
-              context={`Netto liquidatiewaarde op ${formatDate(summary.balance.toDate)}`}
-              prominent
-              icon={<WalletRegular />}
+              year={summary.balance.toDate.slice(0, 4)}
             />
-            <StatCard
-              label="Winst 2026"
-              metric={summary.yearProfit}
-              currency={summary.currency}
-              context={`Sinds ${formatDate(summary.yearProfit.fromDate!)}`}
-              icon={<DataTrendingRegular />}
-            />
-            <StatCard
-              label="Winst deze maand"
-              metric={summary.currentMonthProfit}
-              currency={summary.currency}
-              context={`${formatDate(summary.currentMonthProfit.fromDate!)} – ${formatDate(summary.currentMonthProfit.toDate)}`}
-              icon={<CalendarMonthRegular />}
-            />
-            <StatCard
-              label="Winst vorige maand"
-              metric={summary.previousMonthProfit}
-              currency={summary.currency}
-              context={`${formatDate(summary.previousMonthProfit.fromDate!)} – ${formatDate(summary.previousMonthProfit.toDate)}`}
-              icon={<CalendarMonthRegular />}
-            />
-            <StatCard
-              label="Gemiddeld per maand"
-              metric={summary.averageMonthlyProfit}
-              currency={summary.currency}
-              context={`Gemiddelde over ${summary.averageMonthlyProfit.monthCount} kalendermaanden`}
-              icon={<ArrowTrendingRegular />}
-            />
-          </section>
+          </>
         )}
       </main>
     </div>

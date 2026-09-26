@@ -7,6 +7,16 @@ export interface PortfolioMetric {
   direction: MetricDirection
 }
 
+export interface MonthlyBalanceChange {
+  month: string
+  label: string
+  value: number | null
+  balance: number | null
+  fromDate?: string
+  toDate?: string
+  direction: MetricDirection | null
+}
+
 export interface PortfolioSummary {
   generatedAt: string
   sourceUpdatedAt: string
@@ -23,4 +33,5 @@ export interface PortfolioSummary {
   averageMonthlyProfit: PortfolioMetric & {
     monthCount: number
   }
+  monthlyBalanceChanges: MonthlyBalanceChange[]
 }
