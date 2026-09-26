@@ -1,5 +1,11 @@
 # Versiehistorie
 
+## 0.8.0 – covered-call-dekking
+
+- De Stocks-tabel toont per aandeel hoeveel open short calls tegenover volledige pakketten van 100 aandelen staan.
+- Volledige dekking wordt groen getoond; ontbrekende, gedeeltelijke en overmatige dekking worden rood en met tekst gemarkeerd.
+- Puts, gekochte calls en opties op andere symbolen tellen niet mee als covered call.
+
 ## 0.7.0 – read-only IBKR-koppeling
 
 - Linksonder is een toegankelijke IBKR-status- en refreshbediening toegevoegd.

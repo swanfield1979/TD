@@ -676,7 +676,7 @@ button:focus-visible, a:focus-visible {
 
 .stocks-table {
   width: 100%;
-  min-width: 1000px;
+  min-width: 1120px;
   border-collapse: collapse;
   font-size: 12px;
   font-variant-numeric: tabular-nums;
@@ -708,6 +708,16 @@ button:focus-visible, a:focus-visible {
 .stocks-table__number { text-align: right !important; white-space: nowrap; }
 .stocks-table__purchase-value { color: var(--z365-text-primary); font-weight: 650; }
 .stocks-table__unavailable { color: var(--z365-text-muted); }
+.cc-coverage,
+.cc-coverage strong,
+.cc-coverage small { display: block; }
+.cc-coverage strong { font-size: 12px; }
+.cc-coverage small { margin-top: 1px; font-size: 9px; font-weight: 500; }
+.cc-coverage--complete { color: var(--z365-status-success); }
+.cc-coverage--partial,
+.cc-coverage--none,
+.cc-coverage--over { color: var(--z365-status-danger); }
+.cc-coverage--not_applicable { color: var(--z365-status-neutral); }
 .stocks-table td .metric--positive,
 .stocks-table td .metric--negative { font-weight: 650; }
 .stocks-table td .metric--positive small,

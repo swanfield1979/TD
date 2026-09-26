@@ -1,4 +1,5 @@
 import type { IbkrLiveSnapshot, PortfolioSummary } from './types'
+import { calculateCoveredCallCoverage } from '../shared/covered-call.mjs'
 
 const round = (value: number, decimals = 2) => Number(value.toFixed(decimals))
 
@@ -41,6 +42,7 @@ export function mergeLiveSnapshot(summary: PortfolioSummary, snapshot: IbkrLiveS
       currentValue: position.currentValue,
       difference: position.difference,
       differencePercentage: position.differencePercentage,
+      coveredCallCoverage: calculateCoveredCallCoverage(position, snapshot.positions),
     })),
     portfolioAllocation: {
       isEstimated: false,

@@ -34,6 +34,8 @@ test('normaliseert actuele IBKR rekening- en positiegegevens zonder rekeningnumm
     symbol: 'TEST',
     name: 'TEST',
     assetCategory: 'STK',
+    optionRight: null,
+    multiplier: null,
     currency: 'USD',
     quantity: 10,
     averagePurchasePrice: 100,

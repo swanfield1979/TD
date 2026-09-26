@@ -21,7 +21,7 @@ De eerste versie wordt gecontroleerd met:
 
 ## Resultaat 26 september 2026
 
-- `npm test`: 6 van 6 tests geslaagd, inclusief IBKR-snapshotnormalisatie.
+- `npm test`: 7 van 7 tests geslaagd, inclusief IBKR-snapshotnormalisatie en covered-call-dekking.
 - `npm run build`: geslaagd met TypeScript 7 en Vite 8.
 - XML-import: 192 dagsaldi, 637 trades en 35 optie-events verwerkt.
 - Desktopweergave: visueel gecontroleerd in de lokale browser.
@@ -38,4 +38,4 @@ De eerste versie wordt gecontroleerd met:
 - Portefeuilleverdeling: bronberekening, percentages, toegankelijk tekstalternatief, brede plaatsing naast Saldo en mobiele stapeling gecontroleerd.
 - Compactere verhoudingen: begrensde kaartbreedtes en kleinere typografie op 1920 en 768 pixels gecontroleerd, zonder horizontale overflow.
 - Semantische kleuren: positieve resultaten en opbrengsten groen; negatieve resultaten, terugkoop, commissie en negatief nettoresultaat rood.
-- Stocks-pagina: vijf open posities en FIFO-aankoopwaardes gecontroleerd; lege koersvelden, lege toestand, desktopweergave en mobiel begrensde tabelscroll getest.
+- Stocks-pagina: vijf open posities, FIFO-aankoopwaardes en CC-dekking gecontroleerd; lege koersvelden, lege toestand, desktopweergave en mobiel begrensde tabelscroll getest.

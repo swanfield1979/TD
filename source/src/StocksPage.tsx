@@ -21,6 +21,30 @@ function UnavailableValue() {
   return <span className="stocks-table__unavailable" title="Beschikbaar na koppeling met actuele positiegegevens">—</span>
 }
 
+const coverageLabels = {
+  complete: 'Volledig gedekt',
+  partial: 'Deels gedekt',
+  none: 'Niet gedekt',
+  over: 'Overgedekt',
+  not_applicable: 'Geen volledig lot',
+} as const
+
+function CoveredCallValue({ holding }: { holding: StockHolding }) {
+  const coverage = holding.coveredCallCoverage
+  if (!coverage) return <UnavailableValue />
+  const label = coverageLabels[coverage.status]
+
+  return (
+    <span
+      className={`cc-coverage cc-coverage--${coverage.status}`}
+      aria-label={`${coverage.openContracts} van ${coverage.availableContracts} covered calls; ${label.toLowerCase()}`}
+    >
+      <strong>{numberFormatter.format(coverage.openContracts)}/{numberFormatter.format(coverage.availableContracts)}</strong>
+      <small>{label}</small>
+    </span>
+  )
+}
+
 export default function StocksPage({ holdings, currency }: StocksPageProps) {
   const totalPurchaseValue = holdings.reduce((sum, holding) => sum + holding.purchaseValue, 0)
   const holdingsWithPrice = holdings.filter((holding) => holding.currentPrice !== null).length
@@ -81,11 +105,12 @@ export default function StocksPage({ holdings, currency }: StocksPageProps) {
         ) : (
           <div className="stocks-table-region" tabIndex={0} aria-label="Aandelenposities; horizontaal scrollbaar op een klein scherm">
             <table className="stocks-table">
-              <caption className="visually-hidden">Open aandelenposities met aankoop- en actuele waardes</caption>
+              <caption className="visually-hidden">Open aandelenposities met covered-call-dekking, aankoop- en actuele waardes</caption>
               <thead>
                 <tr>
                   <th scope="col">Aandeel</th>
                   <th scope="col" className="stocks-table__number">Aantal</th>
+                  <th scope="col" className="stocks-table__number" title="Open short calls ten opzichte van volledige pakketten van 100 aandelen">CC-dekking</th>
                   <th scope="col" className="stocks-table__number">Gem. aankoop</th>
                   <th scope="col" className="stocks-table__number">Huidige prijs</th>
                   <th scope="col" className="stocks-table__number">Netto kostprijs</th>
@@ -101,6 +126,7 @@ export default function StocksPage({ holdings, currency }: StocksPageProps) {
                       <small>{holding.name}</small>
                     </th>
                     <td className="stocks-table__number">{numberFormatter.format(holding.quantity)}</td>
+                    <td className="stocks-table__number"><CoveredCallValue holding={holding} /></td>
                     <td className="stocks-table__number">{formatCurrency(holding.averagePurchasePrice, currency)}</td>
                     <td className="stocks-table__number">
                       {holding.currentPrice === null ? <UnavailableValue /> : formatCurrency(holding.currentPrice, currency)}
@@ -125,6 +151,7 @@ export default function StocksPage({ holdings, currency }: StocksPageProps) {
               <tfoot>
                 <tr>
                   <th scope="row">Totaal</th>
+                  <td />
                   <td />
                   <td />
                   <td />

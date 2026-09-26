@@ -85,6 +85,8 @@ function collectSnapshot(timeoutMs = 8_000) {
         symbol: contract.symbol,
         localSymbol: contract.localSymbol,
         assetCategory: contract.secType,
+        optionRight: contract.right ? String(contract.right) : null,
+        multiplier: contract.multiplier ?? null,
         currency: contract.currency,
         position,
         marketPrice,

@@ -30,6 +30,8 @@ De lijngrafiek toont voor alle twaalf kalendermaanden het verschil tussen het la
 
 De pagina **Stocks** toont alle open aandelenposities die uit de aangeleverde Flex-trades kunnen worden gereconstrueerd. Per aandeel worden symbool, naam, aantal, gemiddelde resterende FIFO-aankoopprijs en aankoopwaarde getoond.
 
+Na een live IBKR-update toont **CC-dekking** per aandeel het aantal open short calls tegenover het aantal volledige pakketten van 100 aandelen. `3/3` betekent volledig gedekt. Gekochte calls, puts en opties op een ander symbool tellen niet mee. Minder of meer short calls dan beschikbare aandelenpakketten wordt expliciet als deels gedekt of overgedekt gemarkeerd.
+
 De huidige Flex-bestanden bevatten geen actuele marktprijzen. Daarom blijven **Huidige prijs**, **Huidige waarde** en **Verschil** leeg totdat actuele positiegegevens via een IBKR-koppeling of Open Positions-rapport beschikbaar zijn. Een oude transactieprijs wordt bewust niet als actuele koers gebruikt.
 
 ## Handelsactiviteit en optiepremie

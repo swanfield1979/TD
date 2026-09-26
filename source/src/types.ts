@@ -61,6 +61,15 @@ export interface StockHolding {
   currentValue: number | null
   difference: number | null
   differencePercentage: number | null
+  coveredCallCoverage?: CoveredCallCoverage | null
+}
+
+export type CoveredCallCoverageStatus = 'complete' | 'partial' | 'none' | 'over' | 'not_applicable'
+
+export interface CoveredCallCoverage {
+  openContracts: number
+  availableContracts: number
+  status: CoveredCallCoverageStatus
 }
 
 export type IbkrConnectionState = 'offline' | 'refreshing' | 'awaiting_mfa' | 'connected' | 'error'
@@ -74,6 +83,8 @@ export interface IbkrConnectionStatus {
 
 export interface IbkrLivePosition extends StockHolding {
   assetCategory: string
+  optionRight: string | null
+  multiplier: number | null
   currency: string
   currentPrice: number
   currentValue: number

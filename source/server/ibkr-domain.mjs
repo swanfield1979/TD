@@ -19,12 +19,17 @@ export function createLiveSnapshot({ accountValues, positions, generatedAt = new
       const currentValue = Number(position.marketValue ?? 0)
       const difference = Number(position.unrealizedPnl ?? 0)
       const costBasis = currentValue - difference
+      const multiplier = position.multiplier === null || position.multiplier === undefined
+        ? null
+        : Number(position.multiplier)
 
       return {
         conid: String(position.conid ?? ''),
         symbol: position.symbol || position.localSymbol || String(position.conid ?? ''),
         name: position.localSymbol || position.symbol || String(position.conid ?? ''),
         assetCategory: position.assetCategory || 'UNKNOWN',
+        optionRight: position.optionRight || null,
+        multiplier: Number.isFinite(multiplier) ? multiplier : null,
         currency: position.currency || currency,
         quantity: round(quantity, 4),
         averagePurchasePrice: round(averageCost, 4),
