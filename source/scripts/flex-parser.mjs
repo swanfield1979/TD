@@ -3,7 +3,7 @@ import { assignOptionStrategies } from '../shared/option-strategy.mjs'
 const MONTHS_IN_YEAR = 12
 const MONTH_LABELS = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec']
 const GOAL_GROWTH_PERCENTAGE = 30
-const GOAL_ANNUAL_CONTRIBUTION = 1200
+const GOAL_ANNUAL_CONTRIBUTION = 12000
 const GOAL_PLANNING_YEARS = 5
 
 function decodeXml(value) {
@@ -447,14 +447,37 @@ function monthlyBalanceChangesForYear(rows, year) {
   })
 }
 
+function monthlyPortfolioHistory(rows) {
+  const lastRowByMonth = new Map()
+  rows.forEach((row) => lastRowByMonth.set(row.date.slice(0, 7), row))
+
+  return [...lastRowByMonth.entries()].map(([month, row]) => ({
+    month,
+    date: row.date,
+    balance: round(row.total),
+  }))
+}
+
 function goalPlanSummary(rows, latest) {
   const currentYear = Number(latest.date.slice(0, 4))
   const baseYear = currentYear - 1
   const baseYearEnd = rows.filter((row) => row.date.startsWith(`${baseYear}-`)).at(-1)
   if (!baseYearEnd) return null
 
+  const completedStart = rows.filter((row) => row.date.startsWith(`${baseYear - 1}-`)).at(-1)
+  const completedGoal = completedStart ? {
+    year: baseYear,
+    startValue: round(completedStart.total),
+    growthValue: round(completedStart.total * (GOAL_GROWTH_PERCENTAGE / 100)),
+    contribution: GOAL_ANNUAL_CONTRIBUTION,
+    targetValue: round(completedStart.total * (1 + GOAL_GROWTH_PERCENTAGE / 100) + GOAL_ANNUAL_CONTRIBUTION),
+    resultValue: round(baseYearEnd.total),
+    resultDate: baseYearEnd.date,
+    status: 'completed',
+  } : null
+
   let startValue = baseYearEnd.total
-  const years = Array.from({ length: GOAL_PLANNING_YEARS }, (_, index) => {
+  const plannedYears = Array.from({ length: GOAL_PLANNING_YEARS }, (_, index) => {
     const year = currentYear + index
     const growthValue = startValue * (GOAL_GROWTH_PERCENTAGE / 100)
     const targetValue = startValue + growthValue + GOAL_ANNUAL_CONTRIBUTION
@@ -464,6 +487,9 @@ function goalPlanSummary(rows, latest) {
       growthValue: round(growthValue),
       contribution: GOAL_ANNUAL_CONTRIBUTION,
       targetValue: round(targetValue),
+      resultValue: index === 0 ? round(latest.total) : null,
+      resultDate: index === 0 ? latest.date : null,
+      status: index === 0 ? 'current' : 'planned',
     }
     startValue = targetValue
     return projection
@@ -475,7 +501,7 @@ function goalPlanSummary(rows, latest) {
     baseYearEndValue: round(baseYearEnd.total),
     annualGrowthPercentage: GOAL_GROWTH_PERCENTAGE,
     annualContribution: GOAL_ANNUAL_CONTRIBUTION,
-    years,
+    years: completedGoal ? [completedGoal, ...plannedYears] : plannedYears,
   }
 }
 
@@ -549,6 +575,7 @@ export function createPortfolioSummary({ equityXml, tradesXml, optionXml, curren
       rows,
       String(Number(latest.date.slice(0, 4)) - 1),
     ),
+    portfolioHistory: monthlyPortfolioHistory(rows),
     tradingActivity: tradingActivitySummary(optionTrades),
     stockHoldings,
     optionHoldings,

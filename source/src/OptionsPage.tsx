@@ -1,3 +1,4 @@
+import { MergeRegular } from '@fluentui/react-icons'
 import type { OptionHolding, OptionStrategy } from './types'
 
 interface OptionsPageProps {
@@ -16,6 +17,10 @@ const strategyLabels: Record<OptionStrategy, string> = {
   LONG_CALL: 'Long call',
   LONG_PUT: 'Long put',
   OTHER: 'Overig',
+}
+
+function isSyntheticStrategy(strategy: OptionStrategy) {
+  return strategy === 'SYNT_LONG' || strategy === 'SYNT_SHORT'
 }
 
 function formatCurrency(value: number, currency: string) {
@@ -143,13 +148,23 @@ export default function OptionsPage({ holdings, currency, asOfDate }: OptionsPag
                 {sortedHoldings.map((holding) => {
                   const daysRemaining = holding.expiry ? daysBetween(asOfDate, holding.expiry) : null
                   const expiryStatus = daysRemaining === null ? 'unknown' : daysRemaining < 0 ? 'expired' : daysRemaining <= 7 ? 'urgent' : daysRemaining <= 30 ? 'soon' : 'normal'
+                  const isSynthetic = isSyntheticStrategy(holding.strategy)
                   return (
-                    <tr key={holding.conid}>
+                    <tr key={holding.conid} className={isSynthetic ? 'options-table__row--synthetic' : undefined}>
                       <th scope="row">
                         <strong>{holding.symbol}</strong>
                         <small>{holding.name}</small>
                       </th>
-                      <td><span className={`option-strategy option-strategy--${holding.strategy.startsWith('SYNT') ? 'synthetic' : 'standard'}`}>{strategyLabels[holding.strategy] ?? 'Overig'}</span></td>
+                      <td>
+                        <span
+                          className={`option-strategy option-strategy--${isSynthetic ? 'synthetic' : 'standard'}`}
+                          title={isSynthetic ? 'Gecombineerde synthetische strategie' : undefined}
+                        >
+                          {isSynthetic && <MergeRegular aria-hidden="true" />}
+                          {strategyLabels[holding.strategy] ?? 'Overig'}
+                          {isSynthetic && <span className="visually-hidden">, gecombineerde strategie</span>}
+                        </span>
+                      </td>
                       <td>{holding.optionRight === 'C' || holding.optionRight === 'CALL' ? 'Call' : holding.optionRight === 'P' || holding.optionRight === 'PUT' ? 'Put' : '—'}</td>
                       <td className="options-table__number">
                         <span className="option-position"><strong>{numberFormatter.format(Math.abs(holding.quantity))}</strong><small>{holding.quantity < 0 ? 'short' : 'long'}</small></span>

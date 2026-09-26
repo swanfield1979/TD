@@ -1,13 +1,15 @@
 import { useMemo, useState } from 'react'
 import { ChartMultipleRegular, ClockRegular, TrophyRegular } from '@fluentui/react-icons'
-import type { ClosedTrade } from './types'
+import type { ClosedTrade, PortfolioHistoryPoint } from './types'
 
 interface StatsPageProps {
   trades: ClosedTrade[]
+  portfolioHistory: PortfolioHistoryPoint[]
   currency: string
 }
 
 const MONTHS = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec']
+const ANALYSIS_YEAR = '2026'
 
 const formatCurrency = (value: number, currency: string, showSign = false) =>
   new Intl.NumberFormat('nl-NL', {
@@ -41,7 +43,111 @@ const formatNumber = (value: number, maximumFractionDigits = 1) =>
 
 const direction = (value: number) => value > 0 ? 'positive' : value < 0 ? 'negative' : 'neutral'
 
-function MonthlyResultChart({ trades, currency, year }: StatsPageProps & { year: string }) {
+function PortfolioHistoryChart({ history, currency }: { history: PortfolioHistoryPoint[]; currency: string }) {
+  const years = useMemo(
+    () => [...new Set(history.map((point) => point.month.slice(0, 4)))].sort(),
+    [history],
+  )
+  const [selectedPeriod, setSelectedPeriod] = useState(() => years.includes(ANALYSIS_YEAR) ? ANALYSIS_YEAR : 'all')
+  const points = selectedPeriod === 'all'
+    ? history
+    : history.filter((point) => point.month.startsWith(selectedPeriod))
+
+  if (history.length === 0) {
+    return (
+      <section className="stats-panel portfolio-history" aria-labelledby="portfolio-history-title">
+        <header className="stats-panel__header">
+          <div><span><ChartMultipleRegular aria-hidden="true" /> Portefeuilleverloop</span><h2 id="portfolio-history-title">Ontwikkeling van het saldo</h2></div>
+        </header>
+        <div className="portfolio-history__empty"><strong>Nog geen saldohistorie</strong><span>Importeer Flex-saldogegevens om het verloop te tonen.</span></div>
+      </section>
+    )
+  }
+
+  const width = 1040
+  const height = 330
+  const plot = { left: 76, right: 22, top: 30, bottom: 58 }
+  const plotWidth = width - plot.left - plot.right
+  const plotHeight = height - plot.top - plot.bottom
+  const values = points.map((point) => point.balance)
+  const rawMinimum = Math.min(...values)
+  const rawMaximum = Math.max(...values)
+  const range = Math.max(rawMaximum - rawMinimum, rawMaximum * 0.08, 1)
+  const minimum = Math.max(0, rawMinimum - range * 0.12)
+  const maximum = rawMaximum + range * 0.12
+  const scaleRange = maximum - minimum
+  const pointX = (index: number) => plot.left + (points.length === 1 ? plotWidth / 2 : index / (points.length - 1) * plotWidth)
+  const pointY = (balance: number) => plot.top + (maximum - balance) / scaleRange * plotHeight
+  const path = points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${pointX(index).toFixed(2)} ${pointY(point.balance).toFixed(2)}`).join(' ')
+  const first = points[0]
+  const last = points.at(-1)!
+  const change = last.balance - first.balance
+  const changePercentage = first.balance ? change / first.balance * 100 : 0
+  const labelEvery = selectedPeriod === 'all' ? 3 : 1
+  const monthLabel = (month: string) => MONTHS[Number(month.slice(5, 7)) - 1]
+  const formatDate = (date: string) => new Intl.DateTimeFormat('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(`${date}T12:00:00Z`))
+
+  return (
+    <section className="stats-panel portfolio-history" aria-labelledby="portfolio-history-title">
+      <header className="portfolio-history__header">
+        <div>
+          <span><ChartMultipleRegular aria-hidden="true" /> Portefeuilleverloop</span>
+          <h2 id="portfolio-history-title">Ontwikkeling van het saldo</h2>
+          <small>Maandeindsaldi uit de geïmporteerde Flex-rapporten</small>
+        </div>
+        <div className="portfolio-history__periods" role="group" aria-label="Kies een periode voor het portefeuilleverloop">
+          {years.map((year) => (
+            <button key={year} type="button" aria-pressed={selectedPeriod === year} className={selectedPeriod === year ? 'portfolio-history__period--active' : undefined} onClick={() => setSelectedPeriod(year)}>{year}</button>
+          ))}
+          <button type="button" aria-pressed={selectedPeriod === 'all'} className={selectedPeriod === 'all' ? 'portfolio-history__period--active' : undefined} onClick={() => setSelectedPeriod('all')}>Alles</button>
+        </div>
+      </header>
+
+      <dl className="portfolio-history__summary">
+        <div><dt>Start</dt><dd>{formatCurrency(first.balance, currency)}</dd><small>{formatDate(first.date)}</small></div>
+        <div><dt>Eindstand</dt><dd>{formatCurrency(last.balance, currency)}</dd><small>{formatDate(last.date)}</small></div>
+        <div><dt>Verandering</dt><dd className={`metric--${direction(change)}`}>{formatCurrency(change, currency, true)}</dd><small className={`metric--${direction(change)}`}>{formatPercentage(changePercentage)}</small></div>
+      </dl>
+
+      <div className="portfolio-history__scroll" tabIndex={0} aria-label="Portefeuilleverloop; horizontaal scrollbaar op een klein scherm">
+        <svg className="portfolio-history__chart" viewBox={`0 0 ${width} ${height}`} role="img" aria-labelledby="portfolio-history-svg-title portfolio-history-svg-desc">
+          <title id="portfolio-history-svg-title">Portefeuilleverloop {selectedPeriod === 'all' ? 'van alle jaren' : selectedPeriod}</title>
+          <desc id="portfolio-history-svg-desc">Het saldo liep van {formatCurrency(first.balance, currency)} op {formatDate(first.date)} naar {formatCurrency(last.balance, currency)} op {formatDate(last.date)}.</desc>
+          {[0, 0.25, 0.5, 0.75, 1].map((ratio) => {
+            const y = plot.top + ratio * plotHeight
+            const value = maximum - ratio * scaleRange
+            return (
+              <g key={ratio}>
+                <line className="portfolio-history__gridline" x1={plot.left} x2={width - plot.right} y1={y} y2={y} />
+                <text className="portfolio-history__axis" x={plot.left - 12} y={y + 4} textAnchor="end">{formatCompactCurrency(value, currency)}</text>
+              </g>
+            )
+          })}
+          <path className="portfolio-history__line" d={path} />
+          {points.map((point, index) => (
+            <g key={point.month}>
+              <circle className="portfolio-history__point" cx={pointX(index)} cy={pointY(point.balance)} r="4">
+                <title>{formatDate(point.date)}: {formatCurrency(point.balance, currency)}</title>
+              </circle>
+              {(index % labelEvery === 0 || index === points.length - 1) && (
+                <text className="portfolio-history__month" x={pointX(index)} y={height - 28} textAnchor="middle">
+                  {monthLabel(point.month)}
+                  {(index === 0 || point.month.endsWith('-01')) && <tspan x={pointX(index)} dy="13">{point.month.slice(0, 4)}</tspan>}
+                </text>
+              )}
+            </g>
+          ))}
+        </svg>
+      </div>
+      <footer className="portfolio-history__footer">
+        <span><i aria-hidden="true" /> Portefeuille</span>
+        <small>Benchmarkvergelijking volgt zodra een betrouwbare koersbron is gekoppeld.</small>
+      </footer>
+    </section>
+  )
+}
+
+function MonthlyResultChart({ trades, currency, year }: Pick<StatsPageProps, 'trades' | 'currency'> & { year: string }) {
   const monthly = MONTHS.map((label, monthIndex) => ({
     label,
     value: trades
@@ -217,15 +323,10 @@ function DurationDistribution({ trades }: { trades: ClosedTrade[] }) {
   )
 }
 
-export default function StatsPage({ trades, currency }: StatsPageProps) {
-  const years = useMemo(
-    () => [...new Set(trades.map((trade) => trade.closedAt.slice(0, 4)))].sort((left, right) => right.localeCompare(left)),
-    [trades],
-  )
-  const [selectedYear, setSelectedYear] = useState(() => years[0] ?? '')
+export default function StatsPage({ trades, portfolioHistory, currency }: StatsPageProps) {
   const filteredTrades = useMemo(
-    () => trades.filter((trade) => trade.closedAt.startsWith(selectedYear)),
-    [selectedYear, trades],
+    () => trades.filter((trade) => trade.closedAt.startsWith(ANALYSIS_YEAR)),
+    [trades],
   )
 
   const winningTrades = filteredTrades.filter((trade) => trade.profit > 0)
@@ -240,27 +341,15 @@ export default function StatsPage({ trades, currency }: StatsPageProps) {
   const profitFactor = grossLoss ? grossProfit / grossLoss : null
   const averageProfit = filteredTrades.length ? totalProfit / filteredTrades.length : 0
 
-  if (years.length === 0) {
-    return (
-      <section className="state-panel" role="status">
-        <div><h2>Statistieken nog niet beschikbaar</h2><p>Importeer eerst afgesloten trades om deze analyse te vullen.</p></div>
-      </section>
-    )
-  }
-
   return (
     <div className="stats-page">
       <section className="trades-year-filter" aria-labelledby="stats-year-filter-label">
-        <div><span id="stats-year-filter-label">Analysejaar</span><small>Alle statistieken en grafieken volgen deze selectie.</small></div>
-        <div className="trades-year-filter__options" role="group" aria-label="Kies een analysejaar">
-          {years.map((year) => (
-            <button key={year} type="button" className={year === selectedYear ? 'trades-year-filter__active' : undefined} aria-pressed={year === selectedYear} onClick={() => setSelectedYear(year)}>{year}</button>
-          ))}
-        </div>
+        <div><span id="stats-year-filter-label">Analysejaar</span><small>Alle kerncijfers en handelsgrafieken gebruiken uitsluitend 2026.</small></div>
+        <strong className="stats-analysis-year" aria-label="Analysejaar 2026">2026</strong>
       </section>
 
-      <section className="stats-kpi-grid" aria-label={`Kernstatistieken ${selectedYear}`}>
-        <article><span>Afgesloten trades</span><strong>{filteredTrades.length}</strong><small>{selectedYear}</small></article>
+      <section className="stats-kpi-grid" aria-label={`Kernstatistieken ${ANALYSIS_YEAR}`}>
+        <article><span>Afgesloten trades</span><strong>{filteredTrades.length}</strong><small>{ANALYSIS_YEAR}</small></article>
         <article><span>Winratio</span><strong className="metric--positive">{formatPercentage(filteredTrades.length ? winningTrades.length / filteredTrades.length * 100 : 0)}</strong><small>{winningTrades.length} winsttrades</small></article>
         <article><span>Nettoresultaat</span><strong className={`metric--${direction(totalProfit)}`}>{formatCurrency(totalProfit, currency, true)}</strong><small>Gerealiseerd</small></article>
         <article><span>Gemiddeld per trade</span><strong className={`metric--${direction(averageProfit)}`}>{formatCurrency(averageProfit, currency, true)}</strong><small>Over alle sluitingen</small></article>
@@ -268,8 +357,10 @@ export default function StatsPage({ trades, currency }: StatsPageProps) {
         <article><span>Gemiddelde looptijd</span><strong>{formatNumber(averageDays)} dagen</strong><small>{measuredDurations.length} gemeten trades</small></article>
       </section>
 
+      <PortfolioHistoryChart history={portfolioHistory} currency={currency} />
+
       <div className="stats-grid stats-grid--primary">
-        <MonthlyResultChart trades={filteredTrades} currency={currency} year={selectedYear} />
+        <MonthlyResultChart trades={filteredTrades} currency={currency} year={ANALYSIS_YEAR} />
         <OutcomeChart trades={filteredTrades} />
       </div>
       <div className="stats-grid stats-grid--secondary">

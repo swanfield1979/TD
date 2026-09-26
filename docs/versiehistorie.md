@@ -1,5 +1,20 @@
 # Versiehistorie
 
+## 0.17.0 – meerjarig portefeuilleverloop
+
+- Stats toont het werkelijke portefeuillesaldo per maandeinde over alle beschikbare Flex-jaren.
+- Met 2024, 2025, 2026 en Alles kan de grafiek onafhankelijk van de trade-analyse worden gefilterd.
+- De kerncijfers en alle handelsgrafieken blijven vast gebaseerd op 2026; ook het portefeuilleverloop opent standaard op 2026.
+- Beginwaarde, eindwaarde, dollarverschil en procentuele verandering geven directe context bij de lijn.
+- Benchmarklijnen worden pas geactiveerd wanneer een betrouwbare koersbron beschikbaar is; er worden geen voorbeeldgegevens als echte prestaties getoond.
+
+## 0.16.0 – historisch doelresultaat 2025
+
+- Goals toont 2025 als afgesloten jaar met het werkelijke startsaldo uit 2024, het berekende doel en het gerealiseerde resultaat.
+- De jaarlijkse geplande inleg is gecorrigeerd naar `$ 12.000` en wordt consequent toegepast op 2025, 2026 en de meerjarenplanning.
+- Afgesloten, actuele en toekomstige jaren zijn visueel en semantisch van elkaar onderscheiden.
+- Gecombineerde synthetische optielegs zijn op de Options-pagina herkenbaar aan een samenvoegicoon, strategie-accent en gekoppelde rijkleur.
+
 ## 0.15.0 – statistiekenpagina
 
 - Stats is als menuoptie tussen Goals en Trades toegevoegd.

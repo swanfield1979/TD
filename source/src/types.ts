@@ -17,6 +17,12 @@ export interface MonthlyBalanceChange {
   direction: MetricDirection | null
 }
 
+export interface PortfolioHistoryPoint {
+  month: string
+  date: string
+  balance: number
+}
+
 export interface PremiumPeriod {
   month: string
   received: number
@@ -91,6 +97,9 @@ export interface GoalYear {
   growthValue: number
   contribution: number
   targetValue: number
+  resultValue: number | null
+  resultDate: string | null
+  status: 'completed' | 'current' | 'planned'
 }
 
 export interface GoalPlan {
@@ -183,6 +192,7 @@ export interface PortfolioSummary {
   }
   monthlyBalanceChanges: MonthlyBalanceChange[]
   previousYearMonthlyBalanceChanges: MonthlyBalanceChange[]
+  portfolioHistory: PortfolioHistoryPoint[]
   tradingActivity: TradingActivitySummary
   portfolioAllocation: PortfolioAllocation
   stockHoldings: StockHolding[]

@@ -43,7 +43,8 @@ export default function GoalsPage({ goalPlan, balance, currency }: GoalsPageProp
     )
   }
 
-  const currentGoal = goalPlan.years[0]
+  const currentGoal = goalPlan.years.find((yearGoal) => yearGoal.status === 'current')
+  if (!currentGoal) return null
   const targetIncrease = currentGoal.targetValue - currentGoal.startValue
   const achievedIncrease = balance.value - currentGoal.startValue
   const progress = targetIncrease > 0 ? (achievedIncrease / targetIncrease) * 100 : 0
@@ -112,8 +113,8 @@ export default function GoalsPage({ goalPlan, balance, currency }: GoalsPageProp
       <section className="goal-plan" aria-labelledby="goal-plan-title">
         <header>
           <div>
-            <h2 id="goal-plan-title">Meerjarenplanning</h2>
-            <p>Ieder gepland jaar groeit met {percentage(goalPlan.annualGrowthPercentage)}% en {formatCurrency(goalPlan.annualContribution, currency)} inleg.</p>
+            <h2 id="goal-plan-title">Jaarresultaten en planning</h2>
+            <p>Ieder jaar gebruikt {percentage(goalPlan.annualGrowthPercentage)}% rendement en {formatCurrency(goalPlan.annualContribution, currency)} inleg als doel.</p>
           </div>
           <span>Planning</span>
         </header>
@@ -121,25 +122,28 @@ export default function GoalsPage({ goalPlan, balance, currency }: GoalsPageProp
           <table>
             <thead><tr><th scope="col">Jaar</th><th scope="col">Start</th><th scope="col">Rendement</th><th scope="col">Inleg</th><th scope="col">Doel</th><th scope="col">Resultaat</th><th scope="col">Verschil</th></tr></thead>
             <tbody>
-              {goalPlan.years.map((yearGoal, index) => {
-                const isCurrent = index === 0
-                const difference = balance.value - yearGoal.targetValue
+              {goalPlan.years.map((yearGoal) => {
+                const isCurrent = yearGoal.status === 'current'
+                const isCompleted = yearGoal.status === 'completed'
+                const resultValue = isCurrent ? balance.value : yearGoal.resultValue
+                const resultDate = isCurrent ? balance.toDate : yearGoal.resultDate
+                const difference = resultValue === null ? null : resultValue - yearGoal.targetValue
                 return (
-                  <tr key={yearGoal.year} className={isCurrent ? 'goal-plan__current' : undefined}>
-                    <th scope="row">{yearGoal.year}{isCurrent && <small>Huidig jaar</small>}</th>
+                  <tr key={yearGoal.year} className={isCurrent ? 'goal-plan__current' : isCompleted ? 'goal-plan__completed' : undefined}>
+                    <th scope="row">{yearGoal.year}{isCurrent && <small>Huidig jaar</small>}{isCompleted && <small>Afgesloten jaar</small>}</th>
                     <td>{formatCurrency(yearGoal.startValue, currency)}</td>
                     <td>{formatCurrency(yearGoal.growthValue, currency)}<small>{percentage(goalPlan.annualGrowthPercentage)}%</small></td>
                     <td>{formatCurrency(yearGoal.contribution, currency)}</td>
                     <td><strong>{formatCurrency(yearGoal.targetValue, currency)}</strong></td>
-                    <td>{isCurrent ? <>{formatCurrency(balance.value, currency)}<small>t/m {formatDate(balance.toDate)}</small></> : <span className="goal-plan__pending">—</span>}</td>
-                    <td className={isCurrent ? `metric--${difference > 0 ? 'positive' : difference < 0 ? 'negative' : 'neutral'}` : undefined}>{isCurrent ? formatCurrency(difference, currency, true) : <span className="goal-plan__pending">—</span>}</td>
+                    <td>{resultValue !== null && resultDate ? <>{formatCurrency(resultValue, currency)}<small>{isCurrent ? 't/m ' : 'eindstand '}{formatDate(resultDate)}</small></> : <span className="goal-plan__pending">—</span>}</td>
+                    <td className={difference === null ? undefined : `metric--${difference > 0 ? 'positive' : difference < 0 ? 'negative' : 'neutral'}`}>{difference === null ? <span className="goal-plan__pending">—</span> : formatCurrency(difference, currency, true)}</td>
                   </tr>
                 )
               })}
             </tbody>
           </table>
         </div>
-        <p className="goal-plan__note">Toekomstige startsaldi gebruiken het geplande doel van het voorgaande jaar. Na een echte jaarafsluiting wordt het startpunt automatisch vervangen door de werkelijke eindstand.</p>
+        <p className="goal-plan__note">Afgesloten jaren gebruiken hun werkelijke eindstand. Toekomstige startsaldi gebruiken het geplande doel van het voorgaande jaar totdat een nieuwe jaarafsluiting beschikbaar is.</p>
       </section>
     </div>
   )

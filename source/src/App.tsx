@@ -384,7 +384,11 @@ function App() {
         )}
 
         {!isLoading && summary && currentPage === 'stats' && (
-          <StatsPage trades={summary.closedTrades ?? []} currency={summary.premiumCurrency ?? summary.currency} />
+          <StatsPage
+            trades={summary.closedTrades ?? []}
+            portfolioHistory={summary.portfolioHistory ?? []}
+            currency={summary.currency}
+          />
         )}
       </main>
     </div>

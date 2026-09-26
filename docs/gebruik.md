@@ -50,15 +50,17 @@ Na **Vernieuwen** vult IBKR de huidige optieprijs, marktwaarde en het ongerealis
 
 ## Goals
 
-De pagina **Goals** gebruikt de laatste netto liquidatiewaarde van 2025 als startpunt voor het jaardoel van 2026. De vaste formule is:
+De pagina **Goals** toont afgesloten jaarresultaten en gebruikt de laatste netto liquidatiewaarde van het voorgaande jaar als startpunt voor het actuele jaardoel. De vaste formule is:
 
-`jaardoel = eindstand vorig jaar + 30% rendement + $ 1.200 jaarlijkse inleg`
+`jaardoel = eindstand vorig jaar + 30% rendement + $ 12.000 jaarlijkse inleg`
 
-Met de huidige brondata is de eindstand van 2025 `$ 82.465,00`. Het rendementsdoel is daarom `$ 24.739,50` en het jaardoel voor 2026 `$ 108.404,50`.
+Voor 2025 is het startsaldo op basis van de jaarafsluiting van 2024 `$ 35.772,47`. Met `$ 10.731,74` rendementsdoel en `$ 12.000,00` inleg komt het doel op `$ 58.504,21`. De werkelijke eindstand van 2025 is `$ 82.465,00`, oftewel `$ 23.960,79` boven doel.
+
+Voor 2026 is de eindstand van 2025 `$ 82.465,00` het startsaldo. Het rendementsdoel is `$ 24.739,50` en het jaardoel voor 2026 `$ 119.204,50`.
 
 De voortgangsbalk toont welk deel van de benodigde totale groei al is gerealiseerd. **Voor/achter op schema** vergelijkt het actuele saldo met een lineair doelpad vanaf 1 januari tot en met 31 december. **Nodig per resterende maand** verdeelt het bedrag tot het jaardoel over de nog volledige kalendermaanden.
 
-De meerjarenplanning projecteert vijf jaar vooruit met dezelfde 30% en `$ 1.200` inleg. Voor toekomstige jaren wordt het geplande doel van het voorgaande jaar als voorlopig startsaldo gebruikt. Zodra een nieuw kalenderjaar in de Flex-data is afgesloten, gebruikt de import automatisch die werkelijke eindstand.
+De meerjarenplanning projecteert vijf jaar vooruit met dezelfde 30% en `$ 12.000` inleg. Voor toekomstige jaren wordt het geplande doel van het voorgaande jaar als voorlopig startsaldo gebruikt. Zodra een nieuw kalenderjaar in de Flex-data is afgesloten, gebruikt de import automatisch die werkelijke eindstand en verschijnt het jaar als afgesloten resultaat.
 
 ## Handelsactiviteit en optiepremie
 
@@ -87,18 +89,21 @@ Van trades die vóór het beschikbare Flex-bereik zijn geopend, zijn het gereali
 
 ## Stats
 
-De pagina **Stats** staat tussen Goals en Trades. Met **Analysejaar** wissel je tussen 2025 en 2026; alle cijfers en grafieken volgen direct dezelfde selectie.
+De pagina **Stats** staat tussen Goals en Trades. Alle kerncijfers en handelsgrafieken zijn vast gebaseerd op afgesloten trades uit 2026. Het analysejaar staat daarom zichtbaar als **2026** en is geen wisselbaar filter.
 
 De zes kerncijfers tonen het aantal afgesloten trades, de winratio, het gerealiseerde nettoresultaat, het gemiddelde resultaat per trade, de profit factor en de gemiddelde looptijd. De profit factor is de totale brutowinst gedeeld door het absolute brutoverlies.
 
 De grafieken tonen:
 
+- het portefeuillesaldo per maandeinde, met een afzonderlijke keuze voor 2024, 2025, 2026 of alle beschikbare jaren;
 - gerealiseerde winst of verlies per sluitingsmaand;
 - het aantal winst-, verlies- en neutrale trades;
 - de acht onderliggende waarden met de grootste absolute resultaatimpact;
 - de verdeling van volledig gemeten trades over vijf looptijdcategorieën.
 
-Alle resultaten zijn gebaseerd op de afsluitdatum en nettocashflow van de gesloten optiecycli. Hierdoor sluiten de Stats-jaarkeuze en de Trades-jaarkeuze inhoudelijk op elkaar aan.
+Het portefeuilleverloop gebruikt uitsluitend werkelijke maandeindsaldi uit de Flex-rapporten en toont beginwaarde, eindwaarde en verandering. Deze historische context heeft een eigen periodekeuze voor 2024, 2025, 2026 of alle jaren, maar verandert de vaste 2026-handelsstatistieken niet. De grafiek opent standaard op 2026. Een benchmarkvergelijking wordt pas toegevoegd zodra daarvoor een betrouwbare koersbron is gekoppeld.
+
+Alle traderesultaten zijn gebaseerd op de afsluitdatum en nettocashflow van de gesloten optiecycli. Hierdoor sluiten de Stats-jaarkeuze en de Trades-jaarkeuze inhoudelijk op elkaar aan.
 
 ## Data verversen
 
