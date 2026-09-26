@@ -87,8 +87,8 @@ export default function StocksPage({ holdings, currency }: StocksPageProps) {
                   <th scope="col">Aandeel</th>
                   <th scope="col" className="stocks-table__number">Aantal</th>
                   <th scope="col" className="stocks-table__number">Gem. aankoop</th>
-                  <th scope="col" className="stocks-table__number">Netto kostprijs</th>
                   <th scope="col" className="stocks-table__number">Huidige prijs</th>
+                  <th scope="col" className="stocks-table__number">Netto kostprijs</th>
                   <th scope="col" className="stocks-table__number">Netto positiewaarde</th>
                   <th scope="col" className="stocks-table__number">Winst/verlies</th>
                 </tr>
@@ -102,10 +102,10 @@ export default function StocksPage({ holdings, currency }: StocksPageProps) {
                     </th>
                     <td className="stocks-table__number">{numberFormatter.format(holding.quantity)}</td>
                     <td className="stocks-table__number">{formatCurrency(holding.averagePurchasePrice, currency)}</td>
-                    <td className="stocks-table__number stocks-table__purchase-value">{formatCurrency(holding.purchaseValue, currency)}</td>
                     <td className="stocks-table__number">
                       {holding.currentPrice === null ? <UnavailableValue /> : formatCurrency(holding.currentPrice, currency)}
                     </td>
+                    <td className="stocks-table__number stocks-table__purchase-value">{formatCurrency(holding.purchaseValue, currency)}</td>
                     <td className="stocks-table__number">
                       {holding.currentValue === null ? <UnavailableValue /> : formatCurrency(holding.currentValue, currency)}
                     </td>
@@ -127,8 +127,8 @@ export default function StocksPage({ holdings, currency }: StocksPageProps) {
                   <th scope="row">Totaal</th>
                   <td />
                   <td />
-                  <td className="stocks-table__number">{formatCurrency(totalPurchaseValue, currency)}</td>
                   <td />
+                  <td className="stocks-table__number">{formatCurrency(totalPurchaseValue, currency)}</td>
                   <td className="stocks-table__number">{totalCurrentValue === null ? <UnavailableValue /> : formatCurrency(totalCurrentValue, currency)}</td>
                   <td className="stocks-table__number">
                     {totalDifference === null ? <UnavailableValue /> : (
