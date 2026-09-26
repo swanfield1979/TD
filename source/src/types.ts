@@ -7,6 +7,12 @@ export interface PortfolioMetric {
   direction: MetricDirection
 }
 
+export interface MonthlyTradingResult extends PortfolioMetric {
+  premium: number
+  stockSales: number
+  syntheticClosures: number
+}
+
 export interface MonthlyBalanceChange {
   month: string
   label: string
@@ -53,6 +59,9 @@ export interface PortfolioAllocationCategory {
 
 export interface PortfolioAllocation {
   isEstimated: boolean
+  reservedCash: number
+  freeToSpend: number
+  unpricedContractCount: number
   categories: PortfolioAllocationCategory[]
 }
 
@@ -185,8 +194,8 @@ export interface PortfolioSummary {
   balance: PortfolioMetric
   dailyProfit: PortfolioMetric
   yearProfit: PortfolioMetric
-  currentMonthProfit: PortfolioMetric
-  previousMonthProfit: PortfolioMetric
+  currentMonthProfit: MonthlyTradingResult
+  previousMonthProfit: MonthlyTradingResult
   averageMonthlyProfit: PortfolioMetric & {
     monthCount: number
   }

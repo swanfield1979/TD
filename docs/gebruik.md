@@ -8,14 +8,16 @@ Na verbinding toont de bediening **IBKR verbonden**. Met **Vernieuwen** worden d
 
 Wanneer de koppeling niet beschikbaar is, blijven de laatst geïmporteerde Flex-gegevens zichtbaar. Er worden via deze koppeling geen orders geplaatst.
 
-Het dashboard toont vijf bedragen uit de lokale `flex_net_liq_into_db*.xml`-bronnen:
+Het dashboard combineert saldoreeksen en gerealiseerde transactieresultaten uit de lokale Flex-bronnen:
 
 - **Saldo:** het laatste beschikbare totaal van `EquitySummaryByReportDateInBase`.
 - **Dagelijkse W&V:** het verschil tussen de twee laatste beschikbare handelsdagsaldi, zowel in dollars als als percentage van het saldo van de vorige handelsdag.
 - **Nettoresultaat 2026:** laatste netto liquidatiewaarde minus de startwaarde van 2026. Waar aanwezig wordt 31 december 2025 als nulmeting gebruikt.
-- **Nettoresultaat deze maand:** laatste netto liquidatiewaarde minus de laatste beschikbare waarde vóór de eerste dag van de huidige rapportmaand.
-- **Nettoresultaat vorige maand:** netto liquidatiewaarde aan het einde van de vorige maand minus die van de maand daarvoor.
+- **Nettoresultaat deze maand:** netto optiepremie plus gerealiseerde winst/verlies uit aandelenverkopen en gesloten synthetische posities in de huidige rapportmaand.
+- **Nettoresultaat vorige maand:** dezelfde gerealiseerde berekening voor de voorgaande kalendermaand.
 - **Gemiddeld per maand:** winst 2026 gedeeld door het aantal verstreken kalendermaanden, inclusief de lopende maand.
+
+Bij een gesloten synthetic zit het resultaat van de korte optieleg al in netto premie. Daarom telt de aanvullende component **SYNT** uitsluitend het gerealiseerde resultaat van de lange leg. Aandelenverkopen gebruiken FIFO-winst/verlies inclusief commissie. Onder iedere maandkaart staat de uitsplitsing `premie · aandelen · SYNT`, zodat de optelling controleerbaar blijft.
 
 ## Portefeuilleverdeling
 
@@ -48,6 +50,10 @@ Een long call en short put met dezelfde onderliggende waarde, strike en expirati
 
 Na **Vernieuwen** vult IBKR de huidige optieprijs, marktwaarde en het ongerealiseerde winst/verlies in. Zolang geen actuele snapshot beschikbaar is, blijven deze velden `—`; de Flex-openingspremie wordt niet als actuele prijs gebruikt.
 
+**Gereserveerd voor CSP** telt voor iedere open short put het volledige bedrag voor eventuele assignment: `strike × 100 × aantal contracten`. De short put binnen een **SYNT long** telt daarbij volledig mee. Calls en gekochte puts reserveren geen cash. **Vrij te besteden** is `netto saldo − aandelenwaarde − CSP-reservering`.
+
+Op het Dashboard wordt de CSP-reservering bij **Opties** opgeteld en tegelijk uit **Geld / overig** gehaald. Daardoor blijft het netto saldo ongewijzigd, maar is zichtbaar welk geld niet meer vrij beschikbaar is.
+
 ## Goals
 
 De pagina **Goals** toont afgesloten jaarresultaten en gebruikt de laatste netto liquidatiewaarde van het voorgaande jaar als startpunt voor het actuele jaardoel. De vaste formule is:
@@ -64,7 +70,7 @@ De meerjarenplanning projecteert vijf jaar vooruit met dezelfde 30% en `$ 12.000
 
 ## Handelsactiviteit en optiepremie
 
-- **Totaal trades:** afgeronde en nog open optiecycli, gegroepeerd per IBKR-optiecontract. Een cyclus begint bij de eerste opening en eindigt wanneer de positie weer nul is. Contracten die vóór de rapportperiode zijn geopend maar binnen de periode sluiten, tellen als gesloten trade.
+- **Totaal trades:** op het Dashboard uitsluitend de in het actuele kalenderjaar afgesloten optiecycli plus alle momenteel open optieposities. Voor 2026 zijn dit 171 gesloten en 10 open, samen 181. Een cyclus begint bij de eerste opening en eindigt wanneer de positie weer nul is; een trade die eerder opende maar in 2026 sloot, telt correct mee in 2026.
 - **Premie behouden:** netto optiepremie gedeeld door alle ontvangen brutopremie. Netto is ontvangen premie minus terugkoopkosten en commissies.
 - **Gemiddeld aangehouden:** gemiddelde kalenderduur van gesloten optiecycli waarvan zowel de openings- als sluitingsdatum in het rapport staat. Het getoonde bereik gebruikt dezelfde gemeten trades.
 - **Netto premie per maand:** ontvangen brutopremie minus terugkoop en commissie. De drie onderdelen blijven afzonderlijk onder het nettobedrag zichtbaar.
@@ -89,7 +95,7 @@ Van trades die vóór het beschikbare Flex-bereik zijn geopend, zijn het gereali
 
 ## Stats
 
-De pagina **Stats** staat tussen Goals en Trades. Alle kerncijfers en handelsgrafieken zijn vast gebaseerd op afgesloten trades uit 2026. Het analysejaar staat daarom zichtbaar als **2026** en is geen wisselbaar filter.
+De pagina **Stats** staat tussen Goals en Trades. Met **Analysejaar** wissel je tussen 2024, 2025 en 2026; alle kerncijfers en handelsgrafieken volgen die selectie. Bij het openen staat de analyse standaard op **2026**.
 
 De zes kerncijfers tonen het aantal afgesloten trades, de winratio, het gerealiseerde nettoresultaat, het gemiddelde resultaat per trade, de profit factor en de gemiddelde looptijd. De profit factor is de totale brutowinst gedeeld door het absolute brutoverlies.
 
@@ -101,7 +107,7 @@ De grafieken tonen:
 - de acht onderliggende waarden met de grootste absolute resultaatimpact;
 - de verdeling van volledig gemeten trades over vijf looptijdcategorieën.
 
-Het portefeuilleverloop gebruikt uitsluitend werkelijke maandeindsaldi uit de Flex-rapporten en toont beginwaarde, eindwaarde en verandering. Deze historische context heeft een eigen periodekeuze voor 2024, 2025, 2026 of alle jaren, maar verandert de vaste 2026-handelsstatistieken niet. De grafiek opent standaard op 2026. Een benchmarkvergelijking wordt pas toegevoegd zodra daarvoor een betrouwbare koersbron is gekoppeld.
+Het portefeuilleverloop gebruikt uitsluitend werkelijke maandeindsaldi uit de Flex-rapporten en toont beginwaarde, eindwaarde en verandering. Deze historische context heeft een eigen periodekeuze voor 2024, 2025, 2026 of alle jaren en staat los van het gekozen analysejaar voor trades. De grafiek opent standaard op 2026. Een benchmarkvergelijking wordt pas toegevoegd zodra daarvoor een betrouwbare koersbron is gekoppeld.
 
 Alle traderesultaten zijn gebaseerd op de afsluitdatum en nettocashflow van de gesloten optiecycli. Hierdoor sluiten de Stats-jaarkeuze en de Trades-jaarkeuze inhoudelijk op elkaar aan.
 

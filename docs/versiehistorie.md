@@ -1,5 +1,24 @@
 # Versiehistorie
 
+## 0.19.0 – cashreservering voor CSP
+
+- Iedere open short put reserveert `strike × 100 × aantal contracten`, inclusief de short-putleg van een synthetische positie.
+- Options toont het totaal gereserveerde bedrag en het vrij te besteden bedrag volgens `saldo − aandelen − CSP-reservering`.
+- De dashboardcategorie Opties omvat voortaan zowel de actuele optiewaarde als de CSP-reservering; hetzelfde bedrag wordt uit Geld / overig gehaald.
+- Ontbrekende strikes worden waar mogelijk veilig uit de compacte IBKR-contractnaam afgeleid en anders zichtbaar als onvolledige reservering gemeld.
+
+## 0.18.0 – gerealiseerd maandresultaat
+
+- Nettoresultaat deze en vorige maand combineren netto optiepremie met gerealiseerde aandelenverkopen en gesloten synthetische posities.
+- De korte synthetische leg blijft onderdeel van netto premie; uitsluitend de lange leg wordt aanvullend geteld om dubbeltelling te voorkomen.
+- Beide kaarten tonen een controleerbare uitsplitsing in premie, aandelen en SYNT.
+
+## 0.17.1 – consistente jaarscope
+
+- Het Dashboard gebruikt uitsluitend in 2026 afgesloten trades voor de handels- en premiestatistieken en telt daar de huidige open posities bij op.
+- Totaal trades op het Dashboard is daardoor weer 181: 171 gesloten in 2026 en 10 momenteel open.
+- Stats heeft een onafhankelijke jaarkeuze voor 2024, 2025 en 2026 en opent standaard op 2026.
+
 ## 0.17.0 – meerjarig portefeuilleverloop
 
 - Stats toont het werkelijke portefeuillesaldo per maandeinde over alle beschikbare Flex-jaren.

@@ -324,9 +324,14 @@ function DurationDistribution({ trades }: { trades: ClosedTrade[] }) {
 }
 
 export default function StatsPage({ trades, portfolioHistory, currency }: StatsPageProps) {
-  const filteredTrades = useMemo(
-    () => trades.filter((trade) => trade.closedAt.startsWith(ANALYSIS_YEAR)),
+  const years = useMemo(
+    () => [...new Set(trades.map((trade) => trade.closedAt.slice(0, 4)))].sort((left, right) => right.localeCompare(left)),
     [trades],
+  )
+  const [selectedYear, setSelectedYear] = useState(() => years.includes(ANALYSIS_YEAR) ? ANALYSIS_YEAR : years[0] ?? '')
+  const filteredTrades = useMemo(
+    () => trades.filter((trade) => trade.closedAt.startsWith(selectedYear)),
+    [selectedYear, trades],
   )
 
   const winningTrades = filteredTrades.filter((trade) => trade.profit > 0)
@@ -344,12 +349,16 @@ export default function StatsPage({ trades, portfolioHistory, currency }: StatsP
   return (
     <div className="stats-page">
       <section className="trades-year-filter" aria-labelledby="stats-year-filter-label">
-        <div><span id="stats-year-filter-label">Analysejaar</span><small>Alle kerncijfers en handelsgrafieken gebruiken uitsluitend 2026.</small></div>
-        <strong className="stats-analysis-year" aria-label="Analysejaar 2026">2026</strong>
+        <div><span id="stats-year-filter-label">Analysejaar</span><small>Alle kerncijfers en handelsgrafieken volgen deze selectie.</small></div>
+        <div className="trades-year-filter__options" role="group" aria-label="Kies een analysejaar">
+          {years.map((year) => (
+            <button key={year} type="button" className={year === selectedYear ? 'trades-year-filter__active' : undefined} aria-pressed={year === selectedYear} onClick={() => setSelectedYear(year)}>{year}</button>
+          ))}
+        </div>
       </section>
 
-      <section className="stats-kpi-grid" aria-label={`Kernstatistieken ${ANALYSIS_YEAR}`}>
-        <article><span>Afgesloten trades</span><strong>{filteredTrades.length}</strong><small>{ANALYSIS_YEAR}</small></article>
+      <section className="stats-kpi-grid" aria-label={`Kernstatistieken ${selectedYear}`}>
+        <article><span>Afgesloten trades</span><strong>{filteredTrades.length}</strong><small>{selectedYear}</small></article>
         <article><span>Winratio</span><strong className="metric--positive">{formatPercentage(filteredTrades.length ? winningTrades.length / filteredTrades.length * 100 : 0)}</strong><small>{winningTrades.length} winsttrades</small></article>
         <article><span>Nettoresultaat</span><strong className={`metric--${direction(totalProfit)}`}>{formatCurrency(totalProfit, currency, true)}</strong><small>Gerealiseerd</small></article>
         <article><span>Gemiddeld per trade</span><strong className={`metric--${direction(averageProfit)}`}>{formatCurrency(averageProfit, currency, true)}</strong><small>Over alle sluitingen</small></article>
@@ -360,7 +369,7 @@ export default function StatsPage({ trades, portfolioHistory, currency }: StatsP
       <PortfolioHistoryChart history={portfolioHistory} currency={currency} />
 
       <div className="stats-grid stats-grid--primary">
-        <MonthlyResultChart trades={filteredTrades} currency={currency} year={ANALYSIS_YEAR} />
+        <MonthlyResultChart trades={filteredTrades} currency={currency} year={selectedYear} />
         <OutcomeChart trades={filteredTrades} />
       </div>
       <div className="stats-grid stats-grid--secondary">

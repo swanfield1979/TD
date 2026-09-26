@@ -68,7 +68,10 @@ export default function PortfolioAllocationCard({
         ))}
       </ul>
 
-      {allocation.isEstimated && <p className="allocation-card__note">Indicatief · aandelen op resterende kostprijs</p>}
+      <p className="allocation-card__note">
+        Opties incl. {formatCurrency(allocation.reservedCash ?? 0, currency)} CSP-reservering
+        {allocation.isEstimated ? ' · aandelen op resterende kostprijs' : ''}
+      </p>
     </article>
   )
 }

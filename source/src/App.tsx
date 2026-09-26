@@ -9,7 +9,7 @@ import {
   NavigationRegular,
   TargetArrowRegular,
 } from '@fluentui/react-icons'
-import type { MetricDirection, PortfolioMetric, PortfolioSummary } from './types'
+import type { MetricDirection, MonthlyTradingResult, PortfolioMetric, PortfolioSummary } from './types'
 import MonthlyBalanceChart from './MonthlyBalanceChart'
 import PortfolioAllocationCard from './PortfolioAllocationCard'
 import StocksPage from './StocksPage'
@@ -71,6 +71,12 @@ const directionLabel: Record<MetricDirection, string> = {
   negative: 'Negatief',
   neutral: 'Ongewijzigd',
 }
+
+const tradingResultContext = (result: MonthlyTradingResult, currency: string) => [
+  `premie ${currencyFormatter(currency, true).format(result.premium)}`,
+  `aandelen ${currencyFormatter(currency, true).format(result.stockSales)}`,
+  `SYNT ${currencyFormatter(currency, true).format(result.syntheticClosures)}`,
+].join(' · ')
 
 interface StatCardProps {
   label: string
@@ -330,13 +336,13 @@ function App() {
                 label="Nettoresultaat deze maand"
                 metric={summary.currentMonthProfit}
                 currency={summary.currency}
-                context={`Netto liquidatiewaarde · ${formatDate(summary.currentMonthProfit.fromDate!)} – ${formatDate(summary.currentMonthProfit.toDate)}`}
+                context={tradingResultContext(summary.currentMonthProfit, summary.premiumCurrency ?? summary.currency)}
               />
               <StatCard
                 label="Nettoresultaat vorige maand"
                 metric={summary.previousMonthProfit}
                 currency={summary.currency}
-                context={`Netto liquidatiewaarde · ${formatDate(summary.previousMonthProfit.fromDate!)} – ${formatDate(summary.previousMonthProfit.toDate)}`}
+                context={tradingResultContext(summary.previousMonthProfit, summary.premiumCurrency ?? summary.currency)}
               />
               <StatCard
                 label="Gemiddeld per maand"
@@ -351,6 +357,7 @@ function App() {
                 currentPremium={summary.premiumPeriods.currentMonth}
                 previousPremium={summary.premiumPeriods.previousMonth}
                 premiumCurrency={summary.premiumCurrency ?? 'USD'}
+                year={summary.balance.toDate.slice(0, 4)}
               />
             )}
             <MonthlyBalanceChart
@@ -372,6 +379,9 @@ function App() {
             holdings={summary.optionHoldings ?? []}
             currency={summary.currency}
             asOfDate={summary.balance.toDate}
+            reservedCash={summary.portfolioAllocation.reservedCash ?? 0}
+            freeToSpend={summary.portfolioAllocation.freeToSpend ?? 0}
+            unpricedContractCount={summary.portfolioAllocation.unpricedContractCount ?? 0}
           />
         )}
 

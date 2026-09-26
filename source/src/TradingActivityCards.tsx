@@ -5,6 +5,7 @@ interface TradingActivityCardsProps {
   currentPremium: PremiumPeriod
   previousPremium: PremiumPeriod
   premiumCurrency: string
+  year: string
 }
 
 const numberFormatter = new Intl.NumberFormat('nl-NL')
@@ -69,6 +70,7 @@ export default function TradingActivityCards({
   currentPremium,
   previousPremium,
   premiumCurrency,
+  year,
 }: TradingActivityCardsProps) {
   const captureDirection =
     activity.premiumCapturePercentage > 0
@@ -79,14 +81,14 @@ export default function TradingActivityCards({
   const grossPremiumDirection = directionFor(activity.grossPremium)
 
   return (
-      <section className="activity-grid" aria-label="Handelsactiviteit en optiepremie">
+      <section className="activity-grid" aria-label={`Handelsactiviteit ${year} en optiepremie`}>
         <article className="activity-card activity-card--trades">
           <h2>Totaal trades</h2>
           <p className="activity-card__value">{numberFormatter.format(activity.totalTrades)}</p>
           <p className="activity-card__context">
-            {numberFormatter.format(activity.closedTrades)} gesloten
+            {numberFormatter.format(activity.closedTrades)} gesloten in {year}
             <span aria-hidden="true"> · </span>
-            {numberFormatter.format(activity.openTrades)} open
+            {numberFormatter.format(activity.openTrades)} momenteel open
           </p>
         </article>
 

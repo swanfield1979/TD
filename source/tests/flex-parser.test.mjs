@@ -29,8 +29,24 @@ test('berekent dashboardstatistieken uit dagsaldi', () => {
   assert.equal(result.balance.value, 1200)
   assert.equal(result.dailyProfit.value, 150)
   assert.equal(result.yearProfit.value, 200)
-  assert.equal(result.currentMonthProfit.value, 150)
-  assert.equal(result.previousMonthProfit.value, -50)
+  assert.deepEqual(result.currentMonthProfit, {
+    value: 0,
+    fromDate: '2026-02-28',
+    toDate: '2026-03-20',
+    direction: 'neutral',
+    premium: 0,
+    stockSales: 0,
+    syntheticClosures: 0,
+  })
+  assert.deepEqual(result.previousMonthProfit, {
+    value: 0,
+    fromDate: '2026-01-31',
+    toDate: '2026-02-28',
+    direction: 'neutral',
+    premium: 0,
+    stockSales: 0,
+    syntheticClosures: 0,
+  })
   assert.equal(result.averageMonthlyProfit.value, 66.67)
   assert.equal(result.sourceCounts.trades, 2)
   assert.deepEqual(
@@ -167,6 +183,64 @@ test('dedupliceert overlappende saldodagen en IBKR-uitvoeringen bij meerjarige b
   assert.equal(result.closedTrades.length, 1)
 })
 
+test('begrenst de dashboardactiviteit tot het actuele jaar en telt huidige open posities mee', () => {
+  const equityXml = `<FlexStatement whenGenerated="2026-03-20 10:00:00">
+    <EquitySummaryByReportDateInBase reportDate="2025-12-31" total="1000" />
+    <EquitySummaryByReportDateInBase reportDate="2026-01-31" total="1050" />
+    <EquitySummaryByReportDateInBase reportDate="2026-02-28" total="1100" />
+    <EquitySummaryByReportDateInBase reportDate="2026-03-20" total="1200" />
+  </FlexStatement>`
+  const tradesXml = `<Trades>
+    <Trade assetCategory="OPT" conid="old" dateTime="2025-01-01 10:00:00" quantity="-1" tradePrice="10" openCloseIndicator="O" />
+    <Trade assetCategory="OPT" conid="old" dateTime="2025-01-11 10:00:00" quantity="1" tradePrice="5" openCloseIndicator="C" />
+    <Trade assetCategory="OPT" conid="closed" dateTime="2026-02-01 10:00:00" quantity="-1" tradePrice="2" openCloseIndicator="O" />
+    <Trade assetCategory="OPT" conid="closed" dateTime="2026-02-11 10:00:00" quantity="1" tradePrice="1" openCloseIndicator="C" />
+    <Trade assetCategory="OPT" conid="open" dateTime="2026-03-01 10:00:00" quantity="-1" tradePrice="0.5" openCloseIndicator="O" />
+  </Trades>`
+  const result = createPortfolioSummary({ equityXml, tradesXml, optionXml: '<Options />' })
+
+  assert.deepEqual(result.tradingActivity, {
+    totalTrades: 2,
+    closedTrades: 1,
+    openTrades: 1,
+    premiumCapturePercentage: 60,
+    grossPremium: 250,
+    netPremium: 150,
+    averageDaysHeld: 10,
+    minimumDaysHeld: 10,
+    maximumDaysHeld: 10,
+    measuredClosedTrades: 1,
+  })
+})
+
+test('combineert netto premie met aandelenverkoop en de lange leg van een gesloten synthetic', () => {
+  const equityXml = `<FlexStatement whenGenerated="2026-09-24 10:00:00">
+    <EquitySummaryByReportDateInBase reportDate="2026-07-31" total="1000" />
+    <EquitySummaryByReportDateInBase reportDate="2026-08-31" total="1100" />
+    <EquitySummaryByReportDateInBase reportDate="2026-09-24" total="1200" />
+  </FlexStatement>`
+  const tradesXml = `<Trades>
+    <Trade assetCategory="OPT" conid="premium" dateTime="2026-09-01 10:00:00" quantity="-1" tradePrice="2" ibCommission="-1" fifoPnlRealized="0" openCloseIndicator="O" putCall="P" strike="10" expiry="2026-10-16" underlyingSymbol="PREM" />
+    <Trade assetCategory="OPT" conid="premium" dateTime="2026-09-08 10:00:00" quantity="1" tradePrice="0.5" ibCommission="-1" fifoPnlRealized="148" openCloseIndicator="C" putCall="P" strike="10" expiry="2026-10-16" underlyingSymbol="PREM" />
+    <Trade assetCategory="OPT" conid="call" dateTime="2026-09-02 10:00:00" quantity="1" tradePrice="5" ibCommission="-1" fifoPnlRealized="0" openCloseIndicator="O" putCall="C" strike="20" expiry="2026-12-18" underlyingSymbol="SYNT" />
+    <Trade assetCategory="OPT" conid="put" dateTime="2026-09-02 10:00:00" quantity="-1" tradePrice="3" ibCommission="-1" fifoPnlRealized="0" openCloseIndicator="O" putCall="P" strike="20" expiry="2026-12-18" underlyingSymbol="SYNT" />
+    <Trade assetCategory="OPT" conid="call" dateTime="2026-09-10 10:00:00" quantity="-1" tradePrice="7" ibCommission="-1" fifoPnlRealized="200" openCloseIndicator="C" putCall="C" strike="20" expiry="2026-12-18" underlyingSymbol="SYNT" />
+    <Trade assetCategory="OPT" conid="put" dateTime="2026-09-10 10:00:00" quantity="1" tradePrice="2" ibCommission="-1" fifoPnlRealized="100" openCloseIndicator="C" putCall="P" strike="20" expiry="2026-12-18" underlyingSymbol="SYNT" />
+    <Trade assetCategory="STK" conid="stock" dateTime="2026-09-12 10:00:00" quantity="-10" tradePrice="30" ibCommission="-1" fifoPnlRealized="300" openCloseIndicator="C" underlyingSymbol="STK" />
+  </Trades>`
+  const result = createPortfolioSummary({ equityXml, tradesXml, optionXml: '<Options />' })
+
+  assert.deepEqual(result.currentMonthProfit, {
+    value: 743,
+    fromDate: '2026-08-31',
+    toDate: '2026-09-24',
+    direction: 'positive',
+    premium: 244,
+    stockSales: 299,
+    syntheticClosures: 200,
+  })
+})
+
 test('berekent optieactiviteit, afgesloten trades en maandpremies', () => {
   const equityXml = `<FlexQueryResponse><FlexStatement whenGenerated="2026-03-20 10:00:00">
     <EquitySummaryByReportDateInBase reportDate="2025-12-31" total="1000" />
@@ -209,10 +283,12 @@ test('berekent optieactiviteit, afgesloten trades en maandpremies', () => {
     net: 148,
   })
   assert.deepEqual(result.portfolioAllocation.categories, [
-    { key: 'stocks', label: 'Aandelen', value: 201, percentage: 16.1 },
-    { key: 'options', label: 'Opties', value: 25, percentage: 2 },
-    { key: 'cash', label: 'Geld / overig', value: 1024, percentage: 81.9 },
+    { key: 'stocks', label: 'Aandelen', value: 201, percentage: 4.8 },
+    { key: 'options', label: 'Opties', value: 4025, percentage: 95.2 },
+    { key: 'cash', label: 'Geld / overig', value: 0, percentage: 0 },
   ])
+  assert.equal(result.portfolioAllocation.reservedCash, 4000)
+  assert.equal(result.portfolioAllocation.freeToSpend, -3001)
   assert.deepEqual(result.stockHoldings, [
     {
       conid: '3',

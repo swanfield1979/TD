@@ -5,6 +5,9 @@ interface OptionsPageProps {
   holdings: OptionHolding[]
   currency: string
   asOfDate: string
+  reservedCash: number
+  freeToSpend: number
+  unpricedContractCount: number
 }
 
 const numberFormatter = new Intl.NumberFormat('nl-NL', { maximumFractionDigits: 2 })
@@ -62,7 +65,7 @@ function OptionsMetric({ value, currency, percentage }: { value: number | null; 
   )
 }
 
-export default function OptionsPage({ holdings, currency, asOfDate }: OptionsPageProps) {
+export default function OptionsPage({ holdings, currency, asOfDate, reservedCash, freeToSpend, unpricedContractCount }: OptionsPageProps) {
   const sortedHoldings = [...holdings].sort((left, right) => (
     `${left.expiry || '9999'}${left.symbol}${left.strike ?? ''}`.localeCompare(`${right.expiry || '9999'}${right.symbol}${right.strike ?? ''}`)
   ))
@@ -96,6 +99,20 @@ export default function OptionsPage({ holdings, currency, asOfDate }: OptionsPag
           <span>Open contracten</span>
           <strong>{numberFormatter.format(openContracts)}</strong>
           <small>Long en short samengeteld</small>
+        </article>
+        <article className="positions-summary__card positions-summary__card--reserved">
+          <span>Gereserveerd voor CSP</span>
+          <strong>{formatCurrency(reservedCash, currency)}</strong>
+          <small>
+            {unpricedContractCount > 0
+              ? `${numberFormatter.format(unpricedContractCount)} contract(en) zonder bekende strike`
+              : 'Strike × 100 × open short-putcontracten'}
+          </small>
+        </article>
+        <article className={`positions-summary__card positions-summary__card--${freeToSpend < 0 ? 'negative' : 'available'}`}>
+          <span>Vrij te besteden</span>
+          <strong className={freeToSpend < 0 ? 'metric--negative' : undefined}>{formatCurrency(freeToSpend, currency)}</strong>
+          <small>Saldo − aandelen − CSP-reservering</small>
         </article>
         <article className="positions-summary__card">
           <span>Gem. gekozen DTE</span>
