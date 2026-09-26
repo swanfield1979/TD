@@ -90,9 +90,9 @@ test('berekent optieactiviteit en maandpremies', () => {
     net: 148,
   })
   assert.deepEqual(result.portfolioAllocation.categories, [
-    { key: 'stocks', label: 'Aandelen', value: 200, percentage: 16 },
+    { key: 'stocks', label: 'Aandelen', value: 201, percentage: 16.1 },
     { key: 'options', label: 'Opties', value: 25, percentage: 2 },
-    { key: 'cash', label: 'Geld / overig', value: 1025, percentage: 82 },
+    { key: 'cash', label: 'Geld / overig', value: 1024, percentage: 81.9 },
   ])
   assert.deepEqual(result.stockHoldings, [
     {
@@ -100,8 +100,8 @@ test('berekent optieactiviteit en maandpremies', () => {
       symbol: 'TEST',
       name: 'Test aandeel',
       quantity: 10,
-      averagePurchasePrice: 20,
-      purchaseValue: 200,
+      averagePurchasePrice: 20.1,
+      purchaseValue: 201,
       currentPrice: null,
       currentValue: null,
       difference: null,

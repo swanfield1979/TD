@@ -22,9 +22,18 @@ function UnavailableValue() {
 }
 
 export default function StocksPage({ holdings, currency }: StocksPageProps) {
-  const totalQuantity = holdings.reduce((sum, holding) => sum + holding.quantity, 0)
   const totalPurchaseValue = holdings.reduce((sum, holding) => sum + holding.purchaseValue, 0)
   const holdingsWithPrice = holdings.filter((holding) => holding.currentPrice !== null).length
+  const hasCompletePrices = holdings.length > 0 && holdingsWithPrice === holdings.length
+  const totalCurrentValue = hasCompletePrices
+    ? holdings.reduce((sum, holding) => sum + (holding.currentValue ?? 0), 0)
+    : null
+  const totalDifference = hasCompletePrices
+    ? holdings.reduce((sum, holding) => sum + (holding.difference ?? 0), 0)
+    : null
+  const differenceDirection = totalDifference === null || totalDifference === 0
+    ? 'neutral'
+    : totalDifference > 0 ? 'positive' : 'negative'
 
   return (
     <div className="stocks-page">
@@ -35,19 +44,21 @@ export default function StocksPage({ holdings, currency }: StocksPageProps) {
           <small>Verschillende posities</small>
         </article>
         <article className="stocks-summary__card">
-          <span>Totaal aantal</span>
-          <strong>{numberFormatter.format(totalQuantity)}</strong>
-          <small>Aandelen in portefeuille</small>
+          <span>Netto kostprijs</span>
+          <strong>{formatCurrency(totalPurchaseValue, currency)}</strong>
+          <small>Resterende FIFO-kostprijs inclusief commissie</small>
         </article>
         <article className="stocks-summary__card">
-          <span>Aankoopwaarde</span>
-          <strong>{formatCurrency(totalPurchaseValue, currency)}</strong>
-          <small>Resterende FIFO-kostprijs</small>
+          <span>Netto positiewaarde</span>
+          <strong>{totalCurrentValue === null ? '—' : formatCurrency(totalCurrentValue, currency)}</strong>
+          <small>{hasCompletePrices ? 'Actuele waarde van open aandelen' : 'Beschikbaar na koppeling met actuele koersen'}</small>
         </article>
-        <article className="stocks-summary__card stocks-summary__card--pending">
-          <span>Actuele prijzen</span>
-          <strong>{holdingsWithPrice}/{holdings.length}</strong>
-          <small>Wacht op IBKR-koppeling</small>
+        <article className={`stocks-summary__card stocks-summary__card--${hasCompletePrices ? differenceDirection : 'pending'}`}>
+          <span>Winst/verlies aandelen</span>
+          <strong className={`metric--${differenceDirection}`}>
+            {totalDifference === null ? '—' : formatCurrency(totalDifference, currency)}
+          </strong>
+          <small>{hasCompletePrices ? 'Actuele waarde minus nettokostprijs' : `${holdingsWithPrice}/${holdings.length} actuele koersen beschikbaar`}</small>
         </article>
       </section>
 
@@ -74,10 +85,10 @@ export default function StocksPage({ holdings, currency }: StocksPageProps) {
                   <th scope="col">Aandeel</th>
                   <th scope="col" className="stocks-table__number">Aantal</th>
                   <th scope="col" className="stocks-table__number">Gem. aankoop</th>
-                  <th scope="col" className="stocks-table__number">Aankoopwaarde</th>
+                  <th scope="col" className="stocks-table__number">Netto kostprijs</th>
                   <th scope="col" className="stocks-table__number">Huidige prijs</th>
-                  <th scope="col" className="stocks-table__number">Huidige waarde</th>
-                  <th scope="col" className="stocks-table__number">Verschil</th>
+                  <th scope="col" className="stocks-table__number">Netto positiewaarde</th>
+                  <th scope="col" className="stocks-table__number">Winst/verlies</th>
                 </tr>
               </thead>
               <tbody>
@@ -112,12 +123,16 @@ export default function StocksPage({ holdings, currency }: StocksPageProps) {
               <tfoot>
                 <tr>
                   <th scope="row">Totaal</th>
-                  <td className="stocks-table__number">{numberFormatter.format(totalQuantity)}</td>
+                  <td />
                   <td />
                   <td className="stocks-table__number">{formatCurrency(totalPurchaseValue, currency)}</td>
                   <td />
-                  <td />
-                  <td />
+                  <td className="stocks-table__number">{totalCurrentValue === null ? <UnavailableValue /> : formatCurrency(totalCurrentValue, currency)}</td>
+                  <td className="stocks-table__number">
+                    {totalDifference === null ? <UnavailableValue /> : (
+                      <span className={`metric--${differenceDirection}`}>{formatCurrency(totalDifference, currency)}</span>
+                    )}
+                  </td>
                 </tr>
               </tfoot>
             </table>

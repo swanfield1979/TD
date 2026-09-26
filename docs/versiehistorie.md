@@ -1,5 +1,20 @@
 # Versiehistorie
 
+## 0.6.2 – productie op webroot
+
+- De productiebuild gebruikt expliciet `/` als basispad.
+- Een Nginx-configuratie voor de standaard webroot op poort 80 is toegevoegd.
+- De installatiehandleiding beschrijft bouwen, installeren en veilig bijwerken op Linux.
+- Financiële JSON-data en `index.html` worden niet gecachet; gehashte assets wel.
+
+## 0.6.1 – netto portefeuillewaarden
+
+- De premiekaarten tonen netto premie als hoofdwaarde; ontvangen premie, terugkoop en commissie blijven zichtbaar als controleerbare uitsplitsing.
+- De resultaatkaarten benoemen expliciet dat zij de mutatie van de netto liquidatiewaarde tonen.
+- Het aandelenoverzicht onderscheidt nettokostprijs, actuele netto positiewaarde en aandelenwinst/-verlies.
+- Commissies op aandelenaankopen worden in de resterende FIFO-kostprijs verwerkt.
+- Actuele positiewaarde en ongerealiseerd resultaat blijven leeg totdat actuele IBKR-koersen beschikbaar zijn.
+
 ## 0.6.0 — 26 september 2026
 
 - Tweede navigatiepagina `Stocks` toegevoegd.

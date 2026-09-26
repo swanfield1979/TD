@@ -47,18 +47,18 @@ function PremiumPeriodCard({
   const commissionDirection = premium.commission > 0 ? 'negative' : 'neutral'
 
   return (
-    <article className={`premium-card premium-card--${receivedDirection}${isCurrent ? ' premium-card--current' : ''}`}>
+    <article className={`premium-card premium-card--${netDirection}${isCurrent ? ' premium-card--current' : ''}`}>
       <h2>{label}</h2>
-      <p className={`premium-card__value metric--${receivedDirection}`}>
-        {formatCurrency(premium.received, currency, 'always')}
+      <p className={`premium-card__value metric--${netDirection}`}>
+        {formatCurrency(premium.net, currency, 'always')}
       </p>
       <p className="premium-card__breakdown">
         {formatMonth(premium.month)}<span aria-hidden="true"> · </span>
+        ontvangen <strong className={`metric--${receivedDirection}`}>{formatCurrency(premium.received, currency)}</strong>
+        <span aria-hidden="true"> · </span>
         terugkoop <strong className={`metric--${buybackDirection}`}>{formatCurrency(-premium.buyback, currency)}</strong>
         <span aria-hidden="true"> · </span>
         commissie <strong className={`metric--${commissionDirection}`}>{formatCurrency(-premium.commission, currency)}</strong>
-        <span aria-hidden="true"> · </span>
-        netto <strong className={`metric--${netDirection}`}>{formatCurrency(premium.net, currency, 'always')}</strong>
       </p>
     </article>
   )
@@ -115,13 +115,13 @@ export default function TradingActivityCards({
           </p>
         </article>
         <PremiumPeriodCard
-          label="Ontvangen premie deze maand"
+          label="Netto premie deze maand"
           premium={currentPremium}
           currency={premiumCurrency}
           isCurrent
         />
         <PremiumPeriodCard
-          label="Ontvangen premie vorige maand"
+          label="Netto premie vorige maand"
           premium={previousPremium}
           currency={premiumCurrency}
         />

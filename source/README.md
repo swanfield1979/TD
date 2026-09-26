@@ -34,3 +34,7 @@ npm test
 npm run build
 npm run preview
 ```
+
+## Productie op poort 80
+
+De meegeleverde Nginx-configuratie staat in [`deploy/nginx/trading-monitor.conf`](deploy/nginx/trading-monitor.conf). Volg de Linux-instructies in [`../docs/installatie.md`](../docs/installatie.md) om de build op `http://<intern-ip>/` beschikbaar te maken.

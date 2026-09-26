@@ -1,3 +1,3 @@
 # Releases
 
-Er is nog geen distributiepakket beschikbaar. De huidige versie is een lokale ontwikkelversie en wordt vanuit [`../source/`](../source/) gestart.
+Er is nog geen kant-en-klaar distributiepakket beschikbaar. De productiebuild wordt vanuit [`../source/`](../source/) gemaakt en kan met de meegeleverde Nginx-configuratie op de webroot en poort 80 worden geïnstalleerd. Zie de [installatiehandleiding](../docs/installatie.md).

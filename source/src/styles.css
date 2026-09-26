@@ -565,6 +565,9 @@ button:focus-visible, a:focus-visible {
   background: var(--z365-surface-1);
 }
 
+.stocks-summary__card--positive { border-left-color: var(--z365-status-positive); }
+.stocks-summary__card--negative { border-left-color: var(--z365-status-negative); }
+.stocks-summary__card--neutral,
 .stocks-summary__card--pending { border-left-color: var(--z365-chart-options); }
 .stocks-summary__card span { color: var(--z365-text-secondary); font-size: 11px; }
 

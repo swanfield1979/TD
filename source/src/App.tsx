@@ -223,22 +223,22 @@ function App() {
             </section>
             <section className="dashboard-grid dashboard-grid--performance" aria-label="Portfoliostatistieken">
               <StatCard
-                label="Winst 2026"
+                label="Nettoresultaat 2026"
                 metric={summary.yearProfit}
                 currency={summary.currency}
-                context={`Sinds ${formatDate(summary.yearProfit.fromDate!)}`}
+                context={`Mutatie netto liquidatiewaarde sinds ${formatDate(summary.yearProfit.fromDate!)}`}
               />
               <StatCard
-                label="Winst deze maand"
+                label="Nettoresultaat deze maand"
                 metric={summary.currentMonthProfit}
                 currency={summary.currency}
-                context={`${formatDate(summary.currentMonthProfit.fromDate!)} – ${formatDate(summary.currentMonthProfit.toDate)}`}
+                context={`Netto liquidatiewaarde · ${formatDate(summary.currentMonthProfit.fromDate!)} – ${formatDate(summary.currentMonthProfit.toDate)}`}
               />
               <StatCard
-                label="Winst vorige maand"
+                label="Nettoresultaat vorige maand"
                 metric={summary.previousMonthProfit}
                 currency={summary.currency}
-                context={`${formatDate(summary.previousMonthProfit.fromDate!)} – ${formatDate(summary.previousMonthProfit.toDate)}`}
+                context={`Netto liquidatiewaarde · ${formatDate(summary.previousMonthProfit.fromDate!)} – ${formatDate(summary.previousMonthProfit.toDate)}`}
               />
               <StatCard
                 label="Gemiddeld per maand"

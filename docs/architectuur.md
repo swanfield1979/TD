@@ -8,3 +8,7 @@ Trading Monitor is voorlopig een statische React/TypeScript-app met Vite.
 4. De React-app haalt dit JSON-bestand op en toont de statistieken op de Dashboard- en Stocks-pagina.
 
 Ruwe trades, rekeningidentificatie en andere XML-inhoud worden niet naar de browser gekopieerd. Voor een toekomstige IBKR-koppeling hoort de importlogica achter een server-API met authenticatie en veilige opslag te komen.
+
+## Productiehosting
+
+De productiebuild gebruikt `/` als basispad en wordt vanuit `/var/www/trading-monitor` door Nginx aangeboden. Nginx luistert als standaardserver op poort 80. HTML en financiële JSON-data worden niet gecachet; gehashte statische assets krijgen langdurige caching.

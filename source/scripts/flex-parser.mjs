@@ -158,6 +158,7 @@ function stockHoldingsSummary(trades) {
       dateTime: trade.dateTime,
       quantity: Number(trade.quantity),
       tradePrice: Number(trade.tradePrice),
+      commission: Number(trade.ibCommission),
       openClose: trade.openCloseIndicator,
     }))
     .filter((trade) => trade.conid && trade.dateTime && Number.isFinite(trade.quantity) && Number.isFinite(trade.tradePrice))
@@ -171,7 +172,10 @@ function stockHoldingsSummary(trades) {
 
     for (const trade of contractTrades) {
       if (trade.openClose === 'O' && trade.quantity > 0) {
-        lots.push({ quantity: trade.quantity, unitCost: trade.tradePrice })
+        const commissionPerShare = Number.isFinite(trade.commission)
+          ? Math.abs(trade.commission) / trade.quantity
+          : 0
+        lots.push({ quantity: trade.quantity, unitCost: trade.tradePrice + commissionPerShare })
         continue
       }
 
