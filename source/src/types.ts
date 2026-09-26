@@ -85,6 +85,23 @@ export interface OptionHolding {
   strategy: OptionStrategy
 }
 
+export interface GoalYear {
+  year: number
+  startValue: number
+  growthValue: number
+  contribution: number
+  targetValue: number
+}
+
+export interface GoalPlan {
+  baseYear: number
+  baseYearEndDate: string
+  baseYearEndValue: number
+  annualGrowthPercentage: number
+  annualContribution: number
+  years: GoalYear[]
+}
+
 export type CoveredCallCoverageStatus = 'complete' | 'partial' | 'none' | 'over' | 'not_applicable'
 
 export interface CoveredCallCoverage {
@@ -150,6 +167,7 @@ export interface PortfolioSummary {
   portfolioAllocation: PortfolioAllocation
   stockHoldings: StockHolding[]
   optionHoldings: OptionHolding[]
+  goalPlan: GoalPlan | null
   premiumPeriods: {
     currentMonth: PremiumPeriod
     previousMonth: PremiumPeriod

@@ -46,6 +46,20 @@ test('berekent dashboardstatistieken uit dagsaldi', () => {
     { key: 'options', label: 'Opties', value: 0, percentage: 0 },
     { key: 'cash', label: 'Geld / overig', value: 1200, percentage: 100 },
   ])
+  assert.deepEqual(result.goalPlan, {
+    baseYear: 2025,
+    baseYearEndDate: '2025-12-31',
+    baseYearEndValue: 1000,
+    annualGrowthPercentage: 30,
+    annualContribution: 1200,
+    years: [
+      { year: 2026, startValue: 1000, growthValue: 300, contribution: 1200, targetValue: 2500 },
+      { year: 2027, startValue: 2500, growthValue: 750, contribution: 1200, targetValue: 4450 },
+      { year: 2028, startValue: 4450, growthValue: 1335, contribution: 1200, targetValue: 6985 },
+      { year: 2029, startValue: 6985, growthValue: 2095.5, contribution: 1200, targetValue: 10280.5 },
+      { year: 2030, startValue: 10280.5, growthValue: 3084.15, contribution: 1200, targetValue: 14564.65 },
+    ],
+  })
 })
 
 test('berekent optieactiviteit en maandpremies', () => {

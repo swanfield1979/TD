@@ -1,5 +1,13 @@
 # Versiehistorie
 
+## 0.11.0 – jaarlijkse doelen
+
+- Goals is als derde navigatieoptie toegevoegd tussen Options en Stocks.
+- Het jaardoel gebruikt de werkelijke eindstand van het voorgaande jaar, 30% rendementsdoel en `$ 1.200` jaarlijkse inleg.
+- De pagina toont actueel saldo, resterend doelbedrag, lineaire voortgang en voor- of achterstand op het jaarschema.
+- Een vijfjarenplanning rekent toekomstige startsaldi, rendement, inleg en doelen door.
+- Een echte nieuwe jaarafsluiting vervangt automatisch het eerder geplande startsaldo.
+
 ## 0.10.0 – open optieposities
 
 - Een afzonderlijke Options-pagina en navigatieoptie tonen alle open optiecontracten.

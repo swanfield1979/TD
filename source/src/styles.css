@@ -596,7 +596,170 @@ button:focus-visible, a:focus-visible {
 
 .balance-chart--empty { color: var(--z365-text-secondary); }
 
-.stocks-page, .options-page { min-width: 0; }
+.stocks-page, .options-page, .goals-page { min-width: 0; }
+
+.goals-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.goal-stat {
+  min-height: 116px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 14px 16px;
+  border: 1px solid var(--z365-stroke);
+  border-radius: var(--z365-radius-card);
+  background: var(--z365-surface-1);
+}
+
+.goal-stat--target { border-color: rgba(97, 215, 144, 0.42); }
+.goal-stat__icon {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(76, 164, 255, 0.12);
+  color: var(--z365-accent-primary);
+}
+.goal-stat__icon svg { width: 19px; height: 19px; }
+.goal-stat__icon--growth { background: rgba(8, 216, 229, 0.1); color: var(--z365-accent-brand); }
+.goal-stat__icon--deposit { background: rgba(244, 200, 75, 0.1); color: var(--z365-chart-options); }
+.goal-stat__icon--target { background: var(--z365-status-success-bg); color: var(--z365-status-success); }
+.goal-stat > div { min-width: 0; }
+.goal-stat span:not(.goal-stat__icon), .goal-stat strong, .goal-stat small { display: block; }
+.goal-stat span:not(.goal-stat__icon) { color: var(--z365-text-secondary); font-size: 11px; }
+.goal-stat strong {
+  margin: 6px 0 4px;
+  font-family: Bahnschrift, "Segoe UI Variable", sans-serif;
+  font-size: clamp(18px, 1.6vw, 23px);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.goal-stat small { color: var(--z365-text-muted); font-size: 10px; }
+
+.goal-progress,
+.goal-plan {
+  margin-top: 18px;
+  border: 1px solid var(--z365-stroke);
+  border-radius: var(--z365-radius-card);
+  background: var(--z365-surface-1);
+  overflow: hidden;
+}
+
+.goal-progress { padding: 20px; }
+.goal-progress__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+.goal-progress__kicker {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 6px;
+  color: var(--z365-accent-brand);
+  font-size: 11px;
+  font-weight: 650;
+}
+.goal-progress__kicker svg { width: 16px; height: 16px; }
+.goal-progress h2, .goal-plan h2 { margin: 0; font-size: 18px; }
+.goal-progress__header p:last-child, .goal-plan header p { margin: 4px 0 0; color: var(--z365-text-secondary); font-size: 11px; }
+.goal-progress__status {
+  min-width: 174px;
+  padding: 9px 12px;
+  border: 1px solid var(--z365-stroke);
+  border-radius: var(--z365-radius-control);
+  background: var(--z365-status-neutral-bg);
+  text-align: right;
+}
+.goal-progress__status span, .goal-progress__status strong { display: block; }
+.goal-progress__status span { font-size: 10px; }
+.goal-progress__status strong { margin-top: 2px; font-size: 16px; font-variant-numeric: tabular-nums; }
+.goal-progress__status--positive { border-color: rgba(97, 215, 144, 0.35); background: var(--z365-status-success-bg); color: var(--z365-status-success); }
+.goal-progress__status--negative { border-color: rgba(255, 123, 132, 0.35); background: var(--z365-status-danger-bg); color: var(--z365-status-danger); }
+.goal-progress__status--neutral { color: var(--z365-status-neutral); }
+
+.goal-progress__amounts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  margin-top: 22px;
+}
+.goal-progress__amounts > div:last-child { text-align: right; }
+.goal-progress__amounts span, .goal-progress__amounts strong, .goal-progress__amounts small { display: block; }
+.goal-progress__amounts span { color: var(--z365-text-secondary); font-size: 11px; }
+.goal-progress__amounts strong {
+  margin: 4px 0 3px;
+  font-family: Bahnschrift, "Segoe UI Variable", sans-serif;
+  font-size: clamp(23px, 2.5vw, 34px);
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.goal-progress__amounts small { color: var(--z365-text-muted); font-size: 10px; }
+.goal-progress__track {
+  height: 12px;
+  margin-top: 18px;
+  overflow: hidden;
+  border: 1px solid var(--z365-stroke);
+  border-radius: 999px;
+  background: var(--z365-surface-2);
+}
+.goal-progress__track span { display: block; height: 100%; border-radius: inherit; background: var(--z365-accent-brand); }
+.goal-progress__caption { margin: 7px 0 0; color: var(--z365-text-secondary); font-size: 10px; }
+.goal-progress__caption strong { color: var(--z365-text-primary); font-variant-numeric: tabular-nums; }
+.goal-progress__details {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  margin-top: 17px;
+  overflow: hidden;
+  border: 1px solid var(--z365-stroke);
+  border-radius: var(--z365-radius-control);
+  background: var(--z365-stroke);
+}
+.goal-progress__details > div { padding: 11px 13px; background: var(--z365-surface-2); }
+.goal-progress__details span, .goal-progress__details strong { display: block; }
+.goal-progress__details span { color: var(--z365-text-secondary); font-size: 10px; }
+.goal-progress__details strong { margin-top: 3px; font-size: 14px; font-variant-numeric: tabular-nums; }
+
+.goal-plan > header {
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 13px 18px;
+  border-bottom: 1px solid var(--z365-stroke);
+}
+.goal-plan > header > span {
+  padding: 4px 8px;
+  border: 1px solid rgba(76, 164, 255, 0.34);
+  border-radius: 999px;
+  background: rgba(76, 164, 255, 0.08);
+  color: var(--z365-accent-primary);
+  font-size: 10px;
+}
+.goal-plan__table-region { max-width: 100%; overflow-x: auto; outline: none; }
+.goal-plan__table-region:focus-visible { box-shadow: inset 0 0 0 2px var(--z365-accent-primary); }
+.goal-plan table { width: 100%; min-width: 860px; border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; }
+.goal-plan th, .goal-plan td { padding: 12px 16px; border-bottom: 1px solid var(--z365-stroke); text-align: right; white-space: nowrap; }
+.goal-plan th:first-child { text-align: left; }
+.goal-plan thead th { background: var(--z365-surface-2); color: var(--z365-text-secondary); font-size: 10px; font-weight: 650; }
+.goal-plan tbody tr:hover { background: rgba(76, 164, 255, 0.035); }
+.goal-plan tbody th small, .goal-plan tbody td small { display: block; margin-top: 2px; color: var(--z365-text-muted); font-size: 9px; font-weight: 500; }
+.goal-plan__current { background: rgba(8, 216, 229, 0.035); }
+.goal-plan__current th { color: var(--z365-accent-brand); }
+.goal-plan__current td:last-child { font-weight: 700; }
+.goal-plan__pending { color: var(--z365-text-muted); }
+.goal-plan__note { margin: 0; padding: 11px 18px; color: var(--z365-text-muted); font-size: 10px; }
 
 .positions-summary {
   display: grid;
@@ -888,6 +1051,7 @@ button:focus-visible, a:focus-visible {
   .balance-chart__header { display: block; }
   .balance-chart__legend { justify-content: flex-start; margin-top: 16px; }
   .positions-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .goals-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 700px) {
@@ -946,6 +1110,13 @@ button:focus-visible, a:focus-visible {
   .balance-chart__plot { min-width: 720px; }
   .positions-summary { grid-template-columns: minmax(0, 1fr); }
   .positions-data__header { align-items: flex-start; flex-direction: column; }
+  .goals-summary { grid-template-columns: minmax(0, 1fr); }
+  .goal-progress { padding: 18px 16px; }
+  .goal-progress__header, .goal-plan > header { align-items: flex-start; flex-direction: column; }
+  .goal-progress__status { width: 100%; text-align: left; }
+  .goal-progress__amounts { grid-template-columns: minmax(0, 1fr); }
+  .goal-progress__amounts > div:last-child { text-align: left; }
+  .goal-progress__details { grid-template-columns: minmax(0, 1fr); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -958,6 +1129,6 @@ button:focus-visible, a:focus-visible {
 }
 
 @media (forced-colors: active) {
-  .nav-item--active::before, .stat-card::before, .activity-card::before, .premium-card::before, .data-freshness__pulse { background: Highlight; }
+  .nav-item--active::before, .stat-card::before, .activity-card::before, .premium-card::before, .data-freshness__pulse, .goal-progress__track span { background: Highlight; }
   .allocation-card__segment, .allocation-card__track, .allocation-card__swatch { forced-color-adjust: auto; }
 }

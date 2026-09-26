@@ -21,7 +21,7 @@ De eerste versie wordt gecontroleerd met:
 
 ## Resultaat 26 september 2026
 
-- `npm test`: 10 van 10 tests geslaagd, inclusief IBKR-snapshotnormalisatie, optiecontractgegevens, synthetische strategieherkenning, dagelijkse koersbeweging en covered-call-dekking.
+- `npm test`: 10 van 10 tests geslaagd, inclusief jaardoelberekening, IBKR-snapshotnormalisatie, optiecontractgegevens, synthetische strategieherkenning, dagelijkse koersbeweging en covered-call-dekking.
 - `npm run build`: geslaagd met TypeScript 7 en Vite 8.
 - XML-import: 192 dagsaldi, 637 trades en 35 optie-events verwerkt.
 - Desktopweergave: visueel gecontroleerd in de lokale browser.
@@ -44,3 +44,5 @@ De eerste versie wordt gecontroleerd met:
 - Options-pagina: 10 open posities en 37 contracten uit de huidige Flex-data gecontroleerd; strike, expiratie, openingspremie, gekozen en resterende DTE worden correct getoond.
 - Strategieherkenning: de gekoppelde long call en short put op dezelfde OUST-strike en expiratie worden beide als `SYNT long` gemarkeerd.
 - Options-layout: alle kolommen passen op breed desktopformaat; op 768 pixels blijft de pagina zelf begrensd en scrolt uitsluitend de tabel horizontaal.
+- Goals-berekening: eindstand 2025 `$ 82.465,00`, 30% rendement `$ 24.739,50`, jaarlijkse inleg `$ 1.200,00` en jaardoel 2026 `$ 108.404,50` gecontroleerd tegen de gegenereerde brondata.
+- Goals-layout: vier compacte bronkaarten, een semantische voortgangsbalk, voor/achter-schema-indicator en vijfjarenplanning visueel gecontroleerd in de bestaande dashboardstijl.

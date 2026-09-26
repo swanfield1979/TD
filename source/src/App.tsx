@@ -5,22 +5,25 @@ import {
   DismissRegular,
   HomeRegular,
   NavigationRegular,
+  TargetArrowRegular,
 } from '@fluentui/react-icons'
 import type { MetricDirection, PortfolioMetric, PortfolioSummary } from './types'
 import MonthlyBalanceChart from './MonthlyBalanceChart'
 import PortfolioAllocationCard from './PortfolioAllocationCard'
 import StocksPage from './StocksPage'
 import OptionsPage from './OptionsPage'
+import GoalsPage from './GoalsPage'
 import TradingActivityCards from './TradingActivityCards'
 import IbkrConnectionControl from './IbkrConnectionControl'
 import { mergeLiveSnapshot } from './ibkr'
 
 const DATA_URL = '/data/portfolio-summary.json'
-type Page = 'dashboard' | 'stocks' | 'options'
+type Page = 'dashboard' | 'stocks' | 'options' | 'goals'
 
 const pageFromHash = (): Page => {
   if (window.location.hash === '#stocks') return 'stocks'
   if (window.location.hash === '#options') return 'options'
+  if (window.location.hash === '#goals') return 'goals'
   return 'dashboard'
 }
 
@@ -28,6 +31,7 @@ const pageTitles: Record<Page, string> = {
   dashboard: 'Dashboard',
   stocks: 'Stocks',
   options: 'Options',
+  goals: 'Goals',
 }
 
 const currencyFormatter = (currency: string, showSign = false) =>
@@ -186,6 +190,14 @@ function App() {
             <span>Options</span>
           </a>
           <a
+            className={`nav-item${currentPage === 'goals' ? ' nav-item--active' : ''}`}
+            href="#goals"
+            aria-current={currentPage === 'goals' ? 'page' : undefined}
+          >
+            <TargetArrowRegular aria-hidden="true" />
+            <span>Goals</span>
+          </a>
+          <a
             className={`nav-item${currentPage === 'stocks' ? ' nav-item--active' : ''}`}
             href="#stocks"
             aria-current={currentPage === 'stocks' ? 'page' : undefined}
@@ -295,6 +307,10 @@ function App() {
             currency={summary.currency}
             asOfDate={summary.balance.toDate}
           />
+        )}
+
+        {!isLoading && summary && currentPage === 'goals' && (
+          <GoalsPage goalPlan={summary.goalPlan ?? null} balance={summary.balance} currency={summary.currency} />
         )}
       </main>
     </div>

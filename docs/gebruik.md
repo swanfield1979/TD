@@ -46,6 +46,18 @@ Een long call en short put met dezelfde onderliggende waarde, strike en expirati
 
 Na **Vernieuwen** vult IBKR de huidige optieprijs, marktwaarde en het ongerealiseerde winst/verlies in. Zolang geen actuele snapshot beschikbaar is, blijven deze velden `—`; de Flex-openingspremie wordt niet als actuele prijs gebruikt.
 
+## Goals
+
+De pagina **Goals** gebruikt de laatste netto liquidatiewaarde van 2025 als startpunt voor het jaardoel van 2026. De vaste formule is:
+
+`jaardoel = eindstand vorig jaar + 30% rendement + $ 1.200 jaarlijkse inleg`
+
+Met de huidige brondata is de eindstand van 2025 `$ 82.465,00`. Het rendementsdoel is daarom `$ 24.739,50` en het jaardoel voor 2026 `$ 108.404,50`.
+
+De voortgangsbalk toont welk deel van de benodigde totale groei al is gerealiseerd. **Voor/achter op schema** vergelijkt het actuele saldo met een lineair doelpad vanaf 1 januari tot en met 31 december. **Nodig per resterende maand** verdeelt het bedrag tot het jaardoel over de nog volledige kalendermaanden.
+
+De meerjarenplanning projecteert vijf jaar vooruit met dezelfde 30% en `$ 1.200` inleg. Voor toekomstige jaren wordt het geplande doel van het voorgaande jaar als voorlopig startsaldo gebruikt. Zodra een nieuw kalenderjaar in de Flex-data is afgesloten, gebruikt de import automatisch die werkelijke eindstand.
+
 ## Handelsactiviteit en optiepremie
 
 - **Totaal trades:** afgeronde en nog open optiecycli, gegroepeerd per IBKR-optiecontract. Een cyclus begint bij de eerste opening en eindigt wanneer de positie weer nul is. Contracten die vóór de rapportperiode zijn geopend maar binnen de periode sluiten, tellen als gesloten trade.

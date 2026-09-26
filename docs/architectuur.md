@@ -3,9 +3,9 @@
 Trading Monitor bestaat uit een React/TypeScript-interface met Vite en een kleine lokale Node-backend voor de read-only IBKR-koppeling.
 
 1. De privé Flex XML-rapporten staan uitsluitend lokaal in `source/data/private/`.
-2. `source/scripts/import-flex.mjs` leest de rapporten en berekent saldo-, maand-, trade-, looptijd-, premie- en allocatiestatistieken.
+2. `source/scripts/import-flex.mjs` leest de rapporten en berekent saldo-, maand-, trade-, looptijd-, premie-, allocatie- en jaardoelstatistieken.
 3. De samenvatting wordt lokaal geschreven naar `source/public/data/portfolio-summary.json`.
-4. De React-app haalt dit JSON-bestand op en toont de statistieken op de Dashboard-, Stocks- en Options-pagina.
+4. De React-app haalt dit JSON-bestand op en toont de statistieken op de Dashboard-, Options-, Goals- en Stocks-pagina.
 
 Ruwe trades, rekeningidentificatie en andere XML-inhoud worden niet naar de browser gekopieerd. De live IBKR-koppeling loopt uitsluitend via de lokale server-API; inloggegevens en rekeningidentificatie blijven op de server.
 

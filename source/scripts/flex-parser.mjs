@@ -2,6 +2,9 @@ import { assignOptionStrategies } from '../shared/option-strategy.mjs'
 
 const MONTHS_IN_YEAR = 12
 const MONTH_LABELS = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec']
+const GOAL_GROWTH_PERCENTAGE = 30
+const GOAL_ANNUAL_CONTRIBUTION = 1200
+const GOAL_PLANNING_YEARS = 5
 
 function decodeXml(value) {
   return value
@@ -335,6 +338,38 @@ function monthlyBalanceChanges(rows, start, latest) {
   })
 }
 
+function goalPlanSummary(rows, latest) {
+  const currentYear = Number(latest.date.slice(0, 4))
+  const baseYear = currentYear - 1
+  const baseYearEnd = rows.filter((row) => row.date.startsWith(`${baseYear}-`)).at(-1)
+  if (!baseYearEnd) return null
+
+  let startValue = baseYearEnd.total
+  const years = Array.from({ length: GOAL_PLANNING_YEARS }, (_, index) => {
+    const year = currentYear + index
+    const growthValue = startValue * (GOAL_GROWTH_PERCENTAGE / 100)
+    const targetValue = startValue + growthValue + GOAL_ANNUAL_CONTRIBUTION
+    const projection = {
+      year,
+      startValue: round(startValue),
+      growthValue: round(growthValue),
+      contribution: GOAL_ANNUAL_CONTRIBUTION,
+      targetValue: round(targetValue),
+    }
+    startValue = targetValue
+    return projection
+  })
+
+  return {
+    baseYear,
+    baseYearEndDate: baseYearEnd.date,
+    baseYearEndValue: round(baseYearEnd.total),
+    annualGrowthPercentage: GOAL_GROWTH_PERCENTAGE,
+    annualContribution: GOAL_ANNUAL_CONTRIBUTION,
+    years,
+  }
+}
+
 export function createPortfolioSummary({ equityXml, tradesXml, optionXml, currency = 'USD', premiumCurrency = 'USD', generatedAt = new Date().toISOString() }) {
   const statement = extractTags(equityXml, 'FlexStatement')[0]
   const trades = extractTags(tradesXml, 'Trade')
@@ -392,6 +427,7 @@ export function createPortfolioSummary({ equityXml, tradesXml, optionXml, curren
     tradingActivity: tradingActivitySummary(optionTrades),
     stockHoldings,
     optionHoldings,
+    goalPlan: goalPlanSummary(rows, latest),
     portfolioAllocation: portfolioAllocation(stockHoldings, latest),
     premiumPeriods: {
       currentMonth: premiumForMonth(currentMonth),
