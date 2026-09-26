@@ -12,8 +12,6 @@ Het dashboard toont vijf bedragen uit `flex_net_liq_into_db.xml`:
 
 De lijngrafiek toont voor alle twaalf kalendermaanden het verschil tussen het laatste beschikbare saldo van een maand en het laatste saldo van de voorgaande maand. De lijn verbindt alleen beschikbare maandresultaten. Toekomstige maanden blijven op de tijdas staan met de status `Nog geen data`.
 
-Onder de grafiek kan een tabel met de exacte maandverschillen en eindsaldi worden geopend.
-
 Een positief bedrag krijgt het label `Positief` en een groen accent. Een negatief bedrag krijgt `Negatief` en een rood accent. De tekst en pijliconen zorgen dat betekenis niet alleen via kleur wordt overgebracht.
 
 ## Data verversen

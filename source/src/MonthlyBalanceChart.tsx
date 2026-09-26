@@ -1,4 +1,4 @@
-import { ChevronDownRegular, DataLineRegular } from '@fluentui/react-icons'
+import { DataLineRegular } from '@fluentui/react-icons'
 import type { MonthlyBalanceChange } from './types'
 
 const CHART_WIDTH = 960
@@ -58,9 +58,6 @@ export default function MonthlyBalanceChart({ data = [], currency, year }: Month
       return `${pathIndex === 0 ? 'M' : 'L'} ${xForIndex(index).toFixed(1)} ${yForValue(item.value).toFixed(1)}`
     })
     .join(' ')
-  const bestMonth = availableData.reduce((best, item) => (item.value > best.value ? item : best), availableData[0])
-  const weakestMonth = availableData.reduce((weakest, item) => (item.value < weakest.value ? item : weakest), availableData[0])
-
   if (availableData.length === 0) {
     return (
       <section className="balance-chart balance-chart--empty">
@@ -84,11 +81,6 @@ export default function MonthlyBalanceChart({ data = [], currency, year }: Month
           <span><i className="legend-dot legend-dot--missing" /> Nog geen data</span>
         </div>
       </header>
-
-      <div className="balance-chart__highlights" aria-label="Samenvatting van de grafiek">
-        <span>Beste maand <strong>{bestMonth.label} {exactCurrency(bestMonth.value, currency)}</strong></span>
-        <span>Laagste maand <strong>{weakestMonth.label} {exactCurrency(weakestMonth.value, currency)}</strong></span>
-      </div>
 
       <div className="balance-chart__scroll" tabIndex={0} aria-label={`Lijngrafiek saldoverandering ${year}; horizontaal scrollbaar op een klein scherm`}>
         <svg
@@ -158,27 +150,6 @@ export default function MonthlyBalanceChart({ data = [], currency, year }: Month
           })}
         </svg>
       </div>
-
-      <details className="balance-chart__details">
-        <summary><ChevronDownRegular aria-hidden="true" /> Exacte maandbedragen bekijken</summary>
-        <div className="balance-chart__table-scroll">
-          <table>
-            <thead>
-              <tr><th>Maand</th><th>Verschil</th><th>Eindsaldo</th><th>Status</th></tr>
-            </thead>
-            <tbody>
-              {data.map((item) => (
-                <tr key={item.month}>
-                  <th scope="row">{item.label} {year}</th>
-                  <td>{item.value === null ? '—' : exactCurrency(item.value, currency)}</td>
-                  <td>{item.balance === null ? '—' : exactCurrency(item.balance, currency).replace('+', '')}</td>
-                  <td>{item.value === null ? 'Nog geen data' : item.value >= 0 ? 'Positief' : 'Negatief'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </details>
     </section>
   )
 }
