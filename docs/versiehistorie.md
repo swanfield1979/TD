@@ -1,5 +1,11 @@
 # Versiehistorie
 
+## 0.8.1 – uitgelijnd dashboardraster
+
+- Saldo en portefeuilleverdeling vullen samen dezelfde breedte als Jaarverloop in een rustige 40/60-verdeling.
+- Resultaat- en handelskaarten verdelen de volledige beschikbare rij gelijkmatig.
+- Middelbrede en compacte schermen laten geen lege laatste kaartpositie meer achter.
+
 ## 0.8.0 – covered-call-dekking
 
 - De Stocks-tabel toont per aandeel hoeveel open short calls tegenover volledige pakketten van 100 aandelen staan.

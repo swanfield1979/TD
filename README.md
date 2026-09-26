@@ -2,7 +2,7 @@
 
 Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voortgang op basis van Interactive Brokers Flex-rapporten.
 
-**Versie/status:** 0.8.0, intern dashboard met Dashboard- en Stocks-pagina, covered-call-dekking per aandelenpositie, Nginx-hosting op poort 80 en een read-only IBKR Gateway-koppeling met mobiele IB Key MFA.
+**Versie/status:** 0.8.1, intern dashboard met een strak uitgelijnd overzichtsraster, covered-call-dekking per aandelenpositie, Nginx-hosting op poort 80 en een read-only IBKR Gateway-koppeling met mobiele IB Key MFA.
 
 | Map | Inhoud |
 | --- | --- |
