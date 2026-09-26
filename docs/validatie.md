@@ -10,7 +10,7 @@
 - De snapshot wordt atomair met bestandsmodus `0600` opgeslagen.
 - Er is geen orderfunctionaliteit aanwezig.
 - Een tweede refresh wordt genegeerd zolang de eerste nog loopt.
-- De normalisatie van netto liquidatiewaarde, positie-P/L en dagelijkse koersbeweging wordt met unit-tests gecontroleerd.
+- De normalisatie van netto liquidatiewaarde, positie-P/L, optiecontractgegevens, dagelijkse koersbeweging en strategieherkenning wordt met unit-tests gecontroleerd.
 
 De eerste versie wordt gecontroleerd met:
 
@@ -21,12 +21,12 @@ De eerste versie wordt gecontroleerd met:
 
 ## Resultaat 26 september 2026
 
-- `npm test`: 8 van 8 tests geslaagd, inclusief IBKR-snapshotnormalisatie, dagelijkse koersbeweging en covered-call-dekking.
+- `npm test`: 10 van 10 tests geslaagd, inclusief IBKR-snapshotnormalisatie, optiecontractgegevens, synthetische strategieherkenning, dagelijkse koersbeweging en covered-call-dekking.
 - `npm run build`: geslaagd met TypeScript 7 en Vite 8.
 - XML-import: 192 dagsaldi, 637 trades en 35 optie-events verwerkt.
 - Desktopweergave: visueel gecontroleerd in de lokale browser.
 - Browserconsole: geen fouten of waarschuwingen.
-- Compacte weergave: responsieve éénkolomsopmaak en overlaymenu zijn in de stylesheet afgedekt; een aparte gesimuleerde mobiele viewport was in de beschikbare browser niet actief.
+- Compacte weergave: responsieve kaartopmaak en begrensde horizontale tabelscroll zijn op een gesimuleerde viewport van 768 pixels gecontroleerd.
 - Jaargrafiek: januari–september met bronwaarden gecontroleerd; oktober–december tonen expliciet dat data ontbreekt.
 - Opgeschoonde jaargrafiek: samenvattingsbalk en uitklapbare maandtabel zijn niet meer aanwezig.
 - Vereenvoudigde dashboardkop: bovenlabel en toelichtingszin zijn niet meer aanwezig; titel en gegevensstatus blijven uitgelijnd.
@@ -41,3 +41,6 @@ De eerste versie wordt gecontroleerd met:
 - Semantische kleuren: positieve resultaten en opbrengsten groen; negatieve resultaten, terugkoop, commissie en negatief nettoresultaat rood.
 - Stocks-pagina: vijf open posities, FIFO-aankoopwaardes en CC-dekking gecontroleerd; lege koersvelden, lege toestand, desktopweergave en mobiel begrensde tabelscroll getest.
 - Dagbeweging: positieve, negatieve, ongewijzigde en ontbrekende waarden hebben een expliciete tekstuele weergave; de vorige slotkoers blijft read-only en ontbrekende data wordt niet als nul geïnterpreteerd.
+- Options-pagina: 10 open posities en 37 contracten uit de huidige Flex-data gecontroleerd; strike, expiratie, openingspremie, gekozen en resterende DTE worden correct getoond.
+- Strategieherkenning: de gekoppelde long call en short put op dezelfde OUST-strike en expiratie worden beide als `SYNT long` gemarkeerd.
+- Options-layout: alle kolommen passen op breed desktopformaat; op 768 pixels blijft de pagina zelf begrensd en scrolt uitsluitend de tabel horizontaal.

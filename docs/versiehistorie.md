@@ -1,5 +1,13 @@
 # Versiehistorie
 
+## 0.10.0 – open optieposities
+
+- Een afzonderlijke Options-pagina en navigatieoptie tonen alle open optiecontracten.
+- Per positie zijn strategie, call/put, long/short, aantal, strike, expiratie, gekozen DTE, resterende dagen en openingspremie beschikbaar.
+- Live IBKR-data vult huidige prijs, marktwaarde en ongerealiseerd winst/verlies aan.
+- Synthetische long- en shortcombinaties worden op basis van onderliggende waarde, strike en expiratie als `SYNT` herkend.
+- Korte resterende looptijden krijgen een zichtbare waarschuwing zonder uitsluitend op kleur te vertrouwen.
+
 ## 0.9.0 – dagelijkse koersbeweging
 
 - De Stocks-tabel toont als laatste kolom de procentuele koersverandering ten opzichte van de vorige slotkoers.

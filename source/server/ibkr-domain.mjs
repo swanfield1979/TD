@@ -1,5 +1,11 @@
 const round = (value, decimals = 2) => Number(Number(value).toFixed(decimals))
 
+const normalizeContractDate = (value) => {
+  const digits = String(value || '').replaceAll('-', '').slice(0, 8)
+  if (!/^\d{8}$/.test(digits)) return null
+  return `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6, 8)}`
+}
+
 export function createLiveSnapshot({ accountValues, positions, generatedAt = new Date().toISOString() }) {
   const netLiquidationEntry = accountValues.get('NetLiquidation')
   const totalCashEntry = accountValues.get('TotalCashValue')
@@ -23,6 +29,9 @@ export function createLiveSnapshot({ accountValues, positions, generatedAt = new
       const previousClose = Number.isFinite(previousCloseValue) && previousCloseValue > 0
         ? previousCloseValue
         : null
+      const optionStrikeValue = position.optionStrike === null || position.optionStrike === undefined
+        ? null
+        : Number(position.optionStrike)
       const multiplier = position.multiplier === null || position.multiplier === undefined
         ? null
         : Number(position.multiplier)
@@ -33,6 +42,8 @@ export function createLiveSnapshot({ accountValues, positions, generatedAt = new
         name: position.localSymbol || position.symbol || String(position.conid ?? ''),
         assetCategory: position.assetCategory || 'UNKNOWN',
         optionRight: position.optionRight || null,
+        optionStrike: Number.isFinite(optionStrikeValue) ? round(optionStrikeValue, 4) : null,
+        optionExpiry: normalizeContractDate(position.optionExpiry),
         multiplier: Number.isFinite(multiplier) ? multiplier : null,
         currency: position.currency || currency,
         quantity: round(quantity, 4),

@@ -65,6 +65,26 @@ export interface StockHolding {
   coveredCallCoverage?: CoveredCallCoverage | null
 }
 
+export type OptionStrategy = 'SYNT_LONG' | 'SYNT_SHORT' | 'SHORT_CALL' | 'SHORT_PUT' | 'LONG_CALL' | 'LONG_PUT' | 'OTHER'
+
+export interface OptionHolding {
+  conid: string
+  symbol: string
+  name: string
+  quantity: number
+  optionRight: string | null
+  strike: number | null
+  expiry: string | null
+  openedAt: string | null
+  chosenDte: number | null
+  averageOpenPrice: number | null
+  currentPrice: number | null
+  currentValue: number | null
+  difference: number | null
+  differencePercentage: number | null
+  strategy: OptionStrategy
+}
+
 export type CoveredCallCoverageStatus = 'complete' | 'partial' | 'none' | 'over' | 'not_applicable'
 
 export interface CoveredCallCoverage {
@@ -85,6 +105,8 @@ export interface IbkrConnectionStatus {
 export interface IbkrLivePosition extends StockHolding {
   assetCategory: string
   optionRight: string | null
+  optionStrike: number | null
+  optionExpiry: string | null
   multiplier: number | null
   currency: string
   currentPrice: number
@@ -127,6 +149,7 @@ export interface PortfolioSummary {
   tradingActivity: TradingActivitySummary
   portfolioAllocation: PortfolioAllocation
   stockHoldings: StockHolding[]
+  optionHoldings: OptionHolding[]
   premiumPeriods: {
     currentMonth: PremiumPeriod
     previousMonth: PremiumPeriod

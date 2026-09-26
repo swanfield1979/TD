@@ -58,7 +58,7 @@ test('berekent optieactiviteit en maandpremies', () => {
   const tradesXml = `<Trades>
     <Trade assetCategory="OPT" conid="1" dateTime="2026-02-01 10:00:00" quantity="-1" tradePrice="2" ibCommission="-1" openCloseIndicator="O" />
     <Trade assetCategory="OPT" conid="1" dateTime="2026-02-11 10:00:00" quantity="1" tradePrice="0.5" ibCommission="-1" openCloseIndicator="C" />
-    <Trade assetCategory="OPT" conid="2" dateTime="2026-03-01 10:00:00" quantity="-2" tradePrice="1.5" ibCommission="-1.5" openCloseIndicator="O" />
+    <Trade assetCategory="OPT" conid="2" underlyingSymbol="TEST" description="TEST 17APR26 20 P" expiry="2026-04-17" putCall="P" strike="20" dateTime="2026-03-01 10:00:00" quantity="-2" tradePrice="1.5" ibCommission="-1.5" openCloseIndicator="O" />
     <Trade assetCategory="STK" conid="3" underlyingSymbol="TEST" description="Test aandeel" dateTime="2026-03-02 10:00:00" quantity="10" tradePrice="20" ibCommission="-1" openCloseIndicator="O" />
   </Trades>`
   const result = createPortfolioSummary({ equityXml, tradesXml, optionXml: '<Options />' })
@@ -107,6 +107,25 @@ test('berekent optieactiviteit en maandpremies', () => {
       difference: null,
       differencePercentage: null,
       dailyChangePercentage: null,
+    },
+  ])
+  assert.deepEqual(result.optionHoldings, [
+    {
+      conid: '2',
+      symbol: 'TEST',
+      name: 'TEST 17APR26 20 P',
+      quantity: -2,
+      optionRight: 'P',
+      strike: 20,
+      expiry: '2026-04-17',
+      openedAt: '2026-03-01',
+      chosenDte: 47,
+      averageOpenPrice: 1.5,
+      currentPrice: null,
+      currentValue: null,
+      difference: null,
+      differencePercentage: null,
+      strategy: 'SHORT_PUT',
     },
   ])
 })

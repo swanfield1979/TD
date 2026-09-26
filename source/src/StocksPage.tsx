@@ -78,23 +78,23 @@ export default function StocksPage({ holdings, currency }: StocksPageProps) {
 
   return (
     <div className="stocks-page">
-      <section className="stocks-summary" aria-label="Samenvatting aandelen">
-        <article className="stocks-summary__card">
+      <section className="positions-summary" aria-label="Samenvatting aandelen">
+        <article className="positions-summary__card">
           <span>Open aandelen</span>
           <strong>{numberFormatter.format(holdings.length)}</strong>
           <small>Verschillende posities</small>
         </article>
-        <article className="stocks-summary__card">
+        <article className="positions-summary__card">
           <span>Netto kostprijs</span>
           <strong>{formatCurrency(totalPurchaseValue, currency)}</strong>
           <small>Resterende FIFO-kostprijs inclusief commissie</small>
         </article>
-        <article className="stocks-summary__card">
+        <article className="positions-summary__card">
           <span>Netto positiewaarde</span>
           <strong>{totalCurrentValue === null ? '—' : formatCurrency(totalCurrentValue, currency)}</strong>
           <small>{hasCompletePrices ? 'Actuele waarde van open aandelen' : 'Beschikbaar na koppeling met actuele koersen'}</small>
         </article>
-        <article className={`stocks-summary__card stocks-summary__card--${hasCompletePrices ? differenceDirection : 'pending'}`}>
+        <article className={`positions-summary__card positions-summary__card--${hasCompletePrices ? differenceDirection : 'pending'}`}>
           <span>Winst/verlies aandelen</span>
           <strong className={`metric--${differenceDirection}`}>
             {totalDifference === null ? '—' : formatCurrency(totalDifference, currency)}
@@ -103,24 +103,24 @@ export default function StocksPage({ holdings, currency }: StocksPageProps) {
         </article>
       </section>
 
-      <section className="stocks-data" aria-labelledby="stocks-table-title">
-        <header className="stocks-data__header">
+      <section className="positions-data" aria-labelledby="stocks-table-title">
+        <header className="positions-data__header">
           <div>
             <h2 id="stocks-table-title">Aandelenposities</h2>
             <p>{hasCompletePrices ? 'Open posities met de laatst opgehaalde IBKR-koersen.' : 'Open posities op basis van de aangeleverde Flex-trades.'}</p>
           </div>
-          <span className={`stocks-data__status${hasCompletePrices ? ' stocks-data__status--live' : ''}`}>
+          <span className={`positions-data__status${hasCompletePrices ? ' positions-data__status--live' : ''}`}>
             {hasCompletePrices ? 'Actuele IBKR-koersen' : 'Actuele koersen nog niet gekoppeld'}
           </span>
         </header>
 
         {holdings.length === 0 ? (
-          <div className="stocks-empty">
+          <div className="positions-empty">
             <h3>Geen open aandelen gevonden</h3>
             <p>Importeer een Flex-rapport met aandelentrades om posities te tonen.</p>
           </div>
         ) : (
-          <div className="stocks-table-region" tabIndex={0} aria-label="Aandelenposities; horizontaal scrollbaar op een klein scherm">
+          <div className="positions-table-region" tabIndex={0} aria-label="Aandelenposities; horizontaal scrollbaar op een klein scherm">
             <table className="stocks-table">
               <caption className="visually-hidden">Open aandelenposities met covered-call-dekking, aankoop- en actuele waardes en de koersverandering van vandaag</caption>
               <thead>

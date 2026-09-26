@@ -1,3 +1,5 @@
+import { assignOptionStrategies } from '../shared/option-strategy.mjs'
+
 const MONTHS_IN_YEAR = 12
 const MONTH_LABELS = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec']
 
@@ -61,9 +63,78 @@ function normalizeOptionTrades(trades) {
       tradePrice: Number(trade.tradePrice),
       commission: Number(trade.ibCommission),
       openClose: trade.openCloseIndicator,
+      symbol: trade.underlyingSymbol || trade.symbol,
+      name: trade.description || trade.underlyingSymbol || trade.symbol,
+      expiry: trade.expiry,
+      optionRight: trade.putCall || trade.subCategory,
+      strike: Number(trade.strike),
     }))
     .filter((trade) => trade.conid && trade.dateTime && Number.isFinite(trade.quantity) && Number.isFinite(trade.tradePrice))
     .sort((left, right) => left.dateTime.localeCompare(right.dateTime))
+}
+
+function optionHoldingsSummary(optionTrades) {
+  const tradesByContract = Map.groupBy(optionTrades, (trade) => trade.conid)
+  const holdings = []
+
+  for (const [conid, contractTrades] of tradesByContract) {
+    const lots = []
+
+    for (const trade of contractTrades) {
+      if (trade.openClose === 'O' && Math.abs(trade.quantity) >= 0.000_001) {
+        lots.push({
+          quantity: Math.abs(trade.quantity),
+          direction: Math.sign(trade.quantity),
+          openedAt: trade.dateTime.slice(0, 10),
+          tradePrice: trade.tradePrice,
+        })
+        continue
+      }
+
+      if (trade.openClose !== 'C' || Math.abs(trade.quantity) < 0.000_001) continue
+      let quantityToClose = Math.abs(trade.quantity)
+      const directionToClose = -Math.sign(trade.quantity)
+
+      for (const lot of lots) {
+        if (quantityToClose <= 0 || lot.direction !== directionToClose || lot.quantity <= 0) continue
+        const closedQuantity = Math.min(quantityToClose, lot.quantity)
+        lot.quantity -= closedQuantity
+        quantityToClose -= closedQuantity
+      }
+    }
+
+    const remainingLots = lots.filter((lot) => lot.quantity >= 0.000_001)
+    if (remainingLots.length === 0) continue
+    const quantity = remainingLots.reduce((sum, lot) => sum + lot.quantity * lot.direction, 0)
+    if (Math.abs(quantity) < 0.000_001) continue
+
+    const absoluteQuantity = remainingLots.reduce((sum, lot) => sum + lot.quantity, 0)
+    const metadata = contractTrades.at(-1)
+    const expiry = metadata.expiry || null
+    const chosenDte = expiry
+      ? round(remainingLots.reduce((sum, lot) => sum + calendarDaysBetween(lot.openedAt, expiry) * lot.quantity, 0) / absoluteQuantity)
+      : null
+
+    holdings.push({
+      conid,
+      symbol: metadata.symbol || conid,
+      name: metadata.name || metadata.symbol || conid,
+      quantity: round(quantity, 4),
+      optionRight: metadata.optionRight || null,
+      strike: Number.isFinite(metadata.strike) ? metadata.strike : null,
+      expiry,
+      openedAt: remainingLots.map((lot) => lot.openedAt).sort()[0],
+      chosenDte,
+      averageOpenPrice: round(remainingLots.reduce((sum, lot) => sum + lot.tradePrice * lot.quantity, 0) / absoluteQuantity, 4),
+      currentPrice: null,
+      currentValue: null,
+      difference: null,
+      differencePercentage: null,
+    })
+  }
+
+  return assignOptionStrategies(holdings)
+    .sort((left, right) => `${left.expiry || ''}${left.symbol}${left.strike}`.localeCompare(`${right.expiry || ''}${right.symbol}${right.strike}`))
 }
 
 function premiumSummary(optionTrades) {
@@ -295,6 +366,7 @@ export function createPortfolioSummary({ equityXml, tradesXml, optionXml, curren
   const currentMonth = latest.date.slice(0, 7)
   const previousMonth = shiftMonth(`${currentMonth}-01`, -1).slice(0, 7)
   const stockHoldings = stockHoldingsSummary(trades)
+  const optionHoldings = optionHoldingsSummary(optionTrades)
   const premiumForMonth = (month) => ({
     month,
     ...premiumSummary(optionTrades.filter((trade) => trade.dateTime.startsWith(month))),
@@ -319,6 +391,7 @@ export function createPortfolioSummary({ equityXml, tradesXml, optionXml, curren
     monthlyBalanceChanges: monthlyBalanceChanges(rows, start, latest),
     tradingActivity: tradingActivitySummary(optionTrades),
     stockHoldings,
+    optionHoldings,
     portfolioAllocation: portfolioAllocation(stockHoldings, latest),
     premiumPeriods: {
       currentMonth: premiumForMonth(currentMonth),

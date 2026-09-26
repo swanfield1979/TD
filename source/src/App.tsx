@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
+  ArrowSwapRegular,
   DataTrendingRegular,
   DismissRegular,
   HomeRegular,
@@ -9,14 +10,25 @@ import type { MetricDirection, PortfolioMetric, PortfolioSummary } from './types
 import MonthlyBalanceChart from './MonthlyBalanceChart'
 import PortfolioAllocationCard from './PortfolioAllocationCard'
 import StocksPage from './StocksPage'
+import OptionsPage from './OptionsPage'
 import TradingActivityCards from './TradingActivityCards'
 import IbkrConnectionControl from './IbkrConnectionControl'
 import { mergeLiveSnapshot } from './ibkr'
 
 const DATA_URL = '/data/portfolio-summary.json'
-type Page = 'dashboard' | 'stocks'
+type Page = 'dashboard' | 'stocks' | 'options'
 
-const pageFromHash = (): Page => window.location.hash === '#stocks' ? 'stocks' : 'dashboard'
+const pageFromHash = (): Page => {
+  if (window.location.hash === '#stocks') return 'stocks'
+  if (window.location.hash === '#options') return 'options'
+  return 'dashboard'
+}
+
+const pageTitles: Record<Page, string> = {
+  dashboard: 'Dashboard',
+  stocks: 'Stocks',
+  options: 'Options',
+}
 
 const currencyFormatter = (currency: string, showSign = false) =>
   new Intl.NumberFormat('nl-NL', {
@@ -118,7 +130,7 @@ function App() {
   }, [])
 
   useEffect(() => {
-    document.title = `${currentPage === 'dashboard' ? 'Dashboard' : 'Stocks'} · Trading Monitor`
+    document.title = `${pageTitles[currentPage]} · Trading Monitor`
   }, [currentPage])
 
   useEffect(() => {
@@ -173,6 +185,14 @@ function App() {
             <DataTrendingRegular aria-hidden="true" />
             <span>Stocks</span>
           </a>
+          <a
+            className={`nav-item${currentPage === 'options' ? ' nav-item--active' : ''}`}
+            href="#options"
+            aria-current={currentPage === 'options' ? 'page' : undefined}
+          >
+            <ArrowSwapRegular aria-hidden="true" />
+            <span>Options</span>
+          </a>
         </nav>
         <IbkrConnectionControl onSnapshot={handleLiveSnapshot} />
       </aside>
@@ -180,7 +200,7 @@ function App() {
       <main className="main-content">
         <header className="page-header">
           <div>
-            <h1>{currentPage === 'dashboard' ? 'Dashboard' : 'Stocks'}</h1>
+            <h1>{pageTitles[currentPage]}</h1>
           </div>
           {summary && (
             <div className="data-freshness" title={hasLiveSnapshot ? `IBKR-snapshot opgehaald op ${summary.sourceUpdatedAt}` : `Bronbestand gegenereerd op ${summary.sourceUpdatedAt}`}>
@@ -267,6 +287,14 @@ function App() {
 
         {!isLoading && summary && currentPage === 'stocks' && (
           <StocksPage holdings={summary.stockHoldings ?? []} currency={summary.currency} />
+        )}
+
+        {!isLoading && summary && currentPage === 'options' && (
+          <OptionsPage
+            holdings={summary.optionHoldings ?? []}
+            currency={summary.currency}
+            asOfDate={summary.balance.toDate}
+          />
         )}
       </main>
     </div>

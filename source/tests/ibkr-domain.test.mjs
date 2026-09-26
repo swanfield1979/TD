@@ -15,6 +15,7 @@ test('normaliseert actuele IBKR rekening- en positiegegevens zonder rekeningnumm
       symbol: 'TEST',
       localSymbol: 'TEST',
       assetCategory: 'STK',
+      optionStrike: null,
       currency: 'USD',
       position: 10,
       marketPrice: 105,
@@ -36,6 +37,8 @@ test('normaliseert actuele IBKR rekening- en positiegegevens zonder rekeningnumm
     name: 'TEST',
     assetCategory: 'STK',
     optionRight: null,
+    optionStrike: null,
+    optionExpiry: null,
     multiplier: null,
     currency: 'USD',
     quantity: 10,
@@ -50,6 +53,34 @@ test('normaliseert actuele IBKR rekening- en positiegegevens zonder rekeningnumm
     realizedPnl: 12.5,
   })
   assert.equal('account' in snapshot, false)
+})
+
+test('normaliseert optiecontractgegevens voor de Options-pagina', () => {
+  const accountValues = new Map([['NetLiquidation', { value: '5000', currency: 'USD' }]])
+  const snapshot = createLiveSnapshot({
+    accountValues,
+    positions: [{
+      conid: 456,
+      symbol: 'TEST',
+      localSymbol: 'TEST  261120P00020000',
+      assetCategory: 'OPT',
+      optionRight: 'P',
+      optionStrike: 20,
+      optionExpiry: '20261120',
+      multiplier: 100,
+      currency: 'USD',
+      position: -2,
+      marketPrice: 1.25,
+      marketValue: -250,
+      averageCost: 150,
+      unrealizedPnl: 50,
+      realizedPnl: 0,
+    }],
+  })
+
+  assert.equal(snapshot.positions[0].optionStrike, 20)
+  assert.equal(snapshot.positions[0].optionExpiry, '2026-11-20')
+  assert.equal(snapshot.positions[0].optionRight, 'P')
 })
 
 test('berekent de dagstijging op basis van de vorige slotkoers', () => {
