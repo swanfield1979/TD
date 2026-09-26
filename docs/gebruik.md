@@ -69,6 +69,20 @@ Alle geldbedragen worden uitsluitend met het `$`-teken getoond. De totalen uit h
 
 Een positief resultaat of een opbrengst wordt groen weergegeven. Een negatief resultaat of een kostenpost wordt rood weergegeven. Terugkoop en commissie krijgen daarom een minteken en rode kleur. Tekst en tekens zorgen dat betekenis niet alleen via kleur wordt overgebracht.
 
+## Trades
+
+De pagina **Trades** toont alle afgesloten optiecycli, gesorteerd van nieuw naar oud en verdeeld over pagina's van maximaal 50 regels. Per trade staan de onderliggende waarde, long/short en call/put, strike, openings- en sluitingsdatum, aanhoudduur, openingspremie en netto winst of verlies.
+
+Het nettoresultaat van een volledig gemeten trade is de som van alle verkoop- en aankoopstromen plus commissies binnen de cyclus. **Rendement** is dit resultaat gedeeld door de absolute openingspremie. Daarmee is de berekening consistent voor zowel gekochte als geschreven opties.
+
+**Geannualiseerd (lineair)** rekent het trade-rendement om met:
+
+`trade-rendement × 365 ÷ aantal aangehouden dagen`
+
+Voor een trade die op dezelfde kalenderdag opent en sluit, wordt voor de jaaromrekening minimaal één dag gebruikt. Het geannualiseerde percentage is uitsluitend een theoretische vergelijking; het veronderstelt dat dezelfde trade steeds opnieuw beschikbaar is en is geen voorspelling van toekomstig rendement.
+
+Van trades die vóór het beschikbare Flex-bereik zijn geopend, zijn het gerealiseerde dollarresultaat en de sluitingsgegevens wel zichtbaar. Openingspremie, aanhoudduur en percentages blijven dan `—`, omdat de ontbrekende opening niet wordt geschat.
+
 ## Data verversen
 
 Vervang de XML-bestanden in `source/data/private/` en voer vanuit `source/` opnieuw uit:

@@ -2,7 +2,7 @@
 
 Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voortgang op basis van Interactive Brokers Flex-rapporten.
 
-**Versie/status:** 0.11.0, intern dashboard met afzonderlijke Options-, Goals- en Stocks-overzichten, automatische strategieherkenning, jaarlijkse doelplanning, Nginx-hosting op poort 80 en een read-only IBKR Gateway-koppeling met mobiele IB Key MFA.
+**Versie/status:** 0.12.0, intern dashboard met afzonderlijke Options-, Goals-, Stocks- en Trades-overzichten, automatische strategieherkenning, jaarlijkse doelplanning, Nginx-hosting op poort 80 en een read-only IBKR Gateway-koppeling met mobiele IB Key MFA.
 
 | Map | Inhoud |
 | --- | --- |
@@ -22,6 +22,7 @@ Zie [`docs/installatie.md`](docs/installatie.md) voor de installatie en [`source
 - Stocks-pagina met open aandelen, covered-call-dekking, nettokostprijs, actuele nettowaarde, winst/verlies en procentuele koersbeweging van vandaag.
 - Options-pagina met open contracten, long/short-richting, strategie, strike, expiratie, gekozen DTE, resterende dagen en actueel winst/verlies.
 - Goals-pagina met een jaarlijks doel van 30% rendement boven op de vorige jaarafsluiting, $ 1.200 inleg, voortgang ten opzichte van het jaarschema en een vijfjarenplanning.
+- Trades-pagina met alle afgesloten optiecycli, nettoresultaat, trade-rendement, lineair geannualiseerd rendement en paginering van maximaal 50 regels.
 - Optietrades, premiebehoud, gemiddelde looptijd en netto maandpremies.
 - Positieve en negatieve resultaten met tekst, pictogram en kleur.
 - Lokale verwerking: de ruwe financiële bestanden worden niet aan Git toegevoegd.

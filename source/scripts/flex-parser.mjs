@@ -65,6 +65,7 @@ function normalizeOptionTrades(trades) {
       quantity: Number(trade.quantity),
       tradePrice: Number(trade.tradePrice),
       commission: Number(trade.ibCommission),
+      realizedPnl: Number(trade.fifoPnlRealized),
       openClose: trade.openCloseIndicator,
       symbol: trade.underlyingSymbol || trade.symbol,
       name: trade.description || trade.underlyingSymbol || trade.symbol,
@@ -74,6 +75,113 @@ function normalizeOptionTrades(trades) {
     }))
     .filter((trade) => trade.conid && trade.dateTime && Number.isFinite(trade.quantity) && Number.isFinite(trade.tradePrice))
     .sort((left, right) => left.dateTime.localeCompare(right.dateTime))
+}
+
+function closedTradesSummary(optionTrades) {
+  const tradesByContract = Map.groupBy(optionTrades, (trade) => trade.conid)
+  const closedTrades = []
+
+  for (const [conid, contractTrades] of tradesByContract) {
+    let position = 0
+    let cycleIndex = 0
+    let cycle = null
+    let priorPeriodCycle = null
+
+    for (const trade of contractTrades) {
+      const commission = Number.isFinite(trade.commission) ? trade.commission : 0
+
+      if (trade.openClose === 'O') {
+        if (priorPeriodCycle) {
+          closedTrades.push(priorPeriodCycle)
+          priorPeriodCycle = null
+        }
+        if (!cycle || Math.abs(position) < 0.000_001) {
+          cycleIndex += 1
+          cycle = {
+            id: `${conid}-${cycleIndex}`,
+            conid,
+            symbol: trade.symbol || conid,
+            name: trade.name || trade.symbol || conid,
+            optionRight: trade.optionRight || null,
+            strike: Number.isFinite(trade.strike) ? trade.strike : null,
+            expiry: trade.expiry || null,
+            direction: trade.quantity < 0 ? 'short' : 'long',
+            quantity: 0,
+            openedAt: trade.dateTime.slice(0, 10),
+            closedAt: null,
+            daysHeld: null,
+            openingValue: 0,
+            profit: 0,
+            profitPercentage: null,
+            annualizedPercentage: null,
+            cashFlow: 0,
+          }
+          position = 0
+        }
+        cycle.quantity += Math.abs(trade.quantity)
+        cycle.openingValue += Math.abs(trade.quantity * trade.tradePrice * 100)
+        cycle.cashFlow += -trade.quantity * trade.tradePrice * 100 + commission
+        position += trade.quantity
+        continue
+      }
+
+      if (trade.openClose !== 'C') continue
+      if (!cycle || Math.abs(position) < 0.000_001) {
+        const realizedPnl = Number.isFinite(trade.realizedPnl) ? trade.realizedPnl : 0
+        if (!priorPeriodCycle) {
+          cycleIndex += 1
+          priorPeriodCycle = {
+            id: `${conid}-prior-${cycleIndex}`,
+            conid,
+            symbol: trade.symbol || conid,
+            name: trade.name || trade.symbol || conid,
+            optionRight: trade.optionRight || null,
+            strike: Number.isFinite(trade.strike) ? trade.strike : null,
+            expiry: trade.expiry || null,
+            direction: trade.quantity > 0 ? 'short' : 'long',
+            quantity: 0,
+            openedAt: null,
+            closedAt: trade.dateTime.slice(0, 10),
+            daysHeld: null,
+            openingValue: null,
+            profit: 0,
+            profitPercentage: null,
+            annualizedPercentage: null,
+          }
+        }
+        priorPeriodCycle.quantity += Math.abs(trade.quantity)
+        priorPeriodCycle.closedAt = trade.dateTime.slice(0, 10)
+        priorPeriodCycle.profit += realizedPnl + commission
+        continue
+      }
+
+      cycle.cashFlow += -trade.quantity * trade.tradePrice * 100 + commission
+      position += trade.quantity
+      if (Math.abs(position) >= 0.000_001) continue
+
+      cycle.closedAt = trade.dateTime.slice(0, 10)
+      cycle.daysHeld = calendarDaysBetween(cycle.openedAt, cycle.closedAt)
+      cycle.profit = round(cycle.cashFlow)
+      cycle.openingValue = round(cycle.openingValue)
+      cycle.profitPercentage = cycle.openingValue ? round((cycle.profit / cycle.openingValue) * 100, 1) : null
+      cycle.annualizedPercentage = cycle.profitPercentage === null
+        ? null
+        : round(cycle.profitPercentage * (365 / Math.max(1, cycle.daysHeld)), 1)
+      delete cycle.cashFlow
+      closedTrades.push(cycle)
+      cycle = null
+      position = 0
+    }
+
+    if (priorPeriodCycle) {
+      priorPeriodCycle.profit = round(priorPeriodCycle.profit)
+      closedTrades.push(priorPeriodCycle)
+    }
+  }
+
+  return closedTrades.sort((left, right) =>
+    `${right.closedAt}${right.id}`.localeCompare(`${left.closedAt}${left.id}`),
+  )
 }
 
 function optionHoldingsSummary(optionTrades) {
@@ -402,6 +510,7 @@ export function createPortfolioSummary({ equityXml, tradesXml, optionXml, curren
   const previousMonth = shiftMonth(`${currentMonth}-01`, -1).slice(0, 7)
   const stockHoldings = stockHoldingsSummary(trades)
   const optionHoldings = optionHoldingsSummary(optionTrades)
+  const closedTrades = closedTradesSummary(optionTrades)
   const premiumForMonth = (month) => ({
     month,
     ...premiumSummary(optionTrades.filter((trade) => trade.dateTime.startsWith(month))),
@@ -427,6 +536,7 @@ export function createPortfolioSummary({ equityXml, tradesXml, optionXml, curren
     tradingActivity: tradingActivitySummary(optionTrades),
     stockHoldings,
     optionHoldings,
+    closedTrades,
     goalPlan: goalPlanSummary(rows, latest),
     portfolioAllocation: portfolioAllocation(stockHoldings, latest),
     premiumPeriods: {

@@ -1,5 +1,13 @@
 # Versiehistorie
 
+## 0.12.0 – afgesloten trades
+
+- Trades is als laatste navigatieoptie toegevoegd.
+- Alle afgesloten optiecycli worden van nieuw naar oud getoond met maximaal 50 regels per pagina.
+- Per trade zijn positie, strike, openings- en sluitingsdatum, aanhoudduur, openingspremie en nettoresultaat zichtbaar.
+- Trade-rendement en lineair geannualiseerd rendement worden afzonderlijk getoond en uitgelegd.
+- Oudere trades zonder opening in het Flex-bereik blijven zichtbaar zonder ontbrekende percentages te schatten.
+
 ## 0.11.0 – jaarlijkse doelen
 
 - Goals is als derde navigatieoptie toegevoegd tussen Options en Stocks.

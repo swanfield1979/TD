@@ -102,6 +102,25 @@ export interface GoalPlan {
   years: GoalYear[]
 }
 
+export interface ClosedTrade {
+  id: string
+  conid: string
+  symbol: string
+  name: string
+  optionRight: string | null
+  strike: number | null
+  expiry: string | null
+  direction: 'long' | 'short'
+  quantity: number
+  openedAt: string | null
+  closedAt: string
+  daysHeld: number | null
+  openingValue: number | null
+  profit: number
+  profitPercentage: number | null
+  annualizedPercentage: number | null
+}
+
 export type CoveredCallCoverageStatus = 'complete' | 'partial' | 'none' | 'over' | 'not_applicable'
 
 export interface CoveredCallCoverage {
@@ -168,6 +187,7 @@ export interface PortfolioSummary {
   stockHoldings: StockHolding[]
   optionHoldings: OptionHolding[]
   goalPlan: GoalPlan | null
+  closedTrades: ClosedTrade[]
   premiumPeriods: {
     currentMonth: PremiumPeriod
     previousMonth: PremiumPeriod

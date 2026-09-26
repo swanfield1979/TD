@@ -596,7 +596,7 @@ button:focus-visible, a:focus-visible {
 
 .balance-chart--empty { color: var(--z365-text-secondary); }
 
-.stocks-page, .options-page, .goals-page { min-width: 0; }
+.stocks-page, .options-page, .goals-page, .trades-page { min-width: 0; }
 
 .goals-summary {
   display: grid;
@@ -986,6 +986,84 @@ button:focus-visible, a:focus-visible {
   font-weight: 650;
 }
 
+.trades-table {
+  width: 100%;
+  min-width: 1250px;
+  border-collapse: collapse;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.trades-table th,
+.trades-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--z365-stroke);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.trades-table thead th {
+  background: var(--z365-surface-2);
+  color: var(--z365-text-secondary);
+  font-size: 10px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.trades-table tbody tr:hover { background: rgba(76, 164, 255, 0.035); }
+.trades-table tbody th { min-width: 180px; }
+.trades-table tbody th strong,
+.trades-table tbody th small,
+.trades-table td small { display: block; }
+.trades-table tbody th strong { color: var(--z365-text-primary); font-size: 12px; }
+.trades-table tbody th small {
+  max-width: 220px;
+  margin-top: 2px;
+  overflow: hidden;
+  color: var(--z365-text-muted);
+  font-size: 9px;
+  font-weight: 400;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.trades-table td small { margin-top: 1px; font-size: 9px; font-weight: 500; }
+.trades-table__number { text-align: right !important; white-space: nowrap; }
+.trades-table__unavailable { color: var(--z365-text-muted); }
+.trade-position, .trade-position strong, .trade-position small { display: block; }
+.trade-position strong { font-size: 11px; }
+.trade-position small { margin-top: 1px; color: var(--z365-text-muted); font-size: 9px; }
+
+.trades-pagination {
+  min-height: 62px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 9px 16px;
+  border-top: 1px solid var(--z365-stroke);
+}
+.trades-pagination p { margin: 0; color: var(--z365-text-secondary); font-size: 11px; }
+.trades-pagination > div { display: flex; align-items: center; gap: 5px; }
+.trades-pagination button {
+  min-width: 36px;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--z365-stroke);
+  border-radius: var(--z365-radius-control);
+  background: var(--z365-surface-2);
+  color: var(--z365-text-secondary);
+  font-size: 11px;
+  cursor: pointer;
+}
+.trades-pagination button svg { width: 16px; height: 16px; }
+.trades-pagination button:hover:not(:disabled) { border-color: var(--z365-stroke-strong); color: var(--z365-text-primary); }
+.trades-pagination button:disabled { color: var(--z365-text-muted); cursor: not-allowed; opacity: 0.55; }
+.trades-pagination button.trades-pagination__active { border-color: var(--z365-accent-primary); background: rgba(76, 164, 255, 0.14); color: var(--z365-text-primary); font-weight: 700; }
+.trades-pagination > div > span { min-width: 24px; color: var(--z365-text-muted); text-align: center; }
+.trades-data__note { margin: 0; padding: 0 16px 14px; color: var(--z365-text-muted); font-size: 10px; }
+
 .positions-empty { padding: 36px 20px; text-align: center; }
 .positions-empty h3 { margin: 0 0 5px; font-size: 15px; }
 .positions-empty p { margin: 0; color: var(--z365-text-secondary); font-size: 12px; }
@@ -1117,6 +1195,7 @@ button:focus-visible, a:focus-visible {
   .goal-progress__amounts { grid-template-columns: minmax(0, 1fr); }
   .goal-progress__amounts > div:last-child { text-align: left; }
   .goal-progress__details { grid-template-columns: minmax(0, 1fr); }
+  .trades-pagination { align-items: flex-start; flex-direction: column; }
 }
 
 @media (prefers-reduced-motion: reduce) {

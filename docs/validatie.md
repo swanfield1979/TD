@@ -46,3 +46,7 @@ De eerste versie wordt gecontroleerd met:
 - Options-layout: alle kolommen passen op breed desktopformaat; op 768 pixels blijft de pagina zelf begrensd en scrolt uitsluitend de tabel horizontaal.
 - Goals-berekening: eindstand 2025 `$ 82.465,00`, 30% rendement `$ 24.739,50`, jaarlijkse inleg `$ 1.200,00` en jaardoel 2026 `$ 108.404,50` gecontroleerd tegen de gegenereerde brondata.
 - Goals-layout: vier compacte bronkaarten, een semantische voortgangsbalk, voor/achter-schema-indicator en vijfjarenplanning visueel gecontroleerd in de bestaande dashboardstijl.
+- Trades-import: 171 afgesloten optiecycli gevonden; 167 hebben een volledige opening en aanhoudduur, vier oudere cycli tonen het gerealiseerde resultaat zonder ontbrekende openingsgegevens te schatten.
+- Trades-paginering: maximaal 50 regels per pagina, vier pagina's voor de huidige brondata en toegankelijke vorige-, volgende- en paginanummerknoppen.
+- Trades-berekening: netto cashflow inclusief commissies, rendement op openingspremie en lineaire jaaromrekening gecontroleerd met een gesloten short-puttest.
+- Trades-layout: numerieke kolommen rechts uitgelijnd, semantische winst/verliesweergave en uitsluitend tabelscroll op compacte breedtes.

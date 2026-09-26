@@ -4,6 +4,7 @@ import {
   DataTrendingRegular,
   DismissRegular,
   HomeRegular,
+  HistoryRegular,
   NavigationRegular,
   TargetArrowRegular,
 } from '@fluentui/react-icons'
@@ -13,17 +14,19 @@ import PortfolioAllocationCard from './PortfolioAllocationCard'
 import StocksPage from './StocksPage'
 import OptionsPage from './OptionsPage'
 import GoalsPage from './GoalsPage'
+import TradesPage from './TradesPage'
 import TradingActivityCards from './TradingActivityCards'
 import IbkrConnectionControl from './IbkrConnectionControl'
 import { mergeLiveSnapshot } from './ibkr'
 
 const DATA_URL = '/data/portfolio-summary.json'
-type Page = 'dashboard' | 'stocks' | 'options' | 'goals'
+type Page = 'dashboard' | 'stocks' | 'options' | 'goals' | 'trades'
 
 const pageFromHash = (): Page => {
   if (window.location.hash === '#stocks') return 'stocks'
   if (window.location.hash === '#options') return 'options'
   if (window.location.hash === '#goals') return 'goals'
+  if (window.location.hash === '#trades') return 'trades'
   return 'dashboard'
 }
 
@@ -32,6 +35,7 @@ const pageTitles: Record<Page, string> = {
   stocks: 'Stocks',
   options: 'Options',
   goals: 'Goals',
+  trades: 'Trades',
 }
 
 const currencyFormatter = (currency: string, showSign = false) =>
@@ -205,6 +209,14 @@ function App() {
             <DataTrendingRegular aria-hidden="true" />
             <span>Stocks</span>
           </a>
+          <a
+            className={`nav-item${currentPage === 'trades' ? ' nav-item--active' : ''}`}
+            href="#trades"
+            aria-current={currentPage === 'trades' ? 'page' : undefined}
+          >
+            <HistoryRegular aria-hidden="true" />
+            <span>Trades</span>
+          </a>
         </nav>
         <IbkrConnectionControl onSnapshot={handleLiveSnapshot} />
       </aside>
@@ -311,6 +323,10 @@ function App() {
 
         {!isLoading && summary && currentPage === 'goals' && (
           <GoalsPage goalPlan={summary.goalPlan ?? null} balance={summary.balance} currency={summary.currency} />
+        )}
+
+        {!isLoading && summary && currentPage === 'trades' && (
+          <TradesPage trades={summary.closedTrades ?? []} currency={summary.premiumCurrency ?? summary.currency} />
         )}
       </main>
     </div>

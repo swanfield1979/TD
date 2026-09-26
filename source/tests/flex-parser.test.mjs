@@ -62,7 +62,7 @@ test('berekent dashboardstatistieken uit dagsaldi', () => {
   })
 })
 
-test('berekent optieactiviteit en maandpremies', () => {
+test('berekent optieactiviteit, afgesloten trades en maandpremies', () => {
   const equityXml = `<FlexQueryResponse><FlexStatement whenGenerated="2026-03-20 10:00:00">
     <EquitySummaryByReportDateInBase reportDate="2025-12-31" total="1000" />
     <EquitySummaryByReportDateInBase reportDate="2026-01-31" total="1100" />
@@ -140,6 +140,26 @@ test('berekent optieactiviteit en maandpremies', () => {
       difference: null,
       differencePercentage: null,
       strategy: 'SHORT_PUT',
+    },
+  ])
+  assert.deepEqual(result.closedTrades, [
+    {
+      id: '1-1',
+      conid: '1',
+      symbol: '1',
+      name: '1',
+      optionRight: null,
+      strike: null,
+      expiry: null,
+      direction: 'short',
+      quantity: 1,
+      openedAt: '2026-02-01',
+      closedAt: '2026-02-11',
+      daysHeld: 10,
+      openingValue: 200,
+      profit: 148,
+      profitPercentage: 74,
+      annualizedPercentage: 2701,
     },
   ])
 })
