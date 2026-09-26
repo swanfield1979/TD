@@ -9,7 +9,7 @@ Group=gerard
 ExecStart=/usr/bin/Xvfb :10 -screen 0 1280x800x24 -nolisten tcp
 Restart=always
 RestartSec=3
-PrivateTmp=true
+# IB Gateway moet dezelfde /tmp/.X11-unix-socket kunnen bereiken.
 
 [Install]
 WantedBy=multi-user.target

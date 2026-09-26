@@ -14,7 +14,7 @@ ExecStart=/bin/bash /opt/ibc/gatewaystart.sh
 Restart=on-failure
 RestartSec=10
 UMask=0077
-PrivateTmp=true
+# Xvfb en IB Gateway delen de lokale /tmp/.X11-unix-socket.
 
 [Install]
 WantedBy=multi-user.target
