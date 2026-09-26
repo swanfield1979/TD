@@ -21,3 +21,4 @@ De eerste versie wordt gecontroleerd met:
 - Optieactiviteit: 181 tradecycli, 171 gesloten en 10 open; 167 gesloten cycli hebben een meetbare looptijd.
 - Premies: YTD en de huidige/vorige rapportmaand gecontroleerd tegen de sommen uit het Flex-tradesrapport.
 - Schone browsercontrole na de dashboarduitbreiding: geen fouten of waarschuwingen.
+- Valutaweergave: saldo, winst, jaargrafiek en premiegegevens tonen consequent USD met het `$`-teken.

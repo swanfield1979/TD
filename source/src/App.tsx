@@ -20,6 +20,7 @@ const currencyFormatter = (currency: string) =>
   new Intl.NumberFormat('nl-NL', {
     style: 'currency',
     currency,
+    currencyDisplay: 'narrowSymbol',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })

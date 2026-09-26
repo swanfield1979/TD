@@ -1,5 +1,10 @@
 # Versiehistorie
 
+## 0.3.1 — 26 september 2026
+
+- Saldo, winst, jaargrafiek en optiepremies consequent in USD weergegeven.
+- Compact `$`-teken gebruikt voor alle geldbedragen.
+
 ## 0.3.0 — 26 september 2026
 
 - Blokken toegevoegd voor totaal trades, gesloten/open trades en gemiddelde aanhoudduur.

@@ -19,6 +19,7 @@ function formatCurrency(value: number, currency: string, signDisplay: 'auto' | '
   return new Intl.NumberFormat('nl-NL', {
     style: 'currency',
     currency,
+    currencyDisplay: 'narrowSymbol',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
     signDisplay,

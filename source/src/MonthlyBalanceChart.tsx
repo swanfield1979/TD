@@ -20,6 +20,7 @@ function compactCurrency(value: number, currency: string) {
   return new Intl.NumberFormat('nl-NL', {
     style: 'currency',
     currency,
+    currencyDisplay: 'narrowSymbol',
     notation: 'compact',
     maximumFractionDigits: 0,
   }).format(value)
@@ -29,6 +30,7 @@ function exactCurrency(value: number, currency: string) {
   return new Intl.NumberFormat('nl-NL', {
     style: 'currency',
     currency,
+    currencyDisplay: 'narrowSymbol',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
     signDisplay: 'always',

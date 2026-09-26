@@ -176,7 +176,7 @@ function monthlyBalanceChanges(rows, start, latest) {
   })
 }
 
-export function createPortfolioSummary({ equityXml, tradesXml, optionXml, currency = 'EUR', premiumCurrency = 'USD', generatedAt = new Date().toISOString() }) {
+export function createPortfolioSummary({ equityXml, tradesXml, optionXml, currency = 'USD', premiumCurrency = 'USD', generatedAt = new Date().toISOString() }) {
   const statement = extractTags(equityXml, 'FlexStatement')[0]
   const trades = extractTags(tradesXml, 'Trade')
   const optionTrades = normalizeOptionTrades(trades)
