@@ -1,5 +1,11 @@
 # Versiehistorie
 
+## 0.5.0 — 26 september 2026
+
+- Donutgrafiek met aandelen, opties en geld/overig naast het saldo toegevoegd.
+- Dagrendement in het midden van de verdelingsgrafiek toegevoegd.
+- Indicatieve allocatie uit open aandelenkostprijs en de laatste Flex-saldowaarden berekend.
+
 ## 0.4.0 — 26 september 2026
 
 - Alle dashboardstatistieken in compacte, gelijkmatige kaarten geplaatst.

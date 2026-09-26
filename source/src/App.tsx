@@ -6,6 +6,7 @@ import {
 } from '@fluentui/react-icons'
 import type { MetricDirection, PortfolioMetric, PortfolioSummary } from './types'
 import MonthlyBalanceChart from './MonthlyBalanceChart'
+import PortfolioAllocationCard from './PortfolioAllocationCard'
 import TradingActivityCards from './TradingActivityCards'
 
 const DATA_URL = '/data/portfolio-summary.json'
@@ -174,7 +175,7 @@ function App() {
 
         {!isLoading && summary && (
           <>
-            <section className="dashboard-grid" aria-label="Portfoliostatistieken">
+            <section className="portfolio-summary" aria-label="Saldo en portefeuilleverdeling">
               <StatCard
                 label="Saldo"
                 metric={summary.balance}
@@ -182,6 +183,14 @@ function App() {
                 context={`Netto liquidatiewaarde op ${formatDate(summary.balance.toDate)}`}
                 prominent
               />
+              <PortfolioAllocationCard
+                allocation={summary.portfolioAllocation}
+                balance={summary.balance}
+                dailyProfit={summary.dailyProfit}
+                currency={summary.currency}
+              />
+            </section>
+            <section className="dashboard-grid dashboard-grid--performance" aria-label="Portfoliostatistieken">
               <StatCard
                 label="Winst 2026"
                 metric={summary.yearProfit}

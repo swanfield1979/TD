@@ -14,6 +14,8 @@
   --z365-text-muted: #71838f;
   --z365-accent-brand: #08d8e5;
   --z365-accent-primary: #4ca4ff;
+  --z365-chart-options: #f4c84b;
+  --z365-chart-cash: #e8eef3;
   --z365-status-success: #61d790;
   --z365-status-success-bg: #102a21;
   --z365-status-danger: #ff7b84;
@@ -172,6 +174,14 @@ button:focus-visible, a:focus-visible {
 .data-freshness strong { font-size: 13px; font-weight: 600; }
 .data-freshness small { margin-top: 2px; color: var(--z365-text-secondary); font-size: 12px; }
 
+.portfolio-summary {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(0, 4fr);
+  gap: 14px;
+}
+
+.portfolio-summary .stat-card { min-height: 184px; }
+
 .dashboard-grid,
 .activity-grid {
   display: grid;
@@ -179,7 +189,127 @@ button:focus-visible, a:focus-visible {
   gap: 14px;
 }
 
+.dashboard-grid--performance {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: 14px;
+}
+
 .activity-grid { margin-top: 14px; }
+
+.allocation-card {
+  min-width: 0;
+  min-height: 184px;
+  display: grid;
+  grid-template-columns: 148px minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 22px;
+  padding: 14px 20px 10px;
+  border: 1px solid var(--z365-stroke);
+  border-radius: var(--z365-radius-card);
+  background: var(--z365-surface-1);
+}
+
+.allocation-card__chart {
+  position: relative;
+  width: 136px;
+  height: 136px;
+  grid-row: 1 / 3;
+}
+
+.allocation-card__chart svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.allocation-card__track,
+.allocation-card__segment {
+  fill: none;
+  stroke-width: 13;
+}
+
+.allocation-card__track { stroke: var(--z365-stroke); }
+.allocation-card__segment { stroke-linecap: butt; }
+.allocation-card__segment--stocks { stroke: var(--z365-accent-primary); }
+.allocation-card__segment--options { stroke: var(--z365-chart-options); }
+.allocation-card__segment--cash { stroke: var(--z365-chart-cash); }
+
+.allocation-card__total {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.allocation-card__total strong {
+  font-family: Bahnschrift, "Segoe UI Variable", sans-serif;
+  font-size: 18px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.allocation-card__total span { margin-top: 7px; font-size: 10px; font-weight: 650; }
+
+.allocation-card__legend {
+  align-self: stretch;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.allocation-card__legend li {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr) auto;
+  column-gap: 8px;
+  align-items: center;
+}
+
+.allocation-card__swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.allocation-card__swatch--stocks { background: var(--z365-accent-primary); }
+.allocation-card__swatch--options { background: var(--z365-chart-options); }
+.allocation-card__swatch--cash { background: var(--z365-chart-cash); }
+.allocation-card__label { font-size: 12px; font-weight: 600; }
+
+.allocation-card__amount {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  color: var(--z365-text-secondary);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.allocation-card__amount strong {
+  overflow: hidden;
+  color: var(--z365-text-primary);
+  text-overflow: ellipsis;
+}
+
+.allocation-card__amount small { color: var(--z365-text-secondary); }
+
+.allocation-card__note {
+  align-self: end;
+  margin: 6px 0 0;
+  color: var(--z365-text-muted);
+  font-size: 10px;
+  text-align: right;
+}
 
 .stat-card,
 .activity-card,
@@ -456,7 +586,9 @@ button:focus-visible, a:focus-visible {
 @keyframes spin { to { transform: rotate(360deg); } }
 
 @media (min-width: 1024px) and (max-width: 1279px) {
+  .portfolio-summary { grid-template-columns: minmax(210px, 1fr) minmax(0, 2fr); }
   .dashboard-grid, .activity-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .dashboard-grid--performance { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 1023px) {
@@ -464,7 +596,9 @@ button:focus-visible, a:focus-visible {
   .side-nav { width: 220px; }
   .brand { height: 94px; }
   .main-content { padding-inline: 24px; }
+  .portfolio-summary { grid-template-columns: minmax(0, 1fr); }
   .dashboard-grid, .activity-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dashboard-grid--performance { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .balance-chart__header { display: block; }
   .balance-chart__legend { justify-content: flex-start; margin-top: 16px; }
 }
@@ -506,8 +640,20 @@ button:focus-visible, a:focus-visible {
   .main-content { padding: 24px 16px 32px; }
   .page-header { display: block; padding-right: 48px; }
   .data-freshness { min-width: 0; margin-top: 22px; }
+  .portfolio-summary { grid-template-columns: minmax(0, 1fr); }
   .dashboard-grid, .activity-grid { grid-template-columns: minmax(0, 1fr); }
   .stat-card, .activity-card, .premium-card { min-height: 144px; }
+  .portfolio-summary .stat-card { min-height: 144px; }
+  .allocation-card {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
+    justify-items: center;
+    row-gap: 14px;
+    padding: 18px 16px 14px;
+  }
+  .allocation-card__chart { grid-row: auto; }
+  .allocation-card__legend { width: 100%; grid-template-columns: minmax(0, 1fr); }
+  .allocation-card__note { text-align: center; }
   .state-panel--error { align-items: flex-start; flex-direction: column; }
   .balance-chart { padding: 20px 16px 14px; }
   .balance-chart__plot { min-width: 720px; }
@@ -524,4 +670,5 @@ button:focus-visible, a:focus-visible {
 
 @media (forced-colors: active) {
   .nav-item--active::before, .stat-card::before, .activity-card::before, .premium-card::before, .status-dot, .data-freshness__pulse { background: Highlight; }
+  .allocation-card__segment, .allocation-card__track, .allocation-card__swatch { forced-color-adjust: auto; }
 }

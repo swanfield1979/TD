@@ -9,7 +9,7 @@ De eerste versie wordt gecontroleerd met:
 
 ## Resultaat 26 september 2026
 
-- `npm test`: 3 van 3 tests geslaagd.
+- `npm test`: 4 van 4 tests geslaagd.
 - `npm run build`: geslaagd met TypeScript 7 en Vite 8.
 - XML-import: 192 dagsaldi, 637 trades en 35 optie-events verwerkt.
 - Desktopweergave: visueel gecontroleerd in de lokale browser.
@@ -23,3 +23,4 @@ De eerste versie wordt gecontroleerd met:
 - Schone browsercontrole na de dashboarduitbreiding: geen fouten of waarschuwingen.
 - Valutaweergave: saldo, winst, jaargrafiek en premiegegevens tonen uitsluitend het `$`-teken, zonder uitgeschreven valutacode.
 - Compacte statistiekkaarten: visueel gecontroleerd op brede, middelgrote en mobiele viewport; geen horizontale pagina-overflow en geen consolewaarschuwingen.
+- Portefeuilleverdeling: bronberekening, percentages, toegankelijk tekstalternatief, brede plaatsing naast Saldo en mobiele stapeling gecontroleerd.

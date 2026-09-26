@@ -148,6 +148,71 @@ function tradingActivitySummary(optionTrades) {
   }
 }
 
+function openStockCostBasis(trades) {
+  const stockTrades = trades
+    .filter((trade) => trade.assetCategory === 'STK')
+    .map((trade) => ({
+      conid: trade.conid,
+      dateTime: trade.dateTime,
+      quantity: Number(trade.quantity),
+      tradePrice: Number(trade.tradePrice),
+      openClose: trade.openCloseIndicator,
+    }))
+    .filter((trade) => trade.conid && trade.dateTime && Number.isFinite(trade.quantity) && Number.isFinite(trade.tradePrice))
+    .sort((left, right) => left.dateTime.localeCompare(right.dateTime))
+
+  const lotsByContract = Map.groupBy(stockTrades, (trade) => trade.conid)
+  let costBasis = 0
+
+  for (const contractTrades of lotsByContract.values()) {
+    const lots = []
+
+    for (const trade of contractTrades) {
+      if (trade.openClose === 'O' && trade.quantity > 0) {
+        lots.push({ quantity: trade.quantity, unitCost: trade.tradePrice })
+        continue
+      }
+
+      if (trade.openClose !== 'C' || trade.quantity >= 0) continue
+      let quantityToClose = Math.abs(trade.quantity)
+
+      while (quantityToClose > 0 && lots.length > 0) {
+        const lot = lots[0]
+        const closedQuantity = Math.min(quantityToClose, lot.quantity)
+        lot.quantity -= closedQuantity
+        quantityToClose -= closedQuantity
+        if (lot.quantity <= 0.000_001) lots.shift()
+      }
+    }
+
+    costBasis += lots.reduce((sum, lot) => sum + lot.quantity * lot.unitCost, 0)
+  }
+
+  return round(costBasis)
+}
+
+function portfolioAllocation(trades, latest) {
+  const stocks = openStockCostBasis(trades)
+  const options = round(Math.abs(latest.totalShort))
+  const cashOther = round(Math.max(0, latest.total - stocks + options))
+  const grossTotal = stocks + options + cashOther
+  const category = (key, label, value) => ({
+    key,
+    label,
+    value,
+    percentage: grossTotal ? round((value / grossTotal) * 100, 1) : 0,
+  })
+
+  return {
+    isEstimated: true,
+    categories: [
+      category('stocks', 'Aandelen', stocks),
+      category('options', 'Opties', options),
+      category('cash', 'Geld / overig', cashOther),
+    ],
+  }
+}
+
 function monthlyBalanceChanges(rows, start, latest) {
   const year = latest.date.slice(0, 4)
   let previous = start
@@ -181,7 +246,12 @@ export function createPortfolioSummary({ equityXml, tradesXml, optionXml, curren
   const trades = extractTags(tradesXml, 'Trade')
   const optionTrades = normalizeOptionTrades(trades)
   const rows = extractTags(equityXml, 'EquitySummaryByReportDateInBase')
-    .map((attributes) => ({ date: attributes.reportDate, total: Number(attributes.total) }))
+    .map((attributes) => ({
+      date: attributes.reportDate,
+      total: Number(attributes.total),
+      totalLong: Number(attributes.totalLong ?? attributes.total),
+      totalShort: Number(attributes.totalShort ?? 0),
+    }))
     .filter((row) => row.date && Number.isFinite(row.total))
     .sort((left, right) => left.date.localeCompare(right.date))
 
@@ -217,12 +287,14 @@ export function createPortfolioSummary({ equityXml, tradesXml, optionXml, curren
       optionEvents: extractTags(optionXml, 'OptionEAE').length,
     },
     balance: metric(latest.total, undefined, latest.date),
+    dailyProfit: metric(latest.total - rows.at(-2).total, rows.at(-2).date, latest.date),
     yearProfit: metric(yearProfit, start.date, latest.date),
     currentMonthProfit: metric(latest.total - currentMonthBase.total, currentMonthBase.date, latest.date),
     previousMonthProfit: metric(currentMonthBase.total - previousMonthBase.total, previousMonthBase.date, currentMonthBase.date),
     averageMonthlyProfit: { ...metric(yearProfit / monthCount, start.date, latest.date), monthCount },
     monthlyBalanceChanges: monthlyBalanceChanges(rows, start, latest),
     tradingActivity: tradingActivitySummary(optionTrades),
+    portfolioAllocation: portfolioAllocation(trades, latest),
     premiumPeriods: {
       currentMonth: premiumForMonth(currentMonth),
       previousMonth: premiumForMonth(previousMonth),

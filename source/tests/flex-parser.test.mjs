@@ -25,6 +25,7 @@ test('berekent dashboardstatistieken uit dagsaldi', () => {
   })
 
   assert.equal(result.balance.value, 1200)
+  assert.equal(result.dailyProfit.value, 150)
   assert.equal(result.yearProfit.value, 200)
   assert.equal(result.currentMonthProfit.value, 150)
   assert.equal(result.previousMonthProfit.value, -50)
@@ -40,6 +41,11 @@ test('berekent dashboardstatistieken uit dagsaldi', () => {
     ],
   )
   assert.equal(result.monthlyBalanceChanges.length, 12)
+  assert.deepEqual(result.portfolioAllocation.categories, [
+    { key: 'stocks', label: 'Aandelen', value: 0, percentage: 0 },
+    { key: 'options', label: 'Opties', value: 0, percentage: 0 },
+    { key: 'cash', label: 'Geld / overig', value: 1200, percentage: 100 },
+  ])
 })
 
 test('berekent optieactiviteit en maandpremies', () => {
@@ -47,12 +53,13 @@ test('berekent optieactiviteit en maandpremies', () => {
     <EquitySummaryByReportDateInBase reportDate="2025-12-31" total="1000" />
     <EquitySummaryByReportDateInBase reportDate="2026-01-31" total="1100" />
     <EquitySummaryByReportDateInBase reportDate="2026-02-28" total="1150" />
-    <EquitySummaryByReportDateInBase reportDate="2026-03-20" total="1200" />
+    <EquitySummaryByReportDateInBase reportDate="2026-03-20" total="1200" totalLong="1225" totalShort="-25" />
   </FlexStatement></FlexQueryResponse>`
   const tradesXml = `<Trades>
     <Trade assetCategory="OPT" conid="1" dateTime="2026-02-01 10:00:00" quantity="-1" tradePrice="2" ibCommission="-1" openCloseIndicator="O" />
     <Trade assetCategory="OPT" conid="1" dateTime="2026-02-11 10:00:00" quantity="1" tradePrice="0.5" ibCommission="-1" openCloseIndicator="C" />
     <Trade assetCategory="OPT" conid="2" dateTime="2026-03-01 10:00:00" quantity="-2" tradePrice="1.5" ibCommission="-1.5" openCloseIndicator="O" />
+    <Trade assetCategory="STK" conid="3" dateTime="2026-03-02 10:00:00" quantity="10" tradePrice="20" ibCommission="-1" openCloseIndicator="O" />
   </Trades>`
   const result = createPortfolioSummary({ equityXml, tradesXml, optionXml: '<Options />' })
 
@@ -82,4 +89,9 @@ test('berekent optieactiviteit en maandpremies', () => {
     commission: 2,
     net: 148,
   })
+  assert.deepEqual(result.portfolioAllocation.categories, [
+    { key: 'stocks', label: 'Aandelen', value: 200, percentage: 16 },
+    { key: 'options', label: 'Opties', value: 25, percentage: 2 },
+    { key: 'cash', label: 'Geld / overig', value: 1025, percentage: 82 },
+  ])
 })

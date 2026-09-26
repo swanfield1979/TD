@@ -8,6 +8,12 @@ Het dashboard toont vijf bedragen uit `flex_net_liq_into_db.xml`:
 - **Winst vorige maand:** eindsaldo van de vorige maand minus het eindsaldo van de maand daarvoor.
 - **Gemiddeld per maand:** winst 2026 gedeeld door het aantal verstreken kalendermaanden, inclusief de lopende maand.
 
+## Portefeuilleverdeling
+
+Naast het saldo staat een donutgrafiek met aandelen, opties en geld/overig. Het nettosaldo in het midden komt rechtstreeks uit het laatste Flex-dagsaldo. De kleine waarde eronder is het verschil met de vorige handelsdag.
+
+De huidige Flex-bestanden bevatten geen actuele marktwaarde per afzonderlijke positie. Daarom is de verdeling indicatief: aandelen gebruiken de resterende FIFO-kostprijs van open aandelentrades, opties gebruiken de absolute `totalShort`-waarde uit het laatste saldorapport en geld/overig is het resterende bedrag. Zodra een Open Positions-rapport beschikbaar is, kan deze berekening worden vervangen door actuele marktwaarden.
+
 ## Jaarverloop
 
 De lijngrafiek toont voor alle twaalf kalendermaanden het verschil tussen het laatste beschikbare saldo van een maand en het laatste saldo van de voorgaande maand. De lijn verbindt alleen beschikbare maandresultaten. Toekomstige maanden blijven op de tijdas staan met de status `Nog geen data`.

@@ -2,7 +2,7 @@
 
 Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voortgang op basis van Interactive Brokers Flex-rapporten.
 
-**Versie/status:** 0.4.0, lokaal dashboard gebaseerd op Flex-data tot en met 24 september 2026. Een rechtstreekse IBKR-koppeling volgt later.
+**Versie/status:** 0.5.0, lokaal dashboard gebaseerd op Flex-data tot en met 24 september 2026. Een rechtstreekse IBKR-koppeling volgt later.
 
 | Map | Inhoud |
 | --- | --- |
@@ -18,6 +18,7 @@ Zie [`docs/installatie.md`](docs/installatie.md) voor de installatie en [`source
 
 - Donker, responsief dashboard met het Trading Monitor-logo.
 - Saldo en winststatistieken uit lokale IBKR Flex XML-rapporten.
+- Indicatieve portefeuilleverdeling voor aandelen, opties en geld/overig.
 - Optietrades, premiebehoud, gemiddelde looptijd en ontvangen maandpremies.
 - Positieve en negatieve resultaten met tekst, pictogram en kleur.
 - Lokale verwerking: de ruwe financiële bestanden worden niet aan Git toegevoegd.

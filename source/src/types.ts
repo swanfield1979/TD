@@ -38,6 +38,18 @@ export interface TradingActivitySummary {
   measuredClosedTrades: number
 }
 
+export interface PortfolioAllocationCategory {
+  key: 'stocks' | 'options' | 'cash'
+  label: string
+  value: number
+  percentage: number
+}
+
+export interface PortfolioAllocation {
+  isEstimated: boolean
+  categories: PortfolioAllocationCategory[]
+}
+
 export interface PortfolioSummary {
   generatedAt: string
   sourceUpdatedAt: string
@@ -49,6 +61,7 @@ export interface PortfolioSummary {
     optionEvents: number
   }
   balance: PortfolioMetric
+  dailyProfit: PortfolioMetric
   yearProfit: PortfolioMetric
   currentMonthProfit: PortfolioMetric
   previousMonthProfit: PortfolioMetric
@@ -57,6 +70,7 @@ export interface PortfolioSummary {
   }
   monthlyBalanceChanges: MonthlyBalanceChange[]
   tradingActivity: TradingActivitySummary
+  portfolioAllocation: PortfolioAllocation
   premiumPeriods: {
     currentMonth: PremiumPeriod
     previousMonth: PremiumPeriod
