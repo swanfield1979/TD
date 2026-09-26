@@ -680,7 +680,7 @@ button:focus-visible, a:focus-visible {
 
 .stocks-table {
   width: 100%;
-  min-width: 1120px;
+  min-width: 1210px;
   border-collapse: collapse;
   font-size: 12px;
   font-variant-numeric: tabular-nums;
@@ -712,6 +712,7 @@ button:focus-visible, a:focus-visible {
 .stocks-table__number { text-align: right !important; white-space: nowrap; }
 .stocks-table__purchase-value { color: var(--z365-text-primary); font-weight: 650; }
 .stocks-table__unavailable { color: var(--z365-text-muted); }
+.stocks-table__daily-change { display: inline-block; min-width: 52px; font-weight: 700; }
 .cc-coverage,
 .cc-coverage strong,
 .cc-coverage small { display: block; }

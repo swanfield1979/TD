@@ -22,6 +22,7 @@ test('normaliseert actuele IBKR rekening- en positiegegevens zonder rekeningnumm
       averageCost: 100,
       unrealizedPnl: 50,
       realizedPnl: 12.5,
+      previousClose: 100,
     }],
     generatedAt: '2026-09-26T18:30:00.000Z',
   })
@@ -44,9 +45,28 @@ test('normaliseert actuele IBKR rekening- en positiegegevens zonder rekeningnumm
     currentValue: 1050,
     difference: 50,
     differencePercentage: 5,
+    previousClose: 100,
+    dailyChangePercentage: 5,
     realizedPnl: 12.5,
   })
   assert.equal('account' in snapshot, false)
+})
+
+test('berekent de dagstijging op basis van de vorige slotkoers', () => {
+  const accountValues = new Map([['NetLiquidation', { value: '1000', currency: 'USD' }]])
+  const positions = [
+    { conid: 1, symbol: 'UP', assetCategory: 'STK', position: 1, marketPrice: 101.25, marketValue: 101.25, averageCost: 100, unrealizedPnl: 1.25, previousClose: 100 },
+    { conid: 2, symbol: 'FLAT', assetCategory: 'STK', position: 1, marketPrice: 50, marketValue: 50, averageCost: 50, unrealizedPnl: 0, previousClose: 50 },
+    { conid: 3, symbol: 'DOWN', assetCategory: 'STK', position: 1, marketPrice: 48, marketValue: 48, averageCost: 50, unrealizedPnl: -2, previousClose: 50 },
+    { conid: 4, symbol: 'UNKNOWN', assetCategory: 'STK', position: 1, marketPrice: 25, marketValue: 25, averageCost: 25, unrealizedPnl: 0 },
+  ]
+
+  const snapshot = createLiveSnapshot({ accountValues, positions })
+
+  assert.equal(snapshot.positions.find((position) => position.symbol === 'UP').dailyChangePercentage, 1.25)
+  assert.equal(snapshot.positions.find((position) => position.symbol === 'FLAT').dailyChangePercentage, 0)
+  assert.equal(snapshot.positions.find((position) => position.symbol === 'DOWN').dailyChangePercentage, -4)
+  assert.equal(snapshot.positions.find((position) => position.symbol === 'UNKNOWN').dailyChangePercentage, null)
 })
 
 test('weigert een snapshot zonder netto liquidatiewaarde', () => {

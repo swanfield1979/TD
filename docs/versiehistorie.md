@@ -1,5 +1,12 @@
 # Versiehistorie
 
+## 0.9.0 – dagelijkse koersbeweging
+
+- De Stocks-tabel toont als laatste kolom de procentuele koersverandering ten opzichte van de vorige slotkoers.
+- Positieve dagbewegingen zijn groen, negatieve rood en een ongewijzigde koers wordt expliciet als `0,0%` getoond.
+- De read-only IBKR-refresh haalt de vorige slotkoers via live of beschikbare vertraagde marktdata op.
+- Ontbrekende slotkoersen worden als niet beschikbaar getoond en niet als een onjuiste nulwaarde.
+
 ## 0.8.1 – uitgelijnd dashboardraster
 
 - Saldo en portefeuilleverdeling vullen samen dezelfde breedte als Jaarverloop in een rustige 40/60-verdeling.

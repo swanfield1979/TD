@@ -2,8 +2,11 @@ import { createServer } from 'node:http'
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { spawnSync } from 'node:child_process'
-import { IBApi, EventName } from '@stoqey/ib'
+import { IBApi, EventName, MarketDataType } from '@stoqey/ib'
 import { createLiveSnapshot } from './ibkr-domain.mjs'
+
+const PREVIOUS_CLOSE_TICK_TYPES = new Set([9, 75])
+const MARKET_DATA_REQUEST_ID_START = 900_000
 
 const config = {
   listenHost: process.env.IBKR_API_HOST || '127.0.0.1',
@@ -43,11 +46,13 @@ function delay(milliseconds) {
   return new Promise((resolveDelay) => setTimeout(resolveDelay, milliseconds))
 }
 
-function collectSnapshot(timeoutMs = 8_000) {
+function collectSnapshot(timeoutMs = 12_000) {
   return new Promise((resolveSnapshot, rejectSnapshot) => {
     const accountValues = new Map()
     const positions = []
+    const quoteRequests = new Map()
     let activeAccount
+    let quoteTimeout
     let settled = false
     const ib = new IBApi({ host: config.gatewayHost, port: config.gatewayPort })
 
@@ -55,7 +60,9 @@ function collectSnapshot(timeoutMs = 8_000) {
       if (settled) return
       settled = true
       clearTimeout(timeout)
+      clearTimeout(quoteTimeout)
       try {
+        for (const requestId of quoteRequests.keys()) ib.cancelMktData(requestId)
         if (activeAccount) ib.reqAccountUpdates(false, activeAccount)
         ib.disconnect()
       } catch {
@@ -63,6 +70,36 @@ function collectSnapshot(timeoutMs = 8_000) {
       }
       if (error) rejectSnapshot(error)
       else resolveSnapshot(snapshot)
+    }
+
+    const createSnapshot = () => {
+      try {
+        finish(null, createLiveSnapshot({ accountValues, positions }))
+      } catch (error) {
+        finish(error)
+      }
+    }
+
+    const requestPreviousCloses = () => {
+      const stockPositions = positions.filter((position) => position.assetCategory === 'STK' && position.contract)
+      if (stockPositions.length === 0) return createSnapshot()
+
+      try {
+        // IBKR levert live data als die beschikbaar is en valt anders terug op vertraagde koersen.
+        ib.reqMarketDataType(MarketDataType.DELAYED)
+        stockPositions.forEach((position, index) => {
+          const requestId = MARKET_DATA_REQUEST_ID_START + index
+          const marketDataContract = {
+            ...position.contract,
+            exchange: position.contract.exchange || 'SMART',
+          }
+          quoteRequests.set(requestId, position)
+          ib.reqMktData(requestId, marketDataContract, '', false, false)
+        })
+        quoteTimeout = setTimeout(createSnapshot, 4_000)
+      } catch {
+        createSnapshot()
+      }
     }
 
     const timeout = setTimeout(() => finish(new Error('Geen tijdige reactie van IB Gateway.')), timeoutMs)
@@ -94,15 +131,24 @@ function collectSnapshot(timeoutMs = 8_000) {
         averageCost,
         unrealizedPnl,
         realizedPnl,
+        contract,
       })
     })
     ib.on(EventName.accountDownloadEnd, (accountName) => {
       if (accountName !== activeAccount) return
+      requestPreviousCloses()
+    })
+    ib.on(EventName.tickPrice, (requestId, tickType, price) => {
+      const position = quoteRequests.get(requestId)
+      if (!position || !PREVIOUS_CLOSE_TICK_TYPES.has(tickType) || !Number.isFinite(price) || price <= 0) return
+      position.previousClose = price
+      quoteRequests.delete(requestId)
       try {
-        finish(null, createLiveSnapshot({ accountValues, positions }))
-      } catch (error) {
-        finish(error)
+        ib.cancelMktData(requestId)
+      } catch {
+        // De quote kan al door Gateway zijn afgesloten.
       }
+      if (quoteRequests.size === 0) createSnapshot()
     })
     ib.on(EventName.error, (...args) => {
       const error = args.find((value) => value instanceof Error)
@@ -165,7 +211,7 @@ async function refreshInBackground() {
     while (Date.now() < deadline) {
       await delay(5_000)
       try {
-        const snapshot = await collectSnapshot(6_000)
+        const snapshot = await collectSnapshot(10_000)
         await saveSnapshot(snapshot)
         return setStatus('connected', 'Actuele IBKR-posities zijn bijgewerkt.', {
           lastUpdatedAt: snapshot.generatedAt,

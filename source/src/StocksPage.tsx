@@ -18,7 +18,24 @@ function formatCurrency(value: number, currency: string) {
 }
 
 function UnavailableValue() {
-  return <span className="stocks-table__unavailable" title="Beschikbaar na koppeling met actuele positiegegevens">—</span>
+  return <span className="stocks-table__unavailable" title="Niet beschikbaar in de laatst opgehaalde IBKR-gegevens">—</span>
+}
+
+function DailyChangeValue({ value }: { value: number | null }) {
+  if (value === null || !Number.isFinite(value)) return <UnavailableValue />
+  const direction = value > 0 ? 'positive' : value < 0 ? 'negative' : 'neutral'
+  const formattedValue = new Intl.NumberFormat('nl-NL', {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 2,
+    signDisplay: 'exceptZero',
+  }).format(value)
+
+  return (
+    <span className={`stocks-table__daily-change metric--${direction}`}>
+      {formattedValue}%
+      <span className="visually-hidden"> {value > 0 ? 'gestegen vandaag' : value < 0 ? 'gedaald vandaag' : 'ongewijzigd vandaag'}</span>
+    </span>
+  )
 }
 
 const coverageLabels = {
@@ -105,7 +122,7 @@ export default function StocksPage({ holdings, currency }: StocksPageProps) {
         ) : (
           <div className="stocks-table-region" tabIndex={0} aria-label="Aandelenposities; horizontaal scrollbaar op een klein scherm">
             <table className="stocks-table">
-              <caption className="visually-hidden">Open aandelenposities met covered-call-dekking, aankoop- en actuele waardes</caption>
+              <caption className="visually-hidden">Open aandelenposities met covered-call-dekking, aankoop- en actuele waardes en de koersverandering van vandaag</caption>
               <thead>
                 <tr>
                   <th scope="col">Aandeel</th>
@@ -116,6 +133,7 @@ export default function StocksPage({ holdings, currency }: StocksPageProps) {
                   <th scope="col" className="stocks-table__number">Netto kostprijs</th>
                   <th scope="col" className="stocks-table__number">Netto positiewaarde</th>
                   <th scope="col" className="stocks-table__number">Winst/verlies</th>
+                  <th scope="col" className="stocks-table__number" title="Verandering ten opzichte van de vorige slotkoers">Vandaag</th>
                 </tr>
               </thead>
               <tbody>
@@ -145,6 +163,7 @@ export default function StocksPage({ holdings, currency }: StocksPageProps) {
                         </span>
                       )}
                     </td>
+                    <td className="stocks-table__number"><DailyChangeValue value={holding.dailyChangePercentage} /></td>
                   </tr>
                 ))}
               </tbody>
@@ -162,6 +181,7 @@ export default function StocksPage({ holdings, currency }: StocksPageProps) {
                       <span className={`metric--${differenceDirection}`}>{formatCurrency(totalDifference, currency)}</span>
                     )}
                   </td>
+                  <td />
                 </tr>
               </tfoot>
             </table>

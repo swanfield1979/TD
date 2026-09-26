@@ -61,6 +61,7 @@ export interface StockHolding {
   currentValue: number | null
   difference: number | null
   differencePercentage: number | null
+  dailyChangePercentage: number | null
   coveredCallCoverage?: CoveredCallCoverage | null
 }
 
@@ -90,6 +91,7 @@ export interface IbkrLivePosition extends StockHolding {
   currentValue: number
   difference: number
   differencePercentage: number
+  previousClose: number | null
   realizedPnl: number
 }
 

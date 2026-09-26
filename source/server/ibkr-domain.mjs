@@ -19,6 +19,10 @@ export function createLiveSnapshot({ accountValues, positions, generatedAt = new
       const currentValue = Number(position.marketValue ?? 0)
       const difference = Number(position.unrealizedPnl ?? 0)
       const costBasis = currentValue - difference
+      const previousCloseValue = Number(position.previousClose)
+      const previousClose = Number.isFinite(previousCloseValue) && previousCloseValue > 0
+        ? previousCloseValue
+        : null
       const multiplier = position.multiplier === null || position.multiplier === undefined
         ? null
         : Number(position.multiplier)
@@ -38,6 +42,8 @@ export function createLiveSnapshot({ accountValues, positions, generatedAt = new
         currentValue: round(currentValue),
         difference: round(difference),
         differencePercentage: costBasis ? round((difference / Math.abs(costBasis)) * 100, 2) : 0,
+        previousClose: previousClose === null ? null : round(previousClose, 4),
+        dailyChangePercentage: previousClose === null ? null : round(((currentPrice - previousClose) / previousClose) * 100, 2),
         realizedPnl: round(Number(position.realizedPnl ?? 0)),
       }
     })

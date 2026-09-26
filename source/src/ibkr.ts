@@ -42,6 +42,7 @@ export function mergeLiveSnapshot(summary: PortfolioSummary, snapshot: IbkrLiveS
       currentValue: position.currentValue,
       difference: position.difference,
       differencePercentage: position.differencePercentage,
+      dailyChangePercentage: position.dailyChangePercentage,
       coveredCallCoverage: hasCoveredCallMetadata ? calculateCoveredCallCoverage(position, snapshot.positions) : null,
     })),
     portfolioAllocation: {

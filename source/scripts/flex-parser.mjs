@@ -207,6 +207,7 @@ function stockHoldingsSummary(trades) {
       currentValue: null,
       difference: null,
       differencePercentage: null,
+      dailyChangePercentage: null,
     })
   }
 

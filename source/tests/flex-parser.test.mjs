@@ -106,6 +106,7 @@ test('berekent optieactiviteit en maandpremies', () => {
       currentValue: null,
       difference: null,
       differencePercentage: null,
+      dailyChangePercentage: null,
     },
   ])
 })
