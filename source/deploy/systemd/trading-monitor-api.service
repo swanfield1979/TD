@@ -1,0 +1,26 @@
+[Unit]
+Description=Trading Monitor IBKR read-only API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=gerard
+Group=gerard
+WorkingDirectory=/home/gerard/TD/source
+EnvironmentFile=/etc/trading-monitor/ibkr.env
+ExecStart=/bin/bash /home/gerard/TD/source/server/start-api.sh
+Restart=on-failure
+RestartSec=5
+StateDirectory=trading-monitor
+UMask=0077
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/var/lib/trading-monitor
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+LockPersonality=true
+
+[Install]
+WantedBy=multi-user.target

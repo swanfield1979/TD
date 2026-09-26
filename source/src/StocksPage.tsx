@@ -66,9 +66,11 @@ export default function StocksPage({ holdings, currency }: StocksPageProps) {
         <header className="stocks-data__header">
           <div>
             <h2 id="stocks-table-title">Aandelenposities</h2>
-            <p>Open posities op basis van de aangeleverde Flex-trades.</p>
+            <p>{hasCompletePrices ? 'Open posities met de laatst opgehaalde IBKR-koersen.' : 'Open posities op basis van de aangeleverde Flex-trades.'}</p>
           </div>
-          <span className="stocks-data__status">Actuele koersen nog niet gekoppeld</span>
+          <span className={`stocks-data__status${hasCompletePrices ? ' stocks-data__status--live' : ''}`}>
+            {hasCompletePrices ? 'Actuele IBKR-koersen' : 'Actuele koersen nog niet gekoppeld'}
+          </span>
         </header>
 
         {holdings.length === 0 ? (

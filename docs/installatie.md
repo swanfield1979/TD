@@ -68,3 +68,101 @@ sudo rsync -a --delete dist/ /var/www/trading-monitor/
 ```
 
 Een herstart van Nginx is bij alleen gewijzigde websitebestanden niet nodig.
+
+## IBKR Gateway-koppeling met mobiele MFA
+
+De koppeling bestaat uit vier lokaal afgeschermde onderdelen:
+
+1. IBC start IB Gateway en vult de IBKR-inloggegevens in.
+2. IBKR Mobile toont de IB Key MFA-bevestiging aan de gebruiker.
+3. `trading-monitor-api.service` leest rekening- en positiegegevens via de read-only Gateway-socket.
+4. Nginx stuurt uitsluitend `/api/` door naar de backend op `127.0.0.1:8787`.
+
+### Vereisten
+
+- IB Gateway 1050 staat in `/home/gerard/Jts/ibgateway/1050`.
+- IBC staat in `/opt/ibc` en bevat `/opt/ibc/gatewaystart.sh`.
+- In `gatewaystart.sh` staat `TWS_MAJOR_VRSN=1050`.
+- De Gateway gebruikt **Read-Only API**.
+- Gebruik poort `4001` voor een live Gateway of `4002` voor paper trading, tenzij de Gateway zelf anders is ingesteld.
+- IBC `config.ini` bevat de logininstellingen en is uitsluitend leesbaar voor `gerard` (`chmod 600`). Zet dit bestand nooit in Git.
+
+IBC kan de aanmelding starten, maar de IB Key-bevestiging moet altijd handmatig in IBKR Mobile worden goedgekeurd.
+
+### 1. Installeer het virtuele scherm
+
+```bash
+sudo apt update
+sudo apt install -y xvfb
+```
+
+### 2. Controleer IBC
+
+```bash
+test -x /opt/ibc/gatewaystart.sh && echo "IBC startscript gevonden"
+grep '^TWS_MAJOR_VRSN=' /opt/ibc/gatewaystart.sh
+```
+
+Wanneer IBC elders staat, pas `WorkingDirectory` en `ExecStart` in `deploy/systemd/ibc-gateway.service` aan voordat de service wordt geïnstalleerd.
+
+### 3. Installeer de configuratie
+
+```bash
+cd /home/gerard/TD/source
+
+sudo install -d -o root -g gerard -m 0750 /etc/trading-monitor
+sudo cp deploy/trading-monitor/ibkr.env.example /etc/trading-monitor/ibkr.env
+sudo chown root:gerard /etc/trading-monitor/ibkr.env
+sudo chmod 0640 /etc/trading-monitor/ibkr.env
+sudo nano /etc/trading-monitor/ibkr.env
+```
+
+Controleer in `ibkr.env` vooral `IBKR_PORT` en `IBKR_ALLOWED_ORIGINS`. De origin moet exact overeenkomen met het adres waarmee de browser de website opent, bijvoorbeeld `http://192.168.1.22`.
+
+### 4. Installeer de services en beperkte sudo-regel
+
+```bash
+sudo cp deploy/systemd/xvfb.service /etc/systemd/system/xvfb.service
+sudo cp deploy/systemd/ibc-gateway.service /etc/systemd/system/ibc-gateway.service
+sudo cp deploy/systemd/trading-monitor-api.service /etc/systemd/system/trading-monitor-api.service
+sudo cp deploy/sudoers/trading-monitor-ibkr /etc/sudoers.d/trading-monitor-ibkr
+sudo chmod 0440 /etc/sudoers.d/trading-monitor-ibkr
+sudo visudo -cf /etc/sudoers.d/trading-monitor-ibkr
+
+sudo systemctl daemon-reload
+sudo systemctl enable --now xvfb.service
+sudo systemctl enable --now trading-monitor-api.service
+```
+
+`ibc-gateway.service` wordt bewust niet automatisch ingeschakeld: de knop **Verbinden** start deze service wanneer dat nodig is.
+
+### 5. Werk Nginx en de website bij
+
+```bash
+cd /home/gerard/TD/source
+npm ci
+npm test
+npm run build
+sudo rsync -a --delete dist/ /var/www/trading-monitor/
+
+sudo cp deploy/nginx/trading-monitor.conf /etc/nginx/sites-available/trading-monitor
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+### 6. Controleer de backend
+
+```bash
+curl http://127.0.0.1:8787/api/ibkr/status
+sudo systemctl status trading-monitor-api.service --no-pager
+```
+
+Open daarna `http://192.168.1.22/` en klik linksonder op **Verbinden**. Bevestig binnen drie minuten de melding in IBKR Mobile. Na een geslaagde API-handshake veranderen de status en knop naar **IBKR verbonden** en **Vernieuwen**.
+
+Bij een fout:
+
+```bash
+sudo journalctl -u trading-monitor-api.service -u ibc-gateway.service -n 100 --no-pager
+```
+
+Stel deze website en poort 8787 nooit rechtstreeks beschikbaar op internet. De backend luistert daarom uitsluitend op localhost; alleen Nginx mag `/api/` doorgeven.

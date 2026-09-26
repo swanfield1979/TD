@@ -1,0 +1,2 @@
+# Sta de Trading Monitor-backend uitsluitend toe deze ene vaste service te starten.
+gerard ALL=(root) NOPASSWD: /usr/bin/systemctl start ibc-gateway.service

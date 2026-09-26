@@ -63,6 +63,35 @@ export interface StockHolding {
   differencePercentage: number | null
 }
 
+export type IbkrConnectionState = 'offline' | 'refreshing' | 'awaiting_mfa' | 'connected' | 'error'
+
+export interface IbkrConnectionStatus {
+  state: IbkrConnectionState
+  message: string
+  lastUpdatedAt: string | null
+  isBusy: boolean
+}
+
+export interface IbkrLivePosition extends StockHolding {
+  assetCategory: string
+  currency: string
+  currentPrice: number
+  currentValue: number
+  difference: number
+  differencePercentage: number
+  realizedPnl: number
+}
+
+export interface IbkrLiveSnapshot {
+  generatedAt: string
+  asOfDate: string
+  currency: string
+  netLiquidation: number
+  totalCashValue: number | null
+  grossPositionValue: number | null
+  positions: IbkrLivePosition[]
+}
+
 export interface PortfolioSummary {
   generatedAt: string
   sourceUpdatedAt: string

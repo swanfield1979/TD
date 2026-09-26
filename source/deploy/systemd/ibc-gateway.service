@@ -1,0 +1,20 @@
+[Unit]
+Description=IBKR Gateway 1050 via IBC
+After=network-online.target xvfb.service
+Wants=network-online.target
+Requires=xvfb.service
+
+[Service]
+Type=simple
+User=gerard
+Group=gerard
+WorkingDirectory=/opt/ibc
+Environment=DISPLAY=:10
+ExecStart=/bin/bash /opt/ibc/gatewaystart.sh
+Restart=on-failure
+RestartSec=10
+UMask=0077
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

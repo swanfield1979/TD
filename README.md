@@ -2,7 +2,7 @@
 
 Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voortgang op basis van Interactive Brokers Flex-rapporten.
 
-**Versie/status:** 0.6.2, lokaal dashboard met Dashboard- en Stocks-pagina en een Nginx-productieconfiguratie voor de webroot op poort 80. De data is gebaseerd op Flex-rapporten tot en met 24 september 2026; een rechtstreekse IBKR-koppeling volgt later.
+**Versie/status:** 0.7.0, intern dashboard met Dashboard- en Stocks-pagina, Nginx-hosting op poort 80 en een read-only IBKR Gateway-koppeling met mobiele IB Key MFA.
 
 | Map | Inhoud |
 | --- | --- |
@@ -23,6 +23,7 @@ Zie [`docs/installatie.md`](docs/installatie.md) voor de installatie en [`source
 - Optietrades, premiebehoud, gemiddelde looptijd en netto maandpremies.
 - Positieve en negatieve resultaten met tekst, pictogram en kleur.
 - Lokale verwerking: de ruwe financiële bestanden worden niet aan Git toegevoegd.
+- Read-only live-update van saldo en posities via IBC, IB Gateway en IBKR Mobile MFA.
 
 ## Documentatie
 

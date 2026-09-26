@@ -1,0 +1,15 @@
+[Unit]
+Description=Virtual display for IBKR Gateway
+After=network.target
+
+[Service]
+Type=simple
+User=gerard
+Group=gerard
+ExecStart=/usr/bin/Xvfb :10 -screen 0 1280x800x24 -nolisten tcp
+Restart=always
+RestartSec=3
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

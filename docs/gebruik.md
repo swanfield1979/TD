@@ -1,11 +1,19 @@
 # Gebruik en berekeningen
 
+## IBKR-gegevens vernieuwen
+
+Linksonder staat de IBKR-status. Klik op **Verbinden** wanneer Gateway niet actief is. De webapp start dan IBC en toont **IB Key bevestigen**. Keur de melding binnen drie minuten goed in IBKR Mobile.
+
+Na verbinding toont de bediening **IBKR verbonden**. Met **Vernieuwen** worden de actuele netto liquidatiewaarde, open posities, marktprijzen en ongerealiseerde winst/verlies opnieuw opgehaald. Tijdens het ophalen is de knop geblokkeerd om dubbele aanvragen te voorkomen.
+
+Wanneer de koppeling niet beschikbaar is, blijven de laatst geïmporteerde Flex-gegevens zichtbaar. Er worden via deze koppeling geen orders geplaatst.
+
 Het dashboard toont vijf bedragen uit `flex_net_liq_into_db.xml`:
 
 - **Saldo:** het laatste beschikbare totaal van `EquitySummaryByReportDateInBase`.
-- **Winst 2026:** laatste saldo minus het startsaldo van 2026. Waar aanwezig wordt 31 december 2025 als nulmeting gebruikt.
-- **Winst deze maand:** laatste saldo minus het laatste beschikbare saldo vóór de eerste dag van de huidige rapportmaand.
-- **Winst vorige maand:** eindsaldo van de vorige maand minus het eindsaldo van de maand daarvoor.
+- **Nettoresultaat 2026:** laatste netto liquidatiewaarde minus de startwaarde van 2026. Waar aanwezig wordt 31 december 2025 als nulmeting gebruikt.
+- **Nettoresultaat deze maand:** laatste netto liquidatiewaarde minus de laatste beschikbare waarde vóór de eerste dag van de huidige rapportmaand.
+- **Nettoresultaat vorige maand:** netto liquidatiewaarde aan het einde van de vorige maand minus die van de maand daarvoor.
 - **Gemiddeld per maand:** winst 2026 gedeeld door het aantal verstreken kalendermaanden, inclusief de lopende maand.
 
 ## Portefeuilleverdeling
@@ -29,7 +37,7 @@ De huidige Flex-bestanden bevatten geen actuele marktprijzen. Daarom blijven **H
 - **Totaal trades:** afgeronde en nog open optiecycli, gegroepeerd per IBKR-optiecontract. Een cyclus begint bij de eerste opening en eindigt wanneer de positie weer nul is. Contracten die vóór de rapportperiode zijn geopend maar binnen de periode sluiten, tellen als gesloten trade.
 - **Premie behouden:** netto optiepremie gedeeld door alle ontvangen brutopremie. Netto is ontvangen premie minus terugkoopkosten en commissies.
 - **Gemiddeld aangehouden:** gemiddelde kalenderduur van gesloten optiecycli waarvan zowel de openings- als sluitingsdatum in het rapport staat. Het getoonde bereik gebruikt dezelfde gemeten trades.
-- **Ontvangen premie per maand:** brutopremie van verkochte openingsopties. Terugkoop, commissie en netto worden afzonderlijk onder het bedrag vermeld.
+- **Netto premie per maand:** ontvangen brutopremie minus terugkoop en commissie. De drie onderdelen blijven afzonderlijk onder het nettobedrag zichtbaar.
 
 Alle geldbedragen worden uitsluitend met het `$`-teken getoond. De totalen uit het Flex-rapport worden als dollars geïnterpreteerd; het dashboard voert geen aanvullende valutaconversie uit.
 

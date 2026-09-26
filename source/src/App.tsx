@@ -10,6 +10,8 @@ import MonthlyBalanceChart from './MonthlyBalanceChart'
 import PortfolioAllocationCard from './PortfolioAllocationCard'
 import StocksPage from './StocksPage'
 import TradingActivityCards from './TradingActivityCards'
+import IbkrConnectionControl from './IbkrConnectionControl'
+import { mergeLiveSnapshot } from './ibkr'
 
 const DATA_URL = '/data/portfolio-summary.json'
 type Page = 'dashboard' | 'stocks'
@@ -78,6 +80,12 @@ function App() {
   const [isLoading, setIsLoading] = useState(true)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState<Page>(pageFromHash)
+  const [hasLiveSnapshot, setHasLiveSnapshot] = useState(false)
+
+  const handleLiveSnapshot = useCallback((snapshot: Parameters<typeof mergeLiveSnapshot>[1]) => {
+    setSummary((current) => current ? mergeLiveSnapshot(current, snapshot) : current)
+    setHasLiveSnapshot(true)
+  }, [])
 
   const loadSummary = useCallback(async () => {
     setIsLoading(true)
@@ -166,13 +174,7 @@ function App() {
             <span>Stocks</span>
           </a>
         </nav>
-        <div className="side-nav__status">
-          <span className="status-dot" aria-hidden="true" />
-          <div>
-            <strong>Lokale gegevens</strong>
-            <span>IBKR-koppeling volgt later</span>
-          </div>
-        </div>
+        <IbkrConnectionControl onSnapshot={handleLiveSnapshot} />
       </aside>
 
       <main className="main-content">
@@ -181,11 +183,11 @@ function App() {
             <h1>{currentPage === 'dashboard' ? 'Dashboard' : 'Stocks'}</h1>
           </div>
           {summary && (
-            <div className="data-freshness" title={`Bronbestand gegenereerd op ${summary.sourceUpdatedAt}`}>
+            <div className="data-freshness" title={hasLiveSnapshot ? `IBKR-snapshot opgehaald op ${summary.sourceUpdatedAt}` : `Bronbestand gegenereerd op ${summary.sourceUpdatedAt}`}>
               <span className="data-freshness__pulse" aria-hidden="true" />
               <span>
                 <strong>Bijgewerkt t/m {formatDate(summary.balance.toDate)}</strong>
-                <small>{summary.sourceCounts.equityDays} handelsdagen verwerkt</small>
+                <small>{hasLiveSnapshot ? 'Actuele IBKR-positiegegevens' : `${summary.sourceCounts.equityDays} handelsdagen verwerkt`}</small>
               </span>
             </div>
           )}

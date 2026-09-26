@@ -1,17 +1,19 @@
 {
   "name": "trading-monitor",
   "private": true,
-  "version": "0.6.2",
+  "version": "0.7.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "test": "node --test tests/*.test.mjs",
-    "import:flex": "node scripts/import-flex.mjs"
+    "import:flex": "node scripts/import-flex.mjs",
+    "start:api": "node server/ibkr-api.mjs"
   },
   "dependencies": {
     "@fluentui/react-icons": "2.0.343",
+    "@stoqey/ib": "1.6.10",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },

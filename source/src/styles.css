@@ -111,28 +111,75 @@ button:focus-visible, a:focus-visible {
   background: var(--z365-accent-primary);
 }
 
-.side-nav__status {
+.ibkr-control {
   margin-top: auto;
-  display: flex;
-  gap: 10px;
-  padding: 14px 10px 2px;
+  padding: 14px 4px 0;
   border-top: 1px solid var(--z365-stroke);
+}
+
+.ibkr-control__status {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 0 6px;
   color: var(--z365-text-secondary);
   font-size: 12px;
 }
 
-.side-nav__status strong, .side-nav__status span { display: block; }
-.side-nav__status strong { color: var(--z365-text-primary); font-size: 13px; margin-bottom: 2px; }
-
-.status-dot {
-  width: 8px;
-  height: 8px;
-  margin-top: 5px;
+.ibkr-control__status > svg {
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
   flex: 0 0 auto;
-  border-radius: 50%;
-  background: var(--z365-accent-brand);
-  box-shadow: 0 0 0 3px rgba(8, 216, 229, 0.12);
+  color: var(--z365-status-neutral);
 }
+
+.ibkr-control__status span,
+.ibkr-control__status strong,
+.ibkr-control__status small { min-width: 0; display: block; }
+
+.ibkr-control__status strong {
+  color: var(--z365-text-primary);
+  font-size: 12px;
+  line-height: 17px;
+}
+
+.ibkr-control__status small {
+  margin-top: 2px;
+  overflow: hidden;
+  color: var(--z365-text-muted);
+  font-size: 10px;
+  line-height: 14px;
+  text-overflow: ellipsis;
+}
+
+.ibkr-control--connected .ibkr-control__status > svg { color: var(--z365-status-success); }
+.ibkr-control--awaiting_mfa .ibkr-control__status > svg { color: var(--z365-chart-options); }
+.ibkr-control--error .ibkr-control__status > svg { color: var(--z365-status-danger); }
+
+.ibkr-control button {
+  width: 100%;
+  min-height: 40px;
+  margin-top: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid var(--z365-stroke-strong);
+  border-radius: var(--z365-radius-control);
+  background: rgba(76, 164, 255, 0.1);
+  color: var(--z365-text-primary);
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background var(--z365-motion-fast), border-color var(--z365-motion-fast);
+}
+
+.ibkr-control button:hover:not(:disabled) { background: rgba(76, 164, 255, 0.18); }
+.ibkr-control button:disabled { border-color: var(--z365-stroke); color: var(--z365-text-muted); cursor: not-allowed; }
+.ibkr-control button svg { width: 17px; height: 17px; }
+.ibkr-control__spinner { animation: spin 800ms linear infinite; }
 
 .main-content { min-width: 0; padding: 30px clamp(20px, 3vw, 40px) 40px; }
 
@@ -565,8 +612,8 @@ button:focus-visible, a:focus-visible {
   background: var(--z365-surface-1);
 }
 
-.stocks-summary__card--positive { border-left-color: var(--z365-status-positive); }
-.stocks-summary__card--negative { border-left-color: var(--z365-status-negative); }
+.stocks-summary__card--positive { border-left-color: var(--z365-status-success); }
+.stocks-summary__card--negative { border-left-color: var(--z365-status-danger); }
 .stocks-summary__card--neutral,
 .stocks-summary__card--pending { border-left-color: var(--z365-chart-options); }
 .stocks-summary__card span { color: var(--z365-text-secondary); font-size: 11px; }
@@ -611,6 +658,12 @@ button:focus-visible, a:focus-visible {
   color: var(--z365-chart-options);
   font-size: 10px;
   white-space: nowrap;
+}
+
+.stocks-data__status--live {
+  border-color: rgba(97, 215, 144, 0.34);
+  background: rgba(97, 215, 144, 0.08);
+  color: var(--z365-status-success);
 }
 
 .stocks-table-region {
@@ -800,6 +853,6 @@ button:focus-visible, a:focus-visible {
 }
 
 @media (forced-colors: active) {
-  .nav-item--active::before, .stat-card::before, .activity-card::before, .premium-card::before, .status-dot, .data-freshness__pulse { background: Highlight; }
+  .nav-item--active::before, .stat-card::before, .activity-card::before, .premium-card::before, .data-freshness__pulse { background: Highlight; }
   .allocation-card__segment, .allocation-card__track, .allocation-card__swatch { forced-color-adjust: auto; }
 }

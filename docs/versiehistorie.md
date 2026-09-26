@@ -1,5 +1,14 @@
 # Versiehistorie
 
+## 0.7.0 – read-only IBKR-koppeling
+
+- Linksonder is een toegankelijke IBKR-status- en refreshbediening toegevoegd.
+- De backend kan via een vaste systemd-service IBC en IB Gateway starten.
+- IB Key MFA wordt door de gebruiker in IBKR Mobile bevestigd.
+- Actuele netto liquidatiewaarde, posities, marktprijzen en ongerealiseerde winst/verlies worden read-only opgehaald.
+- Nginx geeft `/api/` uitsluitend door aan de backend op localhost.
+- Systemd-, Xvfb-, sudoers- en omgevingsconfiguraties zijn toegevoegd.
+
 ## 0.6.2 – productie op webroot
 
 - De productiebuild gebruikt expliciet `/` als basispad.

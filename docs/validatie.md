@@ -1,5 +1,17 @@
 # Validatie
 
+## IBKR-koppeling
+
+- De backend bindt alleen aan `127.0.0.1`.
+- Een POST-opdracht vereist dezelfde toegestane origin en de applicatieheader.
+- De systemd-unitnaam komt uitsluitend uit de serverconfiguratie en wordt gevalideerd.
+- De backend gebruikt geen shell voor het starten van Gateway.
+- De browser ontvangt geen IBKR-rekeningnummer, gebruikersnaam of wachtwoord.
+- De snapshot wordt atomair met bestandsmodus `0600` opgeslagen.
+- Er is geen orderfunctionaliteit aanwezig.
+- Een tweede refresh wordt genegeerd zolang de eerste nog loopt.
+- De normalisatie van netto liquidatiewaarde en positie-P/L wordt met unit-tests gecontroleerd.
+
 De eerste versie wordt gecontroleerd met:
 
 - parser-tests via `npm test`;
@@ -9,7 +21,7 @@ De eerste versie wordt gecontroleerd met:
 
 ## Resultaat 26 september 2026
 
-- `npm test`: 4 van 4 tests geslaagd.
+- `npm test`: 6 van 6 tests geslaagd, inclusief IBKR-snapshotnormalisatie.
 - `npm run build`: geslaagd met TypeScript 7 en Vite 8.
 - XML-import: 192 dagsaldi, 637 trades en 35 optie-events verwerkt.
 - Desktopweergave: visueel gecontroleerd in de lokale browser.
