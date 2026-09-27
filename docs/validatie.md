@@ -84,3 +84,9 @@ De eerste versie wordt gecontroleerd met:
 
 - 33 tests geslaagd; expliciete regressies voor winst én verlies op gekochte opties, inclusief maand- en jaarafbakening.
 - Import en TypeScript/Vite-build geslaagd. De maandkaarten bevatten uitsluitend premie en aandelen; jaarresultaat en maandgemiddelde gebruiken dezelfde selectie.
+
+## Versie 0.21.2 — centrering
+
+- Dashboardkaarten in de browser gecontroleerd op 1720, 768 en 360 pixels. De inhoud heeft per kaart gelijke ruimte boven en onder; geen horizontale pagina-overloop.
+- 33 bestaande tests en de TypeScript/Vite-build geslaagd. Alleen uitlijning gewijzigd.
+

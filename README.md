@@ -2,7 +2,7 @@
 
 Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voortgang op basis van Interactive Brokers Flex-rapporten.
 
-**Versie/status:** 0.21.1, intern dashboard met meerjarige Flex-import, CSP-reservering en vrij besteedbaar vermogen, dagelijkse winst/verlies in dollars en procenten, afzonderlijke Stocks-, Options-, Goals-, Stats- en Trades-overzichten, automatische strategieherkenning, jaarlijkse doelplanning, Nginx-hosting op poort 80 en een read-only IBKR Gateway-koppeling met mobiele IB Key MFA.
+**Versie/status:** 0.21.2, intern dashboard met meerjarige Flex-import, CSP-reservering en vrij besteedbaar vermogen, dagelijkse winst/verlies in dollars en procenten, afzonderlijke Stocks-, Options-, Goals-, Stats- en Trades-overzichten, automatische strategieherkenning, jaarlijkse doelplanning, Nginx-hosting op poort 80 en een read-only IBKR Gateway-koppeling met mobiele IB Key MFA.
 
 | Map | Inhoud |
 | --- | --- |

@@ -1,5 +1,10 @@
 # Versiehistorie
 
+## 0.21.2 – gecentreerde dashboardkaarten
+
+- Titels, bedragen en toelichtingen staan als één groep verticaal gecentreerd in de saldo-, resultaat-, activiteit- en premiekaarten.
+- Gelijke boven- en onderruimte; toelichtingen worden niet meer naar de onderrand geduwd.
+
 ## 0.21.1 – gekochte opties buiten nettoresultaat
 
 - Winst en verlies van gekochte opties tellen niet meer mee in het maand- en jaarresultaat of maandgemiddelde.
