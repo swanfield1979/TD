@@ -360,7 +360,7 @@ export default function StatsPage({ trades, portfolioHistory, currency }: StatsP
       <section className="stats-kpi-grid" aria-label={`Kernstatistieken ${selectedYear}`}>
         <article><span>Afgesloten trades</span><strong>{filteredTrades.length}</strong><small>{selectedYear}</small></article>
         <article><span>Winratio</span><strong className="metric--positive">{formatPercentage(filteredTrades.length ? winningTrades.length / filteredTrades.length * 100 : 0)}</strong><small>{winningTrades.length} winsttrades</small></article>
-        <article><span>Nettoresultaat</span><strong className={`metric--${direction(totalProfit)}`}>{formatCurrency(totalProfit, currency, true)}</strong><small>Gerealiseerd</small></article>
+        <article><span>Optieresultaat</span><strong className={`metric--${direction(totalProfit)}`}>{formatCurrency(totalProfit, currency, true)}</strong><small>Long en short · exclusief aandelen</small></article>
         <article><span>Gemiddeld per trade</span><strong className={`metric--${direction(averageProfit)}`}>{formatCurrency(averageProfit, currency, true)}</strong><small>Over alle sluitingen</small></article>
         <article><span>Profit factor</span><strong>{profitFactor === null ? '—' : formatNumber(profitFactor, 2)}</strong><small>Brutowinst ÷ brutoverlies</small></article>
         <article><span>Gemiddelde looptijd</span><strong>{formatNumber(averageDays)} dagen</strong><small>{measuredDurations.length} gemeten trades</small></article>

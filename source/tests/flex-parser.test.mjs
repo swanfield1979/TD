@@ -281,9 +281,9 @@ test('berekent optieactiviteit, afgesloten trades en maandpremies', () => {
     net: 148,
   })
   assert.deepEqual(result.portfolioAllocation.categories, [
-    { key: 'stocks', label: 'Aandelen', value: 201, percentage: 4.8 },
-    { key: 'options', label: 'Opties', value: 4025, percentage: 95.2 },
-    { key: 'cash', label: 'Geld / overig', value: 0, percentage: 0 },
+    { key: 'stocks', label: 'Aandelen', value: 201, percentage: 16.8 },
+    { key: 'options', label: 'Opties', value: 3975, percentage: 331.3 },
+    { key: 'cash', label: 'Geld / overig', value: -2976, percentage: -248 },
   ])
   assert.equal(result.portfolioAllocation.reservedCash, 4000)
   assert.equal(result.portfolioAllocation.freeToSpend, -3001)

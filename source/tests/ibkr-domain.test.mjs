@@ -1,6 +1,32 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { createLiveSnapshot } from '../server/ibkr-domain.mjs'
+import { createLiveSnapshot, updatePosition } from '../server/ibkr-domain.mjs'
+import { optionExpiry } from '../shared/option-expiry.mjs'
+
+test('herhaalde portfolio-events vervangen posities en een nulupdate sluit ze', () => {
+  const positions = new Map()
+  const initial = { conid: 1, position: 100, assetCategory: 'STK', marketValue: 1000 }
+  updatePosition(positions, initial)
+  const quoteReference = [...positions.values()][0]
+  updatePosition(positions, { ...initial, marketValue: 1100 })
+  quoteReference.previousClose = 9
+  assert.equal(positions.size, 1)
+  assert.equal([...positions.values()][0].previousClose, 9)
+  const accountValues = new Map([['NetLiquidation', { value: 1500, currency: 'USD' }]])
+  const snapshot = createLiveSnapshot({ accountValues, positions: [initial, ...positions.values()] })
+  assert.equal(snapshot.positions.length, 1)
+  assert.equal(snapshot.positions[0].currentValue, 1100)
+  updatePosition(positions, { ...initial, position: 0 })
+  assert.equal(createLiveSnapshot({ accountValues, positions: [initial, ...positions.values()] }).positions.length, 0)
+})
+
+test('expiratie gebruikt een geldige contractdatum of de OCC-naam, nooit een verzonnen datum', () => {
+  assert.equal(optionExpiry(null, 'SOFI 261023P00016000'), '2026-10-23')
+  assert.equal(optionExpiry('20260230', 'SOFI 261023P00016000'), '2026-10-23')
+  assert.equal(optionExpiry('2026-11-20', 'SOFI 261023P00016000'), '2026-11-20')
+  assert.equal(optionExpiry(null, 'SOFI 260230P00016000'), null)
+  assert.equal(optionExpiry('202610', 'SOFI'), null)
+})
 
 test('normaliseert actuele IBKR rekening- en positiegegevens zonder rekeningnummer', () => {
   const accountValues = new Map([

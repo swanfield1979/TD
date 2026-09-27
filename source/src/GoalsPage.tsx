@@ -47,6 +47,12 @@ export default function GoalsPage({ goalPlan, balance, currency, contributionPer
 
   const currentGoal = goalPlan.years.find((yearGoal) => yearGoal.status === 'current')
   if (!currentGoal) return null
+  if (Number(balance.toDate.slice(0, 4)) !== currentGoal.year) {
+    return <section className="state-panel" role="status"><div>
+      <h2>Jaardoel bijwerken</h2>
+      <p>Het saldo is van {balance.toDate.slice(0, 4)}, maar de planning loopt nog over {currentGoal.year}. Importeer de Flex-jaarafsluiting en de stortingen van het nieuwe jaar om het nieuwe startsaldo en jaardoel te berekenen.</p>
+    </div></section>
+  }
   const currentCash = contributionPeriods.find((row) => row.year === currentGoal.year)
   const currentReturn = contributionReturn(balance.value, currentGoal.startValue, currentCash?.net)
   const targetIncrease = currentGoal.growthValue
@@ -91,7 +97,7 @@ export default function GoalsPage({ goalPlan, balance, currency, contributionPer
           <div>
             <p className="goal-progress__kicker"><TargetArrowRegular aria-hidden="true" /> Voortgang {currentGoal.year}</p>
             <h2 id="goal-progress-title">Op weg naar het jaardoel</h2>
-            <p>Winst na aftrek van netto inleg, vergeleken met het rendementsdoel.</p>
+            <p>Saldoresultaat inclusief open posities, na aftrek van netto inleg, vergeleken met het rendementsdoel.</p>
           </div>
           <div className={`goal-progress__status goal-progress__status--${scheduleDirection}`}>
             <span>{!currentCash ? 'Inleggegevens ontbreken' : scheduleDifference >= 0 ? 'Voor op schema' : 'Achter op schema'}</span>

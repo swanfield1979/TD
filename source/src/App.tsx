@@ -1,5 +1,5 @@
 import { contributionReturn, contributionsSince } from '../shared/contribution-return.mjs'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   ArrowSwapRegular,
   ChartMultipleRegular,
@@ -20,7 +20,7 @@ import TradesPage from './TradesPage'
 import StatsPage from './StatsPage'
 import TradingActivityCards from './TradingActivityCards'
 import IbkrConnectionControl from './IbkrConnectionControl'
-import { mergeLiveSnapshot } from './ibkr'
+import { mergeLiveSnapshot, resolvePortfolio } from './ibkr'
 
 const DATA_URL = '/data/portfolio-summary.json'
 type Page = 'dashboard' | 'stocks' | 'options' | 'goals' | 'stats' | 'trades'
@@ -105,13 +105,13 @@ interface DailyProfitCardProps {
   currency: string
 }
 
-function DailyProfitCard({ metric, balance, currency }: DailyProfitCardProps) {
+export function DailyProfitCard({ metric, balance, currency }: DailyProfitCardProps) {
   const previousBalance = balance.value - metric.value
   const percentage = previousBalance === 0 ? 0 : metric.value / Math.abs(previousBalance)
 
   return (
     <article className={`stat-card daily-profit-card stat-card--${metric.direction}`}>
-      <h2>Dagelijkse W&amp;V</h2>
+      <h2>Saldoverandering rapportdag</h2>
       <div className="daily-profit-card__values">
         <p className={`stat-card__value metric--${metric.direction}`}>
           {currencyFormatter(currency, true).format(metric.value)}
@@ -176,16 +176,18 @@ function LoadingDashboard() {
 }
 
 function App() {
-  const [summary, setSummary] = useState<PortfolioSummary | null>(null)
+  const [importedSummary, setSummary] = useState<PortfolioSummary | null>(null)
+  const [liveSnapshot, setLiveSnapshot] = useState<Parameters<typeof mergeLiveSnapshot>[1] | null>(null)
+  const summary = useMemo(() => resolvePortfolio(importedSummary, liveSnapshot), [importedSummary, liveSnapshot])
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState<Page>(pageFromHash)
-  const [hasLiveSnapshot, setHasLiveSnapshot] = useState(false)
+  const hasLiveSnapshot = !!summary && summary !== importedSummary
+  const showLiveFreshness = hasLiveSnapshot && currentPage !== 'stats' && currentPage !== 'trades'
 
   const handleLiveSnapshot = useCallback((snapshot: Parameters<typeof mergeLiveSnapshot>[1]) => {
-    setSummary((current) => current ? mergeLiveSnapshot(current, snapshot) : current)
-    setHasLiveSnapshot(true)
+    setLiveSnapshot((current) => !current || snapshot.generatedAt >= current.generatedAt ? snapshot : current)
   }, [])
 
   const loadSummary = useCallback(async () => {
@@ -316,11 +318,11 @@ function App() {
             <h1>{pageTitles[currentPage]}</h1>
           </div>
           {summary && (
-            <div className="data-freshness" title={hasLiveSnapshot ? `IBKR-snapshot opgehaald op ${summary.sourceUpdatedAt}` : `Bronbestand gegenereerd op ${summary.sourceUpdatedAt}`}>
+            <div className="data-freshness" title={showLiveFreshness ? `IBKR-snapshot opgehaald op ${summary.sourceUpdatedAt}; Flex-resultaten t/m ${importedSummary?.balance.toDate}` : `Bronbestand gegenereerd op ${importedSummary?.sourceUpdatedAt}`}>
               <span className="data-freshness__pulse" aria-hidden="true" />
               <span>
-                <strong>Bijgewerkt t/m {formatDate(summary.balance.toDate)}</strong>
-                <small>{hasLiveSnapshot ? 'Actuele IBKR-positiegegevens' : `${summary.sourceCounts.equityDays} handelsdagen verwerkt`}</small>
+                <strong>Bijgewerkt t/m {formatDate((showLiveFreshness ? summary : importedSummary)!.balance.toDate)}</strong>
+                <small>{showLiveFreshness ? `IBKR-posities · Flex t/m ${formatDate(importedSummary!.balance.toDate)}` : 'Historische Flex-gegevens'}</small>
               </span>
             </div>
           )}
@@ -351,7 +353,7 @@ function App() {
               />
               <DailyProfitCard
                 metric={summary.dailyProfit}
-                balance={summary.balance}
+                balance={importedSummary!.balance}
                 currency={summary.currency}
               />
               <PortfolioAllocationCard
@@ -393,15 +395,15 @@ function App() {
                 currentPremium={summary.premiumPeriods.currentMonth}
                 previousPremium={summary.premiumPeriods.previousMonth}
                 premiumCurrency={summary.premiumCurrency ?? 'USD'}
-                year={summary.balance.toDate.slice(0, 4)}
+                year={summary.yearProfit.toDate.slice(0, 4)}
               />
             )}
             <MonthlyBalanceChart
               data={summary.monthlyBalanceChanges ?? []}
               referenceData={summary.previousYearMonthlyBalanceChanges ?? []}
               currency={summary.currency}
-              year={summary.balance.toDate.slice(0, 4)}
-              referenceYear={String(Number(summary.balance.toDate.slice(0, 4)) - 1)}
+              year={summary.yearProfit.toDate.slice(0, 4)}
+              referenceYear={String(Number(summary.yearProfit.toDate.slice(0, 4)) - 1)}
             />
           </>
         )}

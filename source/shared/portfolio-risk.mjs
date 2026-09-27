@@ -40,17 +40,18 @@ export function cashSecuredPutReserve(optionHoldings) {
   }
 }
 
-export function portfolioAllocation({ balance, stockValue, optionValue, cashValue, optionHoldings, isEstimated }) {
+export function portfolioAllocation({ balance, stockValue, optionValue, optionHoldings, isEstimated }) {
   const { reservedCash, unpricedContractCount } = cashSecuredPutReserve(optionHoldings)
   const optionsIncludingReserve = round(optionValue + reservedCash)
-  const availableCash = round(Math.max(0, cashValue - reservedCash))
+  // Include cash plus all other NAV components (e.g. accrued interest). Short
+  // option liabilities retain their sign; reserve is a reclassification only.
+  const availableCash = round(balance - stockValue - optionsIncludingReserve)
   const freeToSpend = round(balance - stockValue - reservedCash)
-  const grossTotal = stockValue + optionsIncludingReserve + availableCash
   const category = (key, label, value) => ({
     key,
     label,
     value: round(value),
-    percentage: grossTotal ? round((value / grossTotal) * 100, 1) : 0,
+    percentage: balance ? round((value / balance) * 100, 1) : 0,
   })
 
   return {

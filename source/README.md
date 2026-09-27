@@ -2,6 +2,8 @@
 
 De webapp staat volledig in deze map. Voer alle ontwikkel- en bouwcommando's vanuit `source/` uit.
 
+Versie 0.23.0 corrigeert IBKR-synchronisatie en de nettoverdeling. Na een serverupdate zijn `npm run import:flex`, `npm run build`, het publiceren van `dist/` en `sudo systemctl restart trading-monitor-api.service` nodig. `npm test` bevat ook React/TypeScript-integratietests via Vite; hiervoor is geen actieve IBKR-verbinding nodig.
+
 ## Vereisten
 
 - Node.js 22 of nieuwer

@@ -113,7 +113,7 @@ export default function TradesPage({ trades, currency }: TradesPageProps) {
           <span>Winnende trades</span><strong>{filteredTrades.length ? formatPercentage((winningTrades / filteredTrades.length) * 100) : '0,0%'}</strong><small>{winningTrades} met positief resultaat</small>
         </article>
         <article className={`positions-summary__card positions-summary__card--${directionClass(totalProfit)}`}>
-          <span>Gerealiseerd resultaat</span><strong className={`metric--${directionClass(totalProfit)}`}>{formatCurrency(totalProfit, currency, true)}</strong><small>Inclusief beschikbare commissies</small>
+          <span>Gerealiseerd optieresultaat</span><strong className={`metric--${directionClass(totalProfit)}`}>{formatCurrency(totalProfit, currency, true)}</strong><small>Long en short · exclusief aandelen</small>
         </article>
         <article className="positions-summary__card positions-summary__card--neutral">
           <span>Gemiddeld aangehouden</span><strong>{new Intl.NumberFormat('nl-NL', { maximumFractionDigits: 1 }).format(averageDays)} dagen</strong><small>{measuredDurations.length} volledig gemeten trades</small>
@@ -124,7 +124,7 @@ export default function TradesPage({ trades, currency }: TradesPageProps) {
         <header className="positions-data__header">
           <div>
             <h2 id="closed-trades-title">Afgesloten trades {selectedYear}</h2>
-            <p>Nettoresultaat, rendement op de openingspremie en lineair geannualiseerd rendement.</p>
+            <p>Alle gesloten opties inclusief gekochte opties. Het dashboard telt uitsluitend short-premie en gerealiseerde aandelenwinst.</p>
           </div>
           <span className="positions-data__status positions-data__status--live">{firstItem}–{lastItem} van {filteredTrades.length}</span>
         </header>

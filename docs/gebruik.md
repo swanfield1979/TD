@@ -12,7 +12,7 @@ Het dashboard combineert saldoreeksen en gerealiseerde transactieresultaten uit 
 
 - **Totale winst:** huidig saldo − startsaldo − netto inleg sinds 2025. Netto inleg is stortingen min opnames. Het percentage is winst / (startsaldo + netto inleg) × 100. Dit is eenvoudig totaalrendement, niet tijdgewogen of geannualiseerd. De inleg van 2024 zit al in het startsaldo van 2025. Bij ontbrekende jaarhistorie verschijnt een streepje; bij verschillende peildatums verschijnt ≈. Open posities tellen via het saldo mee.
 - **Saldo:** het laatste beschikbare totaal van `EquitySummaryByReportDateInBase`.
-- **Dagelijkse W&V:** het verschil tussen de twee laatste beschikbare handelsdagsaldi, zowel in dollars als als percentage van het saldo van de vorige handelsdag.
+- **Saldoverandering rapportdag:** het verschil tussen de twee laatste beschikbare handelsdagsaldi, zowel in dollars als als percentage van het saldo van de vorige handelsdag.
 - **Nettoresultaat jaar:** alle gerealiseerde short-optiepremies en aandelenresultaten met een sluitingsdatum in het rapportjaar. Ongerealiseerde koersbewegingen en stortingen tellen niet mee.
 - **Nettoresultaat deze maand:** netto optiepremie plus gerealiseerde winst/verlies uit aandelenverkopen in de huidige rapportmaand.
 - **Nettoresultaat vorige maand:** dezelfde gerealiseerde berekening voor de voorgaande kalendermaand.
@@ -38,9 +38,11 @@ Zie de [IBKR Flex-velddefinitie](https://www.ibkrguides.com/reportingreference/r
 ## Portefeuilleverdeling
 
 Naast het saldo staat een donutgrafiek met aandelen, opties en geld/overig. Het nettosaldo in het midden komt rechtstreeks uit het laatste Flex-dagsaldo.
-Tussen het saldo en de donut staat **Dagelijkse W&V** als afzonderlijke kaart. Positief, negatief en ongewijzigd worden met zowel kleur als een expliciet teken en tekstalternatief weergegeven.
+Tussen het saldo en de donut staat **Saldoverandering rapportdag**. Bedrag en percentage gebruiken dezelfde twee Flex-saldi, ook na een live-update. Dit is een saldoverandering en kan stortingen, opnames en ongerealiseerde koersbewegingen bevatten; het is geen gerealiseerd handelsresultaat.
 
-De huidige Flex-bestanden bevatten geen actuele marktwaarde per afzonderlijke positie. Daarom is de verdeling indicatief: aandelen gebruiken de resterende FIFO-kostprijs van open aandelentrades, opties gebruiken de absolute `totalShort`-waarde uit het laatste saldorapport en geld/overig is het resterende bedrag. Zodra een Open Positions-rapport beschikbaar is, kan deze berekening worden vervangen door actuele marktwaarden.
+Zonder live snapshot is de verdeling indicatief: aandelen gebruiken de resterende FIFO-kostprijs en opties de negatieve shortwaarde uit het laatste saldorapport. Afzonderlijke marktwaarden van gekochte opties zijn daarin niet beschikbaar en blijven onderdeel van geld/overig. Met een live snapshot gebruiken aandelen en opties hun getekende IBKR-marktwaarden. Short-verplichtingen blijven negatief. De CSP-reservering wordt van geld/overig naar opties verplaatst. Geld/overig is het sluitstuk tot de netto liquidatiewaarde en omvat ook overige waarderingsposten. Bij een negatieve categorie vervalt de donutverdeling; de bedragen blijven zichtbaar.
+
+Actuele posities en historische resultaten hebben aparte peildatums in de header. Stats en Trades tonen uitsluitend de Flex-peildatum. Hun **optieresultaat** omvat alle gesloten long- en short-opties, exclusief aandelen. Het **nettoresultaat** op het dashboard omvat uitsluitend gerealiseerde short-premie en aandelenverkopen. Goals en Totale winst volgen juist het saldo inclusief open posities, gecorrigeerd voor netto inleg. Bij een nieuw kalenderjaar vereist Goals eerst een bijgewerkte Flex-jaarafsluiting. Een onbekende openingsdatum of vorige slotkoers blijft onbekend; gekozen DTE en dagkoersverschil worden dan niet verzonnen.
 
 ## Jaarverloop
 
@@ -129,4 +131,4 @@ Herlaad daarna het dashboard.
 
 ## Aandachtspunt
 
-Saldo, dagelijkse W&V, saldoverloop en Goals blijven gebaseerd op netto liquidatiewaarde; stortingen, opnames en ongerealiseerde koersbewegingen kunnen die cijfers beïnvloeden. Nettoresultaat en het maandgemiddelde gebruiken uitsluitend gerealiseerde short-optiepremies en aandelenresultaten. Netto premie bevat uitsluitend afgesloten short opties. Stats en Trades analyseren uitsluitend optieafsluitingen; aandelenresultaten staan in het totale nettoresultaat op het Dashboard.
+Saldo, saldoverandering per rapportdag, saldoverloop en Goals blijven gebaseerd op netto liquidatiewaarde; stortingen, opnames en ongerealiseerde koersbewegingen kunnen die cijfers beïnvloeden. Nettoresultaat en het maandgemiddelde gebruiken uitsluitend gerealiseerde short-optiepremies en aandelenresultaten. Netto premie bevat uitsluitend afgesloten short opties. Stats en Trades analyseren uitsluitend optieafsluitingen; aandelenresultaten staan in het totale nettoresultaat op het Dashboard.

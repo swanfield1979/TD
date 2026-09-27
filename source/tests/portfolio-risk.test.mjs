@@ -44,6 +44,17 @@ test('verplaatst CSP-reservering van cash naar opties en berekent vrij te bested
   assert.deepEqual(allocation.categories.map(({ key, value }) => ({ key, value })), [
     { key: 'stocks', value: 48_590.06 },
     { key: 'options', value: 20_911.78 },
-    { key: 'cash', value: 20_455.21 },
+    { key: 'cash', value: 16_731.65 },
   ])
+})
+
+test('nettoverdeling sluit aan op NAV met short-verplichtingen, overige waarden en negatieve cash', () => {
+  for (const input of [
+    { balance: 86097.12, stockValue: 36203.06, optionValue: -91.42, cashValue: 49857.64 },
+    { balance: 1000, stockValue: 2000, optionValue: -100, cashValue: -900 },
+  ]) {
+    const allocation = portfolioAllocation({ ...input, optionHoldings: [], isEstimated: false })
+    assert.equal(Number(allocation.categories.reduce((sum, row) => sum + row.value, 0).toFixed(2)), input.balance)
+    assert.equal(allocation.categories[1].value, input.optionValue)
+  }
 })

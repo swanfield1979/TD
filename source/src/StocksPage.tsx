@@ -87,7 +87,7 @@ export default function StocksPage({ holdings, currency }: StocksPageProps) {
         <article className="positions-summary__card">
           <span>Netto kostprijs</span>
           <strong>{formatCurrency(totalPurchaseValue, currency)}</strong>
-          <small>Resterende FIFO-kostprijs inclusief commissie</small>
+            <small>Kostprijs van de resterende open posities</small>
         </article>
         <article className="positions-summary__card">
           <span>Netto positiewaarde</span>

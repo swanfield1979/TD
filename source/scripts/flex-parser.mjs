@@ -76,7 +76,6 @@ function normalizeOptionTrades(trades) {
       strike: Number(trade.strike),
     }))
     .filter((trade) => trade.conid && trade.dateTime && Number.isFinite(trade.quantity) && Number.isFinite(trade.tradePrice))
-    .sort((left, right) => left.dateTime.localeCompare(right.dateTime))
 }
 
 function optionHoldingsSummary(optionTrades) {
@@ -194,7 +193,6 @@ function stockHoldingsSummary(trades) {
       openClose: trade.openCloseIndicator,
     }))
     .filter((trade) => trade.conid && trade.dateTime && Number.isFinite(trade.quantity) && Number.isFinite(trade.tradePrice))
-    .sort((left, right) => left.dateTime.localeCompare(right.dateTime))
 
   const lotsByContract = Map.groupBy(stockTrades, (trade) => trade.conid)
   const holdings = []
@@ -248,8 +246,8 @@ function stockHoldingsSummary(trades) {
 
 function portfolioAllocation(stockHoldings, optionHoldings, latest) {
   const stocks = round(stockHoldings.reduce((sum, holding) => sum + holding.purchaseValue, 0))
-  const options = round(Math.abs(latest.totalShort))
-  const cashOther = round(Math.max(0, latest.total - stocks + options))
+  const options = round(-Math.abs(latest.totalShort))
+  const cashOther = round(latest.total - stocks - options)
   return buildPortfolioAllocation({
     balance: latest.total,
     stockValue: stocks,

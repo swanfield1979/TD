@@ -2,7 +2,7 @@
 
 Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voortgang op basis van Interactive Brokers Flex-rapporten.
 
-**Versie/status:** 0.22.0, intern dashboard met meerjarige Flex-import, CSP-reservering en vrij besteedbaar vermogen, dagelijkse winst/verlies in dollars en procenten, afzonderlijke Stocks-, Options-, Goals-, Stats- en Trades-overzichten, automatische strategieherkenning, jaarlijkse doelplanning, Nginx-hosting op poort 80 en een read-only IBKR Gateway-koppeling met mobiele IB Key MFA.
+**Versie/status:** 0.23.0, intern dashboard met meerjarige Flex-import, CSP-reservering en vrij besteedbaar vermogen, saldoverandering per rapportdag in dollars en procenten, afzonderlijke Stocks-, Options-, Goals-, Stats- en Trades-overzichten, automatische strategieherkenning, jaarlijkse doelplanning, Nginx-hosting op poort 80 en een read-only IBKR Gateway-koppeling met mobiele IB Key MFA.
 
 | Map | Inhoud |
 | --- | --- |
@@ -19,7 +19,7 @@ Zie [`docs/installatie.md`](docs/installatie.md) voor de installatie en [`source
 - Donker, responsief dashboard met het Trading Monitor-logo.
 - Totale winst sinds start 2025 gecorrigeerd voor netto inleg, met winstpercentage over ingebracht kapitaal en huidig (live) saldo.
 - Saldo en nettoresultaatstatistieken uit lokale IBKR Flex XML-rapporten.
-- Afzonderlijke kaart voor dagelijkse winst/verlies in dollars en als percentage van de vorige handelsdag.
+- Afzonderlijke kaart voor saldoverandering per rapportdag in dollars en als percentage van de vorige rapportdag.
 - Maand- en jaarresultaat uitsluitend uit gerealiseerde short-optiepremie en aandelenverkopen; FIFO-kosten en commissies tellen mee op de sluitingsdatum.
 - Portefeuilleverdeling voor aandelen, opties inclusief gereserveerd CSP-bedrag en vrij geld/overig.
 - Stocks-pagina met open aandelen, covered-call-dekking, nettokostprijs, actuele nettowaarde, winst/verlies en procentuele koersbeweging van vandaag.

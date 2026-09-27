@@ -2,16 +2,24 @@ import type { IbkrLiveSnapshot, PortfolioSummary } from './types'
 import { calculateCoveredCallCoverage } from '../shared/covered-call.mjs'
 import { assignOptionStrategies } from '../shared/option-strategy.mjs'
 import { optionStrike, portfolioAllocation } from '../shared/portfolio-risk.mjs'
+import { optionExpiry } from '../shared/option-expiry.mjs'
 
 const round = (value: number, decimals = 2) => Number(value.toFixed(decimals))
 
+export function resolvePortfolio(summary: PortfolioSummary | null, snapshot: IbkrLiveSnapshot | null) {
+  if (!summary || !snapshot || snapshot.currency !== summary.currency || snapshot.asOfDate < summary.balance.toDate) return summary
+  return mergeLiveSnapshot(summary, snapshot)
+}
+
 export function mergeLiveSnapshot(summary: PortfolioSummary, snapshot: IbkrLiveSnapshot): PortfolioSummary {
-  const stockPositions = snapshot.positions.filter((position) => position.assetCategory === 'STK')
-  const optionPositions = snapshot.positions.filter((position) => position.assetCategory === 'OPT')
+  const positions = [...new Map(snapshot.positions.map((position) => [position.conid, position])).values()]
+    .filter((position) => position.quantity !== 0)
+  const stockPositions = positions.filter((position) => position.assetCategory === 'STK')
+  const optionPositions = positions.filter((position) => position.assetCategory === 'OPT')
   const optionMetadata = new Map((summary.optionHoldings ?? []).map((position) => [position.conid, position]))
   const hasCoveredCallMetadata = optionPositions.every((position) => Object.hasOwn(position, 'optionRight'))
-  const stockValue = stockPositions.reduce((sum, position) => sum + Math.abs(position.currentValue), 0)
-  const optionValue = optionPositions.reduce((sum, position) => sum + Math.abs(position.currentValue), 0)
+  const stockValue = stockPositions.reduce((sum, position) => sum + position.currentValue, 0)
+  const optionValue = optionPositions.reduce((sum, position) => sum + position.currentValue, 0)
   const cashValue = snapshot.totalCashValue === null
     ? Math.max(0, snapshot.netLiquidation - stockValue - optionValue)
     : Math.max(0, snapshot.totalCashValue)
@@ -25,7 +33,7 @@ export function mergeLiveSnapshot(summary: PortfolioSummary, snapshot: IbkrLiveS
       quantity: position.quantity,
       optionRight: position.optionRight,
       strike: position.optionStrike ?? metadata?.strike ?? null,
-      expiry: position.optionExpiry ?? metadata?.expiry ?? null,
+      expiry: optionExpiry(position.optionExpiry ?? metadata?.expiry, position.name),
       openedAt: metadata?.openedAt ?? null,
       chosenDte: metadata?.chosenDte ?? null,
       averageOpenPrice: multiplier ? round(Math.abs(position.averagePurchasePrice) / multiplier, 4) : metadata?.averageOpenPrice ?? null,
@@ -60,9 +68,14 @@ export function mergeLiveSnapshot(summary: PortfolioSummary, snapshot: IbkrLiveS
       difference: position.difference,
       differencePercentage: position.differencePercentage,
       dailyChangePercentage: position.dailyChangePercentage,
-      coveredCallCoverage: hasCoveredCallMetadata ? calculateCoveredCallCoverage(position, snapshot.positions) : null,
+      coveredCallCoverage: hasCoveredCallMetadata ? calculateCoveredCallCoverage(position, positions) : null,
     })),
     optionHoldings: liveOptionHoldings,
+    tradingActivity: summary.tradingActivity ? {
+      ...summary.tradingActivity,
+      openTrades: liveOptionHoldings.length,
+      totalTrades: summary.tradingActivity.closedTrades + liveOptionHoldings.length,
+    } : summary.tradingActivity,
     portfolioAllocation: portfolioAllocation({
       balance: snapshot.netLiquidation,
       stockValue,

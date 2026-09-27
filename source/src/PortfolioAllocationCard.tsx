@@ -22,6 +22,7 @@ export default function PortfolioAllocationCard({
   currency,
 }: PortfolioAllocationCardProps) {
   let offset = 0
+  const canChart = balance.value > 0 && allocation.categories.every((category) => category.value >= 0)
   const summary = allocation.categories
     .map((category) => `${category.label}: ${category.percentage.toLocaleString('nl-NL')}%`)
     .join(', ')
@@ -32,7 +33,7 @@ export default function PortfolioAllocationCard({
       <div className="allocation-card__chart" aria-hidden="true">
         <svg viewBox="0 0 120 120">
           <circle className="allocation-card__track" cx="60" cy="60" r="48" pathLength="100" />
-          {allocation.categories.map((category) => {
+          {canChart && allocation.categories.map((category) => {
             const dashOffset = -offset
             offset += category.percentage
             return (
@@ -71,6 +72,7 @@ export default function PortfolioAllocationCard({
       <p className="allocation-card__note">
         Opties incl. {formatCurrency(allocation.reservedCash ?? 0, currency)} CSP-reservering
         {allocation.isEstimated ? ' · aandelen op resterende kostprijs' : ''}
+        {!canChart ? ' · negatieve bedragen: zie verdeling' : ''}
       </p>
     </article>
   )

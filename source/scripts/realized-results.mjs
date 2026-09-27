@@ -32,7 +32,8 @@ export function mergeOptionEvents(trades, events) {
     if (remaining > 1e-8) {
       const trade = {
         ...event,
-        dateTime: `${event.date} 23:59:59`,
+        dateTime: event.date,
+        dateOnlyEvent: true,
         quantity: remaining * Math.sign(number(event.quantity)),
         openCloseIndicator: event.assetCategory === 'OPT' || event.transactionType === 'Sell' ? 'C' : 'O',
         fifoPnlRealized: event.realizedPnl === undefined ? undefined : number(event.realizedPnl) * remaining / Math.abs(number(event.quantity)),
@@ -42,7 +43,14 @@ export function mergeOptionEvents(trades, events) {
       used.set(trade, remaining)
     }
   }
-  return result.sort((a, b) => (a.dateTime || '').localeCompare(b.dateTime || ''))
+  // EAE contains a date, not an execution time. Shares delivered that day must
+  // exist before intraday disposals; date-only closures follow timed trades.
+  // Preserve the true order of timed executions (including same-day reopenings).
+  const order = (trade) => trade.dateOnlyEvent
+    ? (trade.assetCategory === 'STK' && trade.openCloseIndicator === 'O' ? -1 : 1)
+    : 0
+  return result.sort((a, b) => date(a).localeCompare(date(b)) || order(a) - order(b)
+    || (a.dateTime || '').localeCompare(b.dateTime || ''))
 }
 
 // FIFO realisations are emitted at each close, including partial closes. Opening

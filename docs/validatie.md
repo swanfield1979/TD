@@ -1,5 +1,19 @@
 # Validatie
 
+## Resultaat 27 september 2026 — versie 0.23.0
+
+- `npm test`: 48 van 48 tests geslaagd. `npm run build`: TypeScript en productiebuild geslaagd.
+
+- Regressies voor herhaalde en afsluitende IBKR-updates, behoud van koersreferenties, ontdubbeling van oude snapshots, OCC-expiratie en ongeldige datums.
+- Integratietests laden de echte TypeScript/React-modules via Vite: beide laadvolgordes, herladen, oude snapshots, valuta, actuele aantallen, dagpercentage en Goals-jaarovergang.
+- EAE-aandelenlevering plus verkoop op dezelfde dag gecontroleerd via zowel het realisatieregister als de volledige Flex-import. Geen fantoompositie achteraf.
+- Nettoverdeling gecontroleerd met negatieve verplichtingen en negatieve cash; de bedragen tellen op tot de netto liquidatiewaarde.
+- Alle twaalf lokale XML-bronnen opnieuw geïmporteerd. Privébronnen, financiële JSON en bouwuitvoer blijven buiten Git.
+- Browsercontrole met de bestaande IBKR-snapshot en bewust 1,5 seconde vertraagde Flex-response: het actuele saldo blijft behouden. Dashboard toont zeven open posities; SOFI-expiratie is 23 oktober 2026. Er zijn geen orders of nieuwe IBKR-synchronisaties gestart.
+- Dashboard visueel gecontroleerd op desktop en bij een viewport van 390 pixels; geen horizontale pagina-overloop. Options, Goals, Stats en Trades gecontroleerd op labels, datums en waarden. Browserconsole zonder fouten.
+
+Publicatie op de Linux-server vereist naast import/build ook een herstart van `trading-monitor-api.service`, omdat de eventverwerking in de backend is gewijzigd.
+
 ## Resultaat 27 september 2026 — versie 0.20.0
 
 - `npm test`: 31 van 31 tests geslaagd. De nieuwe regressies controleren sluitingsmaand/jaargrens, open posities, gedeeltelijke FIFO-sluitingen, rolls, gekochte calls, aandelen/ETF-verkopen, CC/CSP-assignment, expiratie, dubbele OptionEAE-events, uitoefening en commissies.

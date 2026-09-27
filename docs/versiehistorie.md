@@ -1,5 +1,16 @@
 # Versiehistorie
 
+## 0.23.0 – betrouwbare synchronisatie en consistente peildatums
+
+- Herhaalde IBKR-positieupdates vervangen dezelfde positie; nulposities verdwijnen. Ook oude snapshots worden ontdubbeld.
+- Een snapshot die vóór de Flex-data binnenkomt blijft behouden; verouderde snapshots overschrijven geen nieuwere rapportdatum.
+- Dashboardaantallen gebruiken de actuele open opties. Ontbrekende expiraties worden waar mogelijk uit de OCC-contractnaam gelezen.
+- EAE-aandelenleveringen worden vóór verkopen op dezelfde dag verwerkt, met dezelfde volgorde voor resultaten en resterende posities.
+- Saldoverandering rapportdag gebruikt het bijbehorende historische saldo. Headers onderscheiden actuele posities van Flex-historie.
+- Stats/Trades benoemen expliciet dat hun optieresultaat long en short omvat. Het dashboardnettoresultaat blijft uitsluitend short-premie plus aandelenverkopen.
+- Goals vraagt bij een jaarovergang om een nieuwe jaarafsluiting voordat het nieuwe saldo in een doelberekening wordt gebruikt.
+- Portefeuilleverdeling behoudt het negatieve teken van short-opties en sluit aan op het nettosaldo. Negatieve categorieën worden niet als positieve donutsegmenten getekend.
+
 ## 0.22.0 – werkelijke inleg en gecorrigeerd rendement
 
 - Jaarlijkse stortingsrapporten ingelezen; opnames verlagen de netto inleg.

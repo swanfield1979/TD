@@ -3,7 +3,7 @@ import { mkdir, readFile, rename, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { IBApi, EventName, MarketDataType } from '@stoqey/ib'
-import { createLiveSnapshot } from './ibkr-domain.mjs'
+import { createLiveSnapshot, updatePosition } from './ibkr-domain.mjs'
 
 const PREVIOUS_CLOSE_TICK_TYPES = new Set([9, 75])
 const MARKET_DATA_REQUEST_ID_START = 900_000
@@ -49,7 +49,7 @@ function delay(milliseconds) {
 function collectSnapshot(timeoutMs = 12_000) {
   return new Promise((resolveSnapshot, rejectSnapshot) => {
     const accountValues = new Map()
-    const positions = []
+    const positions = new Map()
     const quoteRequests = new Map()
     let activeAccount
     let quoteTimeout
@@ -74,14 +74,14 @@ function collectSnapshot(timeoutMs = 12_000) {
 
     const createSnapshot = () => {
       try {
-        finish(null, createLiveSnapshot({ accountValues, positions }))
+        finish(null, createLiveSnapshot({ accountValues, positions: [...positions.values()] }))
       } catch (error) {
         finish(error)
       }
     }
 
     const requestPreviousCloses = () => {
-      const stockPositions = positions.filter((position) => position.assetCategory === 'STK' && position.contract)
+      const stockPositions = [...positions.values()].filter((position) => position.position !== 0 && position.assetCategory === 'STK' && position.contract)
       if (stockPositions.length === 0) return createSnapshot()
 
       try {
@@ -117,7 +117,8 @@ function collectSnapshot(timeoutMs = 12_000) {
     })
     ib.on(EventName.updatePortfolio, (contract, position, marketPrice, marketValue, averageCost, unrealizedPnl, realizedPnl, accountName) => {
       if (accountName !== activeAccount) return
-      positions.push({
+      updatePosition(positions, {
+        accountName,
         conid: contract.conId,
         symbol: contract.symbol,
         localSymbol: contract.localSymbol,

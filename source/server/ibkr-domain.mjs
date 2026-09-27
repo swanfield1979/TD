@@ -1,9 +1,11 @@
+import { optionExpiry } from '../shared/option-expiry.mjs'
 const round = (value, decimals = 2) => Number(Number(value).toFixed(decimals))
 
-const normalizeContractDate = (value) => {
-  const digits = String(value || '').replaceAll('-', '').slice(0, 8)
-  if (!/^\d{8}$/.test(digits)) return null
-  return `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6, 8)}`
+export function updatePosition(positions, update) {
+  const key = `${update.accountName || ''}|${update.conid}`
+  const existing = positions.get(key)
+  // Keep quote-request references valid while retaining only the latest update.
+  positions.set(key, existing ? Object.assign(existing, update) : { ...update })
 }
 
 export function createLiveSnapshot({ accountValues, positions, generatedAt = new Date().toISOString() }) {
@@ -16,7 +18,9 @@ export function createLiveSnapshot({ accountValues, positions, generatedAt = new
     return Number.isFinite(value) ? value : null
   }
 
-  const normalizedPositions = positions
+  const latestPositions = new Map()
+  for (const position of positions) updatePosition(latestPositions, position)
+  const normalizedPositions = [...latestPositions.values()]
     .filter((position) => Number(position.position) !== 0)
     .map((position) => {
       const quantity = Number(position.position)
@@ -43,7 +47,7 @@ export function createLiveSnapshot({ accountValues, positions, generatedAt = new
         assetCategory: position.assetCategory || 'UNKNOWN',
         optionRight: position.optionRight || null,
         optionStrike: Number.isFinite(optionStrikeValue) ? round(optionStrikeValue, 4) : null,
-        optionExpiry: normalizeContractDate(position.optionExpiry),
+        optionExpiry: optionExpiry(position.optionExpiry, position.localSymbol),
         multiplier: Number.isFinite(multiplier) ? multiplier : null,
         currency: position.currency || currency,
         quantity: round(quantity, 4),

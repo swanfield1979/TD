@@ -10,6 +10,31 @@ const trade = (conid, date, quantity, price, openClose, extra = {}) => ({
 })
 const results = (trades, events = []) => realizedResults(mergeOptionEvents(trades, events))
 
+test('EAE-aandelenlevering is beschikbaar voor verkoop op dezelfde dag, zonder fantoompositie', () => {
+  const sale = trade('stock', '2026-02-06', -100, 25, 'C', { assetCategory: 'STK', fifoPnlRealized: 499 })
+  const delivery = { conid: 'stock', underlyingSymbol: 'TEST', assetCategory: 'STK', date: '2026-02-06',
+    quantity: 100, tradePrice: 20, transactionType: 'Buy' }
+  const merged = mergeOptionEvents([sale], [delivery])
+  assert.equal(merged[0].dateTime, '2026-02-06')
+  assert.equal(tradingResult(realizedResults(merged), '2026-02').stockSales, 499)
+  const xml = (tag, row) => `<${tag} ${Object.entries(row).map(([key, value]) => `${key}="${value}"`).join(' ')}/>`
+  const summary = createPortfolioSummary({
+    equityXml: '<EquitySummaryByReportDateInBase reportDate="2025-12-31" total="1000"/><EquitySummaryByReportDateInBase reportDate="2026-02-06" total="1499"/>',
+    tradesXml: xml('Trade', sale), optionXml: xml('OptionEAE', delivery),
+  })
+  assert.equal(summary.stockHoldings.length, 0)
+  assert.equal(summary.currentMonthProfit.stockSales, 499)
+})
+
+test('echte sluiting en heropening dezelfde dag behouden de volgorde naast datumloze expiraties', () => {
+  const merged = mergeOptionEvents([
+    trade('x', '2026-02-05', -1, 2, 'O'),
+    trade('x', '2026-02-06', 1, 1, 'C', { dateTime: '2026-02-06 09:00:00' }),
+    trade('x', '2026-02-06', -1, 3, 'O', { dateTime: '2026-02-06 14:00:00' }),
+  ], [{ conid: 'x', assetCategory: 'OPT', date: '2026-02-06', quantity: 1, tradePrice: 0, transactionType: 'Expiration' }])
+  assert.deepEqual(realizedResults(merged).map((row) => row.profit), [98, 299])
+})
+
 test('boekt een decemberopening pas bij sluiten in januari, inclusief beide commissies', () => {
   const ledger = results([trade('csp', '2025-12-31', -1, 3, 'O'), trade('csp', '2026-01-05', 1, 1, 'C')])
   assert.equal(tradingResult(ledger, '2025-12').value, 0)
