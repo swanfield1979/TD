@@ -89,4 +89,3 @@ De eerste versie wordt gecontroleerd met:
 
 - Dashboardkaarten in de browser gecontroleerd op 1720, 768 en 360 pixels. De inhoud heeft per kaart gelijke ruimte boven en onder; geen horizontale pagina-overloop.
 - 33 bestaande tests en de TypeScript/Vite-build geslaagd. Alleen uitlijning gewijzigd.
-
