@@ -1,5 +1,13 @@
 # Versiehistorie
 
+## 0.22.0 – werkelijke inleg en gecorrigeerd rendement
+
+- Jaarlijkse stortingsrapporten ingelezen; opnames verlagen de netto inleg.
+- Totale winst en percentage gecorrigeerd voor netto inleg sinds 2025.
+- Goals toont Inleg, Ingelegd en Winst / %, met aparte winst- en inlegvoortgang.
+- Extra inleg boven de planning verhoogt de saldoverwachting zonder als rendement te tellen.
+- Ontbrekende historie en afwijkende peildatums worden expliciet getoond.
+
 ## 0.21.2 – gecentreerde dashboardkaarten
 
 - Titels, bedragen en toelichtingen staan als één groep verticaal gecentreerd in de saldo-, resultaat-, activiteit- en premiekaarten.

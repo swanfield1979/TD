@@ -182,6 +182,7 @@ export interface IbkrLiveSnapshot {
 }
 
 export interface PortfolioSummary {
+  contributionPeriods?: ContributionPeriod[]
   generatedAt: string
   sourceUpdatedAt: string
   currency: string
@@ -213,4 +214,14 @@ export interface PortfolioSummary {
     currentMonth: PremiumPeriod
     previousMonth: PremiumPeriod
   }
+}
+
+export interface ContributionPeriod {
+  year: number
+  fromDate: string
+  toDate: string
+  currency: string
+  net: number
+  currencyInferred: boolean
+  currencies: { currency: string; deposits: number; withdrawals: number; net: number }[]
 }

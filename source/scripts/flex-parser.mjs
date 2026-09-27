@@ -300,7 +300,8 @@ function monthlyPortfolioHistory(rows) {
   }))
 }
 
-function goalPlanSummary(rows, latest) {
+function goalPlanSummary(rows, latest, contributions = []) {
+  const expectedContribution = (year) => Math.max(GOAL_ANNUAL_CONTRIBUTION, contributions.find((row) => row.year === year)?.net ?? 0)
   const currentYear = Number(latest.date.slice(0, 4))
   const baseYear = currentYear - 1
   const baseYearEnd = rows.filter((row) => row.date.startsWith(`${baseYear}-`)).at(-1)
@@ -312,7 +313,7 @@ function goalPlanSummary(rows, latest) {
     startValue: round(completedStart.total),
     growthValue: round(completedStart.total * (GOAL_GROWTH_PERCENTAGE / 100)),
     contribution: GOAL_ANNUAL_CONTRIBUTION,
-    targetValue: round(completedStart.total * (1 + GOAL_GROWTH_PERCENTAGE / 100) + GOAL_ANNUAL_CONTRIBUTION),
+    targetValue: round(completedStart.total * (1 + GOAL_GROWTH_PERCENTAGE / 100) + expectedContribution(baseYear)),
     resultValue: round(baseYearEnd.total),
     resultDate: baseYearEnd.date,
     status: 'completed',
@@ -322,7 +323,7 @@ function goalPlanSummary(rows, latest) {
   const plannedYears = Array.from({ length: GOAL_PLANNING_YEARS }, (_, index) => {
     const year = currentYear + index
     const growthValue = startValue * (GOAL_GROWTH_PERCENTAGE / 100)
-    const targetValue = startValue + growthValue + GOAL_ANNUAL_CONTRIBUTION
+    const targetValue = startValue + growthValue + expectedContribution(year)
     const projection = {
       year,
       startValue: round(startValue),
@@ -347,7 +348,44 @@ function goalPlanSummary(rows, latest) {
   }
 }
 
-export function createPortfolioSummary({ equityXml, tradesXml, optionXml, currency = 'USD', premiumCurrency = 'USD', generatedAt = new Date().toISOString() }) {
+export function cashContributionPeriods(xml, currency = 'USD') {
+  const reports = new Map()
+  const iso = (value) => /^\d{8}$/.test(value || '') ? `${value.slice(0, 4)}-${value.slice(4, 6)}-${value.slice(6, 8)}` : value
+  for (const match of xml.matchAll(/<FlexStatement\b([^>]*)>([\s\S]*?)<\/FlexStatement>/g)) {
+    const statement = parseAttributes(match[1])
+    const fromDate = iso(statement.fromDate)
+    const toDate = iso(statement.toDate)
+    if (!fromDate || !toDate || fromDate.slice(0, 4) !== toDate.slice(0, 4)) throw new Error('Stortingsrapport moet één kalenderjaar bevatten.')
+    const rows = extractTags(match[2], 'CashReportCurrency')
+    // These supplied Flex exports omit the currency column. IBKR lists the
+    // consolidated base-currency summary first, followed by currency breakouts.
+    const base = rows.find((row) => row.currency === 'BASE_SUMMARY') ?? (!rows[0]?.currency ? rows[0] : null)
+    if (!base || base.depositWithdrawals === undefined || !Number.isFinite(Number(base.depositWithdrawals))) throw new Error('Basistotaal stortingen/opnames ontbreekt in Cash Report.')
+    const byCurrency = new Map()
+    for (const transaction of extractTags(match[2], 'CashTransaction').filter((row) => row.type === 'Deposits/Withdrawals')) {
+      const amount = Number(transaction.amount)
+      if (!transaction.currency || !Number.isFinite(amount)) throw new Error('Ongeldige storting/opname.')
+      const totals = byCurrency.get(transaction.currency) ?? { currency: transaction.currency, deposits: 0, withdrawals: 0, net: 0 }
+      totals.deposits += Math.max(0, amount)
+      totals.withdrawals += Math.max(0, -amount)
+      totals.net += amount
+      byCurrency.set(transaction.currency, totals)
+    }
+    const report = { year: Number(fromDate.slice(0, 4)), fromDate, toDate, currency,
+      net: Math.sign(Number(base.depositWithdrawals)) * Math.round(Math.abs(Number(base.depositWithdrawals)) * 100) / 100, currencyInferred: !base.currency,
+      currencies: [...byCurrency.values()].map((row) => ({ ...row, deposits: round(row.deposits), withdrawals: round(row.withdrawals), net: round(row.net) })) }
+    const key = `${statement.accountId || ''}|${report.year}`
+    const previous = reports.get(key)
+    if (previous && previous.fromDate !== fromDate) throw new Error('Overlappende stortingsrapporten met verschillende begindatums; gebruik één cumulatief rapport per jaar.')
+    if (previous?.toDate === toDate && previous.net !== report.net) throw new Error('Tegenstrijdige stortingsrapporten voor dezelfde periode.')
+    if (!previous || toDate >= previous.toDate) reports.set(key, report)
+  }
+  const periods = [...reports.values()].sort((a, b) => a.fromDate.localeCompare(b.fromDate))
+  if (new Set(periods.map((period) => period.year)).size !== periods.length) throw new Error('Stortingen van meerdere rekeningen kunnen niet met één portefeuillesaldo worden vergeleken.')
+  return periods
+}
+
+export function createPortfolioSummary({ equityXml, tradesXml, optionXml, contributionsXml = '', currency = 'USD', premiumCurrency = 'USD', generatedAt = new Date().toISOString() }) {
   const statements = extractTags(`${equityXml}\n${tradesXml}\n${optionXml}`, 'FlexStatement')
   const statement = statements
     .filter(({ whenGenerated }) => whenGenerated)
@@ -374,6 +412,7 @@ export function createPortfolioSummary({ equityXml, tradesXml, optionXml, curren
   if (rows.length === 0) throw new Error('Geen dagsaldi gevonden in het Flex-rapport.')
 
   const latest = rows.at(-1)
+  const contributionPeriods = cashContributionPeriods(contributionsXml, currency)
   const startingBalance = rows.find((row) => row.date === '2024-12-31')
     ?? rows.find((row) => row.date.startsWith('2025-'))
   const trades = mergeOptionEvents(rawTrades, extractTags(optionXml, 'OptionEAE'))
@@ -413,6 +452,7 @@ export function createPortfolioSummary({ equityXml, tradesXml, optionXml, curren
     },
     balance: metric(latest.total, undefined, latest.date),
     startingBalance: startingBalance ? { value: round(startingBalance.total), date: startingBalance.date } : null,
+    contributionPeriods,
     dailyProfit: metric(latest.total - rows.at(-2).total, rows.at(-2).date, latest.date),
     yearProfit: metric(yearProfit, start.date, latest.date),
     currentMonthProfit: monthlyTradingResult(results, currentMonth, currentMonthBase.date, latest.date),
@@ -428,7 +468,7 @@ export function createPortfolioSummary({ equityXml, tradesXml, optionXml, curren
     stockHoldings,
     optionHoldings,
     closedTrades,
-    goalPlan: goalPlanSummary(rows, latest),
+    goalPlan: goalPlanSummary(rows, latest, contributionPeriods),
     portfolioAllocation: portfolioAllocation(stockHoldings, optionHoldings, latest),
     premiumPeriods: {
       currentMonth: premiumForMonth(currentMonth),

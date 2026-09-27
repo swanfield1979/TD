@@ -1,0 +1,2 @@
+export function contributionReturn(balance: number, startingBalance: number | null | undefined, netContributions: number | null | undefined): { capital: number; profit: number; percentage: number | null } | null
+export function contributionsSince(periods: { year: number; fromDate: string; toDate: string; net: number }[], startDate: string | undefined, endDate: string): { net: number; toDate: string; datesDiffer: boolean } | null

@@ -24,3 +24,7 @@ De live snapshot vervangt in de interface uitsluitend actuele waarden: saldo, po
 ## Gerealiseerde resultaten
 
 `source/scripts/realized-results.mjs` vormt het gezamenlijke FIFO-register voor resultaatkaarten, jaarpremie en afgesloten optietrades. `mergeOptionEvents` vult ontbrekende OptionEAE-sluitingen en aandelentransacties aan zonder dezelfde uitvoering opnieuw te boeken. `realizedResults` bewaart aanschafkosten en commissies in open lots, verwerkt gedeeltelijke afsluitingen op hun eigen datum en scheidt short-premie, aandelen en gekochte opties. Uitoefeningskosten van long opties worden aan de resulterende aandelentransactie gekoppeld. De Flex-import begrenst dit register op de laatste beschikbare saldodag. Historische saldo- en doelgrafieken blijven op netto liquidatiewaarde gebaseerd.
+
+## Inleg en saldorendement
+
+De Flex-import levert `contributionPeriods` met netto basistotalen en bruto stortingen/opnames per bronvaluta. Alleen niet-identificerende jaargegevens gaan naar de browser; ruwe exports blijven privé. `shared/contribution-return.mjs` berekent winst en eenvoudig rendement na inlegcorrectie en controleert of de jaarreeks sinds het startsaldo compleet is. Live saldorefresh herberekent de UI-waarden met dezelfde kasstroomhistorie; peildatumverschillen blijven zichtbaar. Zie [Inleg en rendement](inleg.md).

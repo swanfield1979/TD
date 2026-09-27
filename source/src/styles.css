@@ -887,7 +887,7 @@ button:focus-visible, a:focus-visible {
 
 .goals-summary {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -1004,7 +1004,7 @@ button:focus-visible, a:focus-visible {
 .goal-progress__caption strong { color: var(--z365-text-primary); font-variant-numeric: tabular-nums; }
 .goal-progress__details {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 1px;
   margin-top: 17px;
   overflow: hidden;
@@ -1414,6 +1414,7 @@ button:focus-visible, a:focus-visible {
 @keyframes spin { to { transform: rotate(360deg); } }
 
 @media (min-width: 1024px) and (max-width: 1399px) {
+  .goals-summary { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .portfolio-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .dashboard-grid--performance { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .activity-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
@@ -1536,4 +1537,9 @@ button:focus-visible, a:focus-visible {
 @media (forced-colors: active) {
   .nav-item--active::before, .stat-card::before, .activity-card::before, .premium-card::before, .data-freshness__pulse, .goal-progress__track span { background: Highlight; }
   .allocation-card__segment, .allocation-card__track, .allocation-card__swatch { forced-color-adjust: auto; }
+}
+
+.goal-progress__details small { display: block; margin-top: 4px; color: var(--z365-text-secondary); font-size: 10px; }
+@media (min-width: 601px) and (max-width: 1023px) {
+  .goal-progress__details { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

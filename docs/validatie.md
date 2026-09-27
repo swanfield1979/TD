@@ -89,3 +89,10 @@ De eerste versie wordt gecontroleerd met:
 
 - Dashboardkaarten in de browser gecontroleerd op 1720, 768 en 360 pixels. De inhoud heeft per kaart gelijke ruimte boven en onder; geen horizontale pagina-overloop.
 - 33 bestaande tests en de TypeScript/Vite-build geslaagd. Alleen uitlijning gewijzigd.
+
+## Versie 0.22.0 — inleg en rendement
+
+- 38 tests geslaagd, inclusief valutauitsplitsing zonder dubbeltelling, gelijke stortingen, opnames, cumulatieve rapportvervanging, ontbrekende jaarhistorie, verschillende peildatums en doelen bij extra inleg.
+- Alle twaalf lokale XML-bronnen opnieuw geïmporteerd; jaartotalen gecontroleerd tegen de aangeleverde Cash Reports. Productie-JSON is gelijk aan de geïmporteerde samenvatting.
+- TypeScript/Vite-build geslaagd. Dashboard en Goals gecontroleerd in de browser; geen horizontale pagina-overloop op desktop, tablet en mobiel (1720, 1024, 768 en 360 pixels voor Goals). Geen browserfouten tijdens de controle.
+- Stortingsbestanden zijn uitgesloten van Git. De huidige winst is expliciet voorlopig omdat saldo- en inlegpeildatum één dag verschillen.

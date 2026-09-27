@@ -2,7 +2,7 @@
 
 Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voortgang op basis van Interactive Brokers Flex-rapporten.
 
-**Versie/status:** 0.21.2, intern dashboard met meerjarige Flex-import, CSP-reservering en vrij besteedbaar vermogen, dagelijkse winst/verlies in dollars en procenten, afzonderlijke Stocks-, Options-, Goals-, Stats- en Trades-overzichten, automatische strategieherkenning, jaarlijkse doelplanning, Nginx-hosting op poort 80 en een read-only IBKR Gateway-koppeling met mobiele IB Key MFA.
+**Versie/status:** 0.22.0, intern dashboard met meerjarige Flex-import, CSP-reservering en vrij besteedbaar vermogen, dagelijkse winst/verlies in dollars en procenten, afzonderlijke Stocks-, Options-, Goals-, Stats- en Trades-overzichten, automatische strategieherkenning, jaarlijkse doelplanning, Nginx-hosting op poort 80 en een read-only IBKR Gateway-koppeling met mobiele IB Key MFA.
 
 | Map | Inhoud |
 | --- | --- |
@@ -17,13 +17,14 @@ Zie [`docs/installatie.md`](docs/installatie.md) voor de installatie en [`source
 ## Functies
 
 - Donker, responsief dashboard met het Trading Monitor-logo.
-- Totale winst sinds start 2025 in dollars en procenten, met startsaldo en huidig (live) saldo.
+- Totale winst sinds start 2025 gecorrigeerd voor netto inleg, met winstpercentage over ingebracht kapitaal en huidig (live) saldo.
 - Saldo en nettoresultaatstatistieken uit lokale IBKR Flex XML-rapporten.
 - Afzonderlijke kaart voor dagelijkse winst/verlies in dollars en als percentage van de vorige handelsdag.
 - Maand- en jaarresultaat uitsluitend uit gerealiseerde short-optiepremie en aandelenverkopen; FIFO-kosten en commissies tellen mee op de sluitingsdatum.
 - Portefeuilleverdeling voor aandelen, opties inclusief gereserveerd CSP-bedrag en vrij geld/overig.
 - Stocks-pagina met open aandelen, covered-call-dekking, nettokostprijs, actuele nettowaarde, winst/verlies en procentuele koersbeweging van vandaag.
 - Options-pagina met open contracten, long/short-richting, strategie, strike, expiratie, gekozen DTE, resterende dagen, CSP-reservering, vrij te besteden bedrag en actueel winst/verlies.
+- Jaarlijkse stortingsimport, met geplande Inleg en werkelijk Ingelegd naast elkaar in Goals.
 - Goals-pagina met historische jaarresultaten, een jaarlijks doel van 30% rendement boven op de vorige jaarafsluiting, $ 12.000 inleg, voortgang ten opzichte van het jaarschema en een vijfjarenplanning.
 - Stats-pagina met analyse per jaar, standaard op 2026, meerjarig portefeuilleverloop, kerncijfers, maandresultaten, winst/verliesverdeling, resultaat per onderliggende waarde en verdeling van de aanhoudduur.
 - Trades-pagina met jaarkeuze 2025/2026, afgesloten optieposities, nettoresultaat, trade-rendement, lineair geannualiseerd rendement en paginering van maximaal 50 regels.

@@ -1,3 +1,4 @@
+import { contributionReturn, contributionsSince } from '../shared/contribution-return.mjs'
 import { useCallback, useEffect, useState } from 'react'
 import {
   ArrowSwapRegular,
@@ -127,14 +128,16 @@ function DailyProfitCard({ metric, balance, currency }: DailyProfitCardProps) {
   )
 }
 
-function TotalProfitCard({ startingBalance, balance, currency }: {
+function TotalProfitCard({ startingBalance, balance, currency, contributions = [] }: {
+  contributions?: PortfolioSummary['contributionPeriods']
   startingBalance: PortfolioSummary['startingBalance']
   balance: PortfolioMetric
   currency: string
 }) {
-  const profit = startingBalance ? balance.value - startingBalance.value : null
-  const percentage = startingBalance && startingBalance.value > 0 && profit !== null
-    ? profit / startingBalance.value : null
+  const cash = contributionsSince(contributions, startingBalance?.date, balance.toDate)
+  const result = contributionReturn(balance.value, startingBalance?.value, cash?.net)
+  const profit = result?.profit ?? null
+  const percentage = result?.percentage ?? null
   const direction = profit === null || profit === 0 ? 'neutral' : profit > 0 ? 'positive' : 'negative'
 
   return (
@@ -142,19 +145,20 @@ function TotalProfitCard({ startingBalance, balance, currency }: {
       <h2>Totale winst</h2>
       <div className="daily-profit-card__values">
         <p className={`stat-card__value metric--${direction}`}>
-          {profit === null ? '—' : currencyFormatter(currency, true).format(profit)}
+          {profit === null ? '—' : `${cash?.datesDiffer ? '≈ ' : ''}${currencyFormatter(currency, true).format(profit)}`}
         </p>
         <p className={`daily-profit-card__percentage metric--${direction}`}>
-          {percentage === null ? '—' : percentageFormatter.format(percentage)}
+          {percentage === null ? '—' : `${cash?.datesDiffer ? '≈ ' : ''}${percentageFormatter.format(percentage)}`}
         </p>
       </div>
       <p className="stat-card__context">
         {startingBalance ? <>
           Sinds start 2025 · {formatDate(startingBalance.date)}<br />
-          Start {currencyFormatter(currency).format(startingBalance.value)} / nu {currencyFormatter(currency).format(balance.value)}
+          Start {currencyFormatter(currency).format(startingBalance.value)} / nu {currencyFormatter(currency).format(balance.value)}<br />
+          {cash ? <>Netto inleg {currencyFormatter(currency).format(cash.net)} t/m {formatDate(cash.toDate)}</> : 'Stortingshistorie ontbreekt · importeer jaarrapporten.'}
         </> : 'Startsaldo ontbreekt · importeer Flex-saldi uit 2025.'}
       </p>
-      <span className="visually-hidden">Saldogroei inclusief stortingen, opnames en open posities; percentage ten opzichte van het startsaldo.</span>
+      <span className="visually-hidden">Winst na aftrek van netto inleg; percentage over startsaldo plus netto inleg, inclusief open posities. Bij afwijkende peildatums is het resultaat voorlopig.</span>
     </article>
   )
 }
@@ -355,7 +359,7 @@ function App() {
                 balance={summary.balance}
                 currency={summary.currency}
               />
-              <TotalProfitCard startingBalance={summary.startingBalance} balance={summary.balance} currency={summary.currency} />
+              <TotalProfitCard contributions={summary.contributionPeriods} startingBalance={summary.startingBalance} balance={summary.balance} currency={summary.currency} />
             </section>
             <section className="dashboard-grid dashboard-grid--performance" aria-label="Portfoliostatistieken">
               <StatCard
@@ -418,7 +422,7 @@ function App() {
         )}
 
         {!isLoading && summary && currentPage === 'goals' && (
-          <GoalsPage goalPlan={summary.goalPlan ?? null} balance={summary.balance} currency={summary.currency} />
+          <GoalsPage contributionPeriods={summary.contributionPeriods ?? []} goalPlan={summary.goalPlan ?? null} balance={summary.balance} currency={summary.currency} />
         )}
 
         {!isLoading && summary && currentPage === 'trades' && (

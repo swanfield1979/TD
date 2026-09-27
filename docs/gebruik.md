@@ -10,7 +10,7 @@ Wanneer de koppeling niet beschikbaar is, blijven de laatst geïmporteerde Flex-
 
 Het dashboard combineert saldoreeksen en gerealiseerde transactieresultaten uit de lokale Flex-bronnen:
 
-- **Totale winst:** huidig saldo minus het startsaldo van 2025; percentage = verschil / startsaldo × 100. Als nulmeting geldt 31 december 2024, anders de eerste beschikbare saldodag van 2025 (de datum staat op de kaart). De kaart rechts bovenaan toont start / nu en volgt live saldo-updates. Dit is saldogroei inclusief stortingen, opnames en ongerealiseerde koersbewegingen; het is geen apart gerealiseerd handelsresultaat. Zonder startsaldo verschijnt een streepje; bij een startsaldo van nul blijft het percentage leeg.
+- **Totale winst:** huidig saldo − startsaldo − netto inleg sinds 2025. Netto inleg is stortingen min opnames. Het percentage is winst / (startsaldo + netto inleg) × 100. Dit is eenvoudig totaalrendement, niet tijdgewogen of geannualiseerd. De inleg van 2024 zit al in het startsaldo van 2025. Bij ontbrekende jaarhistorie verschijnt een streepje; bij verschillende peildatums verschijnt ≈. Open posities tellen via het saldo mee.
 - **Saldo:** het laatste beschikbare totaal van `EquitySummaryByReportDateInBase`.
 - **Dagelijkse W&V:** het verschil tussen de twee laatste beschikbare handelsdagsaldi, zowel in dollars als als percentage van het saldo van de vorige handelsdag.
 - **Nettoresultaat jaar:** alle gerealiseerde short-optiepremies en aandelenresultaten met een sluitingsdatum in het rapportjaar. Ongerealiseerde koersbewegingen en stortingen tellen niet mee.
@@ -72,17 +72,7 @@ Op het Dashboard wordt de CSP-reservering bij **Opties** opgeteld en tegelijk ui
 
 ## Goals
 
-De pagina **Goals** toont afgesloten jaarresultaten en gebruikt de laatste netto liquidatiewaarde van het voorgaande jaar als startpunt voor het actuele jaardoel. De vaste formule is:
-
-`jaardoel = eindstand vorig jaar + 30% rendement + $ 12.000 jaarlijkse inleg`
-
-Voor 2025 is het startsaldo op basis van de jaarafsluiting van 2024 `$ 35.772,47`. Met `$ 10.731,74` rendementsdoel en `$ 12.000,00` inleg komt het doel op `$ 58.504,21`. De werkelijke eindstand van 2025 is `$ 82.465,00`, oftewel `$ 23.960,79` boven doel.
-
-Voor 2026 is de eindstand van 2025 `$ 82.465,00` het startsaldo. Het rendementsdoel is `$ 24.739,50` en het jaardoel voor 2026 `$ 119.204,50`.
-
-De voortgangsbalk toont welk deel van de benodigde totale groei al is gerealiseerd. **Voor/achter op schema** vergelijkt het actuele saldo met een lineair doelpad vanaf 1 januari tot en met 31 december. **Nodig per resterende maand** verdeelt het bedrag tot het jaardoel over de nog volledige kalendermaanden.
-
-De meerjarenplanning projecteert vijf jaar vooruit met dezelfde 30% en `$ 12.000` inleg. Voor toekomstige jaren wordt het geplande doel van het voorgaande jaar als voorlopig startsaldo gebruikt. Zodra een nieuw kalenderjaar in de Flex-data is afgesloten, gebruikt de import automatisch die werkelijke eindstand en verschijnt het jaar als afgesloten resultaat.
+Goals toont geplande **Inleg**, werkelijke **Ingelegd** (netto na opnames) en **Winst / %** naast elkaar. De voortgang en benodigde winst per maand worden voor inleg gecorrigeerd. Het rendementsdoel blijft 30% van het startsaldo; de geplande jaarlijkse inleg blijft $ 12.000. Werkelijke inleg boven de planning verhoogt de saldoverwachting zonder als rendement te tellen. Zie [Inleg en rendement](inleg.md) voor formules, import en peildatums.
 
 ## Handelsactiviteit en optiepremie
 
