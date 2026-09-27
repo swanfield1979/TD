@@ -37,7 +37,6 @@ test('berekent dashboardstatistieken uit dagsaldi', () => {
     direction: 'neutral',
     premium: 0,
     stockSales: 0,
-    longOptionSales: 0,
   })
   assert.deepEqual(result.previousMonthProfit, {
     value: 0,
@@ -46,7 +45,6 @@ test('berekent dashboardstatistieken uit dagsaldi', () => {
     direction: 'neutral',
     premium: 0,
     stockSales: 0,
-    longOptionSales: 0,
   })
   assert.equal(result.averageMonthlyProfit.value, 0)
   assert.equal(result.sourceCounts.trades, 2)
@@ -214,7 +212,7 @@ test('begrenst de dashboardactiviteit tot het actuele jaar en telt huidige open 
   })
 })
 
-test('combineert netto premie met aandelenverkoop en de lange leg van een gesloten synthetic', () => {
+test('combineert premie en aandelenverkoop zonder de gekochte leg van een synthetic', () => {
   const equityXml = `<FlexStatement whenGenerated="2026-09-24 10:00:00">
     <EquitySummaryByReportDateInBase reportDate="2026-07-31" total="1000" />
     <EquitySummaryByReportDateInBase reportDate="2026-08-31" total="1100" />
@@ -232,13 +230,12 @@ test('combineert netto premie met aandelenverkoop en de lange leg van een geslot
   const result = createPortfolioSummary({ equityXml, tradesXml, optionXml: '<Options />' })
 
   assert.deepEqual(result.currentMonthProfit, {
-    value: 744,
+    value: 546,
     fromDate: '2026-08-31',
     toDate: '2026-09-24',
     direction: 'positive',
     premium: 246,
     stockSales: 300,
-    longOptionSales: 198,
   })
 })
 

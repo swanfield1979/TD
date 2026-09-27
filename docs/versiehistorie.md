@@ -1,5 +1,11 @@
 # Versiehistorie
 
+## 0.21.1 – gekochte opties buiten nettoresultaat
+
+- Winst en verlies van gekochte opties tellen niet meer mee in het maand- en jaarresultaat of maandgemiddelde.
+- De nettoresultaatkaarten tonen uitsluitend premie en aandelen.
+- Optiehistorie in Trades/Stats en Totale winst op basis van saldogroei blijven behouden.
+
 ## 0.21.0 – totale winst sinds start 2025
 
 - Rechts naast de portefeuilleverdeling staat Totale winst met saldogroei in dollars en procenten.

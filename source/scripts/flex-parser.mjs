@@ -146,7 +146,7 @@ function optionHoldingsSummary(optionTrades) {
 function monthlyTradingResult(results, month, fromDate, toDate) {
   const result = tradingResult(results, month)
   return { ...metric(result.value, fromDate, toDate), premium: result.premium,
-    stockSales: result.stockSales, longOptionSales: result.longOptionSales }
+    stockSales: result.stockSales }
 }
 
 function calendarDaysBetween(startDateTime, endDateTime) {

@@ -137,8 +137,7 @@ export function tradingResult(results, period) {
   const total = (category) => round(selected.filter((result) => result.category === category).reduce((sum, result) => sum + result.profit, 0))
   const premium = total('premium')
   const stockSales = total('stockSales')
-  const longOptionSales = total('longOptionSales')
-  return { premium, stockSales, longOptionSales, value: round(premium + stockSales + longOptionSales) }
+  return { premium, stockSales, value: round(premium + stockSales) }
 }
 
 export function closedOptionTrades(results) {

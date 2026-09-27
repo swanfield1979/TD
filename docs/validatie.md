@@ -79,3 +79,8 @@ De eerste versie wordt gecontroleerd met:
 - Flex-import, TypeScript-controle en productiebuild geslaagd.
 - Kaart in de browser gecontroleerd op desktop en mobiel; geen horizontale pagina-overloop of afgeknipte kaarten op 1720, 1400, 1024, 768 en 360 pixels. Geen browserfouten of waarschuwingen tijdens de controle.
 - Het actuele saldo wordt rechtstreeks uit dezelfde state gelezen als de Saldokaart, zodat een live update automatisch doorwerkt.
+
+## Versie 0.21.1 — uitsluiting gekochte opties
+
+- 33 tests geslaagd; expliciete regressies voor winst én verlies op gekochte opties, inclusief maand- en jaarafbakening.
+- Import en TypeScript/Vite-build geslaagd. De maandkaarten bevatten uitsluitend premie en aandelen; jaarresultaat en maandgemiddelde gebruiken dezelfde selectie.

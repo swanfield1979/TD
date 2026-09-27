@@ -75,7 +75,6 @@ const directionLabel: Record<MetricDirection, string> = {
 const tradingResultContext = (result: MonthlyTradingResult, currency: string) => [
   `premie ${currencyFormatter(currency, true).format(result.premium)}`,
   `aandelen ${currencyFormatter(currency, true).format(result.stockSales)}`,
-  `gekochte opties ${currencyFormatter(currency, true).format(result.longOptionSales)}`,
 ].join(' · ')
 
 interface StatCardProps {
@@ -363,7 +362,7 @@ function App() {
                 label={`Nettoresultaat ${summary.yearProfit.toDate.slice(0, 4)}`}
                 metric={summary.yearProfit}
                 currency={summary.currency}
-                context="Gerealiseerde premie, aandelen en gekochte opties"
+                context="Gerealiseerde premie en aandelen"
               />
               <StatCard
                 label="Nettoresultaat deze maand"

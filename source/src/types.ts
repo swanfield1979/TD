@@ -10,7 +10,6 @@ export interface PortfolioMetric {
 export interface MonthlyTradingResult extends PortfolioMetric {
   premium: number
   stockSales: number
-  longOptionSales: number
 }
 
 export interface MonthlyBalanceChange {
