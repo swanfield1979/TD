@@ -68,3 +68,18 @@ test('Goals weigert een nieuwjaarsaldo te combineren met de planning van vorig j
   assert.match(html, /Flex-jaarafsluiting/)
   assert.doesNotMatch(html, /Winst \/ rendement behaald/)
 })
+
+test('Goals toont saldovoortgang ook als rendement negatief is', () => {
+  const goalPlan = structuredClone(summary.goalPlan)
+  const goal = goalPlan.years.find(row => row.status === 'current')
+  Object.assign(goal, { startValue: 82465, targetValue: 119204.50, growthValue: 24739.50 })
+  const html = renderToStaticMarkup(createElement(GoalsPage, {
+    goalPlan, balance: { ...summary.balance, value: 86097.12 }, currency: 'USD',
+    contributionPeriods: [{ year: 2026, net: 7238.53, toDate: '2026-09-25' }],
+  }))
+  assert.match(html, /72,2%/)
+  assert.match(html, /aria-valuenow="72"/)
+  assert.match(html, /width:72\./)
+  assert.match(html, /-3\.606,41/)
+  assert.match(html, /van het jaardoel bereikt/)
+})

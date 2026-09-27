@@ -74,6 +74,8 @@ Op het Dashboard wordt de CSP-reservering bij **Opties** opgeteld en tegelijk ui
 
 ## Goals
 
+De voortgangsbalk toont het actuele saldo als percentage van het totale jaardoel, inclusief startkapitaal en inleg. De aparte winstberekening trekt netto inleg wel af. De balk wordt begrensd op 0–100%; het bijschrift kan meer dan 100% tonen als het jaardoel is overschreden.
+
 Goals toont geplande **Inleg**, werkelijke **Ingelegd** (netto na opnames) en **Winst / %** naast elkaar. De voortgang en benodigde winst per maand worden voor inleg gecorrigeerd. Het rendementsdoel blijft 30% van het startsaldo; de geplande jaarlijkse inleg blijft $ 12.000. Werkelijke inleg boven de planning verhoogt de saldoverwachting zonder als rendement te tellen. Zie [Inleg en rendement](inleg.md) voor formules, import en peildatums.
 
 ## Handelsactiviteit en optiepremie

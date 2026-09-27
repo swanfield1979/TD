@@ -1,5 +1,10 @@
 # Validatie
 
+## Resultaat 27 september 2026 — versie 0.23.1
+
+- `npm test`: 49 van 49 tests geslaagd. `npm run build`: geslaagd.
+- React-renderregressie: saldo 86.097,12 tegenover jaardoel 119.204,50 toont een gevulde balk van 72,2%, terwijl het negatieve rendement na inleg afzonderlijk behouden blijft.
+
 ## Resultaat 27 september 2026 — versie 0.23.0
 
 - `npm test`: 48 van 48 tests geslaagd. `npm run build`: TypeScript en productiebuild geslaagd.

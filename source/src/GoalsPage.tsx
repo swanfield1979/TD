@@ -57,7 +57,7 @@ export default function GoalsPage({ goalPlan, balance, currency, contributionPer
   const currentReturn = contributionReturn(balance.value, currentGoal.startValue, currentCash?.net)
   const targetIncrease = currentGoal.growthValue
   const achievedIncrease = currentReturn?.profit ?? 0
-  const progress = targetIncrease > 0 ? (achievedIncrease / targetIncrease) * 100 : 0
+  const progress = currentGoal.targetValue > 0 ? (balance.value / currentGoal.targetValue) * 100 : 0
   const displayedProgress = Math.min(100, Math.max(0, progress))
   const targetToDate = currentGoal.startValue + (currentCash?.net ?? 0) + targetIncrease * yearFraction(balance.toDate)
   const scheduleDifference = balance.value - targetToDate
@@ -97,7 +97,7 @@ export default function GoalsPage({ goalPlan, balance, currency, contributionPer
           <div>
             <p className="goal-progress__kicker"><TargetArrowRegular aria-hidden="true" /> Voortgang {currentGoal.year}</p>
             <h2 id="goal-progress-title">Op weg naar het jaardoel</h2>
-            <p>Saldoresultaat inclusief open posities, na aftrek van netto inleg, vergeleken met het rendementsdoel.</p>
+            <p>Actueel saldo ten opzichte van het jaardoel. Winst en netto inleg staan hieronder afzonderlijk.</p>
           </div>
           <div className={`goal-progress__status goal-progress__status--${scheduleDirection}`}>
             <span>{!currentCash ? 'Inleggegevens ontbreken' : scheduleDifference >= 0 ? 'Voor op schema' : 'Achter op schema'}</span>
@@ -114,7 +114,7 @@ export default function GoalsPage({ goalPlan, balance, currency, contributionPer
           <span style={{ width: `${displayedProgress}%` }} />
         </div>
         <p className="goal-progress__caption">
-          <strong>{currentCash ? `${percentage(Math.max(0, progress))}%` : '—'}</strong> van het rendementsdoel behaald (zonder inleg)
+          <strong>{percentage(Math.max(0, progress))}%</strong> van het jaardoel bereikt (actueel saldo / jaardoel)
         </p>
 
         <div className="goal-progress__details">

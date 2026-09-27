@@ -1,5 +1,10 @@
 # Versiehistorie
 
+## 0.23.1 – zichtbare voortgang naar het jaardoel
+
+- De voortgangsbalk toont actueel saldo gedeeld door het totale jaardoel. Een negatief jaarresultaat maakt de balk daardoor niet meer leeg.
+- Winst na netto inleg en het verschil met het jaarschema blijven afzonderlijk berekend.
+
 ## 0.23.0 – betrouwbare synchronisatie en consistente peildatums
 
 - Herhaalde IBKR-positieupdates vervangen dezelfde positie; nulposities verdwijnen. Ook oude snapshots worden ontdubbeld.
