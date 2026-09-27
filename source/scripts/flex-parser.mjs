@@ -374,6 +374,8 @@ export function createPortfolioSummary({ equityXml, tradesXml, optionXml, curren
   if (rows.length === 0) throw new Error('Geen dagsaldi gevonden in het Flex-rapport.')
 
   const latest = rows.at(-1)
+  const startingBalance = rows.find((row) => row.date === '2024-12-31')
+    ?? rows.find((row) => row.date.startsWith('2025-'))
   const trades = mergeOptionEvents(rawTrades, extractTags(optionXml, 'OptionEAE'))
     .filter((trade) => trade.dateTime?.slice(0, 10) <= latest.date)
   const optionTrades = normalizeOptionTrades(trades)
@@ -410,6 +412,7 @@ export function createPortfolioSummary({ equityXml, tradesXml, optionXml, curren
       optionEvents: extractTags(optionXml, 'OptionEAE').length,
     },
     balance: metric(latest.total, undefined, latest.date),
+    startingBalance: startingBalance ? { value: round(startingBalance.total), date: startingBalance.date } : null,
     dailyProfit: metric(latest.total - rows.at(-2).total, rows.at(-2).date, latest.date),
     yearProfit: metric(yearProfit, start.date, latest.date),
     currentMonthProfit: monthlyTradingResult(results, currentMonth, currentMonthBase.date, latest.date),

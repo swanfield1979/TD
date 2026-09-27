@@ -128,6 +128,38 @@ function DailyProfitCard({ metric, balance, currency }: DailyProfitCardProps) {
   )
 }
 
+function TotalProfitCard({ startingBalance, balance, currency }: {
+  startingBalance: PortfolioSummary['startingBalance']
+  balance: PortfolioMetric
+  currency: string
+}) {
+  const profit = startingBalance ? balance.value - startingBalance.value : null
+  const percentage = startingBalance && startingBalance.value > 0 && profit !== null
+    ? profit / startingBalance.value : null
+  const direction = profit === null || profit === 0 ? 'neutral' : profit > 0 ? 'positive' : 'negative'
+
+  return (
+    <article className={`stat-card daily-profit-card total-profit-card stat-card--${direction}`}>
+      <h2>Totale winst</h2>
+      <div className="daily-profit-card__values">
+        <p className={`stat-card__value metric--${direction}`}>
+          {profit === null ? '—' : currencyFormatter(currency, true).format(profit)}
+        </p>
+        <p className={`daily-profit-card__percentage metric--${direction}`}>
+          {percentage === null ? '—' : percentageFormatter.format(percentage)}
+        </p>
+      </div>
+      <p className="stat-card__context">
+        {startingBalance ? <>
+          Sinds start 2025 · {formatDate(startingBalance.date)}<br />
+          Start {currencyFormatter(currency).format(startingBalance.value)} / nu {currencyFormatter(currency).format(balance.value)}
+        </> : 'Startsaldo ontbreekt · importeer Flex-saldi uit 2025.'}
+      </p>
+      <span className="visually-hidden">Saldogroei inclusief stortingen, opnames en open posities; percentage ten opzichte van het startsaldo.</span>
+    </article>
+  )
+}
+
 function LoadingDashboard() {
   return (
     <div className="state-panel" role="status" aria-live="polite">
@@ -324,6 +356,7 @@ function App() {
                 balance={summary.balance}
                 currency={summary.currency}
               />
+              <TotalProfitCard startingBalance={summary.startingBalance} balance={summary.balance} currency={summary.currency} />
             </section>
             <section className="dashboard-grid dashboard-grid--performance" aria-label="Portfoliostatistieken">
               <StatCard

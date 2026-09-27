@@ -72,3 +72,10 @@ De eerste versie wordt gecontroleerd met:
 - Gerealiseerd maandresultaat augustus 2026: premie `$ +2.665,70`, aandelenverkopen `$ 0,00` en gesloten SYNT `$ +1.771,57` leveren samen `$ +4.437,27`; een aparte regressietest voorkomt dubbeltelling van de korte synthetische leg.
 - Stats-jaarkeuze: kerncijfers, maandgrafiek, winst/verliesdonut, grootste resultaatimpact en looptijdverdeling wisselen tussen 2024, 2025 en 2026 en openen standaard op 2026.
 - Portefeuilleverloop: 26 werkelijke maandeindsaldi van augustus 2024 tot en met september 2026 verwerkt; de grafiek opent op 2026 en de filters 2024, 2025, 2026 en Alles veranderen uitsluitend deze historische grafiek.
+
+## Versie 0.21.0 — totale winst
+
+- 32 tests geslaagd, inclusief startsaldo op de jaargrens, eerste beschikbare dag in 2025, nul en ontbrekende startgegevens.
+- Flex-import, TypeScript-controle en productiebuild geslaagd.
+- Kaart in de browser gecontroleerd op desktop en mobiel; geen horizontale pagina-overloop of afgeknipte kaarten op 1720, 1400, 1024, 768 en 360 pixels. Geen browserfouten of waarschuwingen tijdens de controle.
+- Het actuele saldo wordt rechtstreeks uit dezelfde state gelezen als de Saldokaart, zodat een live update automatisch doorwerkt.

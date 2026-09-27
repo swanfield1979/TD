@@ -1,5 +1,11 @@
 # Versiehistorie
 
+## 0.21.0 – totale winst sinds start 2025
+
+- Rechts naast de portefeuilleverdeling staat Totale winst met saldogroei in dollars en procenten.
+- Toont startsaldo / huidig saldo en de gebruikte startdatum; live IBKR-saldo-updates worden direct meegenomen.
+- Responsieve kaartindeling en expliciete lege toestand bij ontbrekende startgegevens.
+
 ## 0.20.0 – uitsluitend gerealiseerde resultaten
 
 - Openingspremies en aankopen hebben geen invloed op netto premie of nettoresultaat. Alleen sluitingen, bevestigde expiraties en verkopen tellen mee in hun realisatiemaand.

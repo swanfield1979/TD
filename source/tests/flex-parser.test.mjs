@@ -27,6 +27,7 @@ test('berekent dashboardstatistieken uit dagsaldi', () => {
   })
 
   assert.equal(result.balance.value, 1200)
+  assert.deepEqual(result.startingBalance, { value: 900, date: '2024-12-31' })
   assert.equal(result.dailyProfit.value, 150)
   assert.equal(result.yearProfit.value, 0)
   assert.deepEqual(result.currentMonthProfit, {
@@ -343,4 +344,13 @@ test('berekent optieactiviteit, afgesloten trades en maandpremies', () => {
       annualizedPercentage: 2701,
     },
   ])
+})
+
+
+test('startsaldo gebruikt de eerste saldodag van 2025 als de jaargrens ontbreekt en verzint geen andere start', () => {
+  const recent = '<EquitySummaryByReportDateInBase reportDate="2025-12-31" total="1000"/><EquitySummaryByReportDateInBase reportDate="2026-01-31" total="1100"/><EquitySummaryByReportDateInBase reportDate="2026-02-28" total="1200"/>'
+  const summary = (prefix, rest = recent) => createPortfolioSummary({ equityXml: prefix + rest, tradesXml: '', optionXml: '' })
+  assert.deepEqual(summary('<EquitySummaryByReportDateInBase reportDate="2025-01-03" total="500"/>').startingBalance, { value: 500, date: '2025-01-03' })
+  assert.deepEqual(summary('<EquitySummaryByReportDateInBase reportDate="2025-01-03" total="0"/>').startingBalance, { value: 0, date: '2025-01-03' })
+  assert.equal(summary('', recent.replace('2025-12-31', '2024-12-30')).startingBalance, null)
 })

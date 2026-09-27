@@ -10,6 +10,7 @@ Wanneer de koppeling niet beschikbaar is, blijven de laatst geïmporteerde Flex-
 
 Het dashboard combineert saldoreeksen en gerealiseerde transactieresultaten uit de lokale Flex-bronnen:
 
+- **Totale winst:** huidig saldo minus het startsaldo van 2025; percentage = verschil / startsaldo × 100. Als nulmeting geldt 31 december 2024, anders de eerste beschikbare saldodag van 2025 (de datum staat op de kaart). De kaart rechts bovenaan toont start / nu en volgt live saldo-updates. Dit is saldogroei inclusief stortingen, opnames en ongerealiseerde koersbewegingen; het is geen apart gerealiseerd handelsresultaat. Zonder startsaldo verschijnt een streepje; bij een startsaldo van nul blijft het percentage leeg.
 - **Saldo:** het laatste beschikbare totaal van `EquitySummaryByReportDateInBase`.
 - **Dagelijkse W&V:** het verschil tussen de twee laatste beschikbare handelsdagsaldi, zowel in dollars als als percentage van het saldo van de vorige handelsdag.
 - **Nettoresultaat jaar:** alle gerealiseerde optiepremies, aandelenresultaten en resultaten van gekochte opties met een sluitingsdatum in het rapportjaar. Ongerealiseerde koersbewegingen en stortingen tellen niet mee.

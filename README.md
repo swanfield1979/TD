@@ -2,7 +2,7 @@
 
 Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voortgang op basis van Interactive Brokers Flex-rapporten.
 
-**Versie/status:** 0.20.0, intern dashboard met meerjarige Flex-import, CSP-reservering en vrij besteedbaar vermogen, dagelijkse winst/verlies in dollars en procenten, afzonderlijke Stocks-, Options-, Goals-, Stats- en Trades-overzichten, automatische strategieherkenning, jaarlijkse doelplanning, Nginx-hosting op poort 80 en een read-only IBKR Gateway-koppeling met mobiele IB Key MFA.
+**Versie/status:** 0.21.0, intern dashboard met meerjarige Flex-import, CSP-reservering en vrij besteedbaar vermogen, dagelijkse winst/verlies in dollars en procenten, afzonderlijke Stocks-, Options-, Goals-, Stats- en Trades-overzichten, automatische strategieherkenning, jaarlijkse doelplanning, Nginx-hosting op poort 80 en een read-only IBKR Gateway-koppeling met mobiele IB Key MFA.
 
 | Map | Inhoud |
 | --- | --- |
@@ -17,6 +17,7 @@ Zie [`docs/installatie.md`](docs/installatie.md) voor de installatie en [`source
 ## Functies
 
 - Donker, responsief dashboard met het Trading Monitor-logo.
+- Totale winst sinds start 2025 in dollars en procenten, met startsaldo en huidig (live) saldo.
 - Saldo en nettoresultaatstatistieken uit lokale IBKR Flex XML-rapporten.
 - Afzonderlijke kaart voor dagelijkse winst/verlies in dollars en als percentage van de vorige handelsdag.
 - Maand- en jaarresultaat uitsluitend uit gerealiseerde optiepremie, aandelenverkopen en gekochte opties; FIFO-kosten en commissies tellen mee op de sluitingsdatum.

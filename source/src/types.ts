@@ -193,6 +193,7 @@ export interface PortfolioSummary {
     optionEvents: number
   }
   balance: PortfolioMetric
+  startingBalance?: { value: number; date: string } | null
   dailyProfit: PortfolioMetric
   yearProfit: PortfolioMetric
   currentMonthProfit: MonthlyTradingResult
