@@ -28,7 +28,7 @@ test('berekent dashboardstatistieken uit dagsaldi', () => {
 
   assert.equal(result.balance.value, 1200)
   assert.equal(result.dailyProfit.value, 150)
-  assert.equal(result.yearProfit.value, 200)
+  assert.equal(result.yearProfit.value, 0)
   assert.deepEqual(result.currentMonthProfit, {
     value: 0,
     fromDate: '2026-02-28',
@@ -36,7 +36,7 @@ test('berekent dashboardstatistieken uit dagsaldi', () => {
     direction: 'neutral',
     premium: 0,
     stockSales: 0,
-    syntheticClosures: 0,
+    longOptionSales: 0,
   })
   assert.deepEqual(result.previousMonthProfit, {
     value: 0,
@@ -45,9 +45,9 @@ test('berekent dashboardstatistieken uit dagsaldi', () => {
     direction: 'neutral',
     premium: 0,
     stockSales: 0,
-    syntheticClosures: 0,
+    longOptionSales: 0,
   })
-  assert.equal(result.averageMonthlyProfit.value, 66.67)
+  assert.equal(result.averageMonthlyProfit.value, 0)
   assert.equal(result.sourceCounts.trades, 2)
   assert.deepEqual(
     result.monthlyBalanceChanges.slice(0, 4).map(({ month, value, balance }) => ({ month, value, balance })),
@@ -203,9 +203,9 @@ test('begrenst de dashboardactiviteit tot het actuele jaar en telt huidige open 
     totalTrades: 2,
     closedTrades: 1,
     openTrades: 1,
-    premiumCapturePercentage: 60,
-    grossPremium: 250,
-    netPremium: 150,
+    premiumCapturePercentage: 50,
+    grossPremium: 200,
+    netPremium: 100,
     averageDaysHeld: 10,
     minimumDaysHeld: 10,
     maximumDaysHeld: 10,
@@ -231,13 +231,13 @@ test('combineert netto premie met aandelenverkoop en de lange leg van een geslot
   const result = createPortfolioSummary({ equityXml, tradesXml, optionXml: '<Options />' })
 
   assert.deepEqual(result.currentMonthProfit, {
-    value: 743,
+    value: 744,
     fromDate: '2026-08-31',
     toDate: '2026-09-24',
     direction: 'positive',
-    premium: 244,
-    stockSales: 299,
-    syntheticClosures: 200,
+    premium: 246,
+    stockSales: 300,
+    longOptionSales: 198,
   })
 })
 
@@ -260,9 +260,9 @@ test('berekent optieactiviteit, afgesloten trades en maandpremies', () => {
     totalTrades: 2,
     closedTrades: 1,
     openTrades: 1,
-    premiumCapturePercentage: 89.3,
-    grossPremium: 500,
-    netPremium: 446.5,
+    premiumCapturePercentage: 74,
+    grossPremium: 200,
+    netPremium: 148,
     averageDaysHeld: 10,
     minimumDaysHeld: 10,
     maximumDaysHeld: 10,
@@ -270,10 +270,10 @@ test('berekent optieactiviteit, afgesloten trades en maandpremies', () => {
   })
   assert.deepEqual(result.premiumPeriods.currentMonth, {
     month: '2026-03',
-    received: 300,
+    received: 0,
     buyback: 0,
-    commission: 1.5,
-    net: 298.5,
+    commission: 0,
+    net: 0,
   })
   assert.deepEqual(result.premiumPeriods.previousMonth, {
     month: '2026-02',

@@ -132,13 +132,13 @@ export default function TradesPage({ trades, currency }: TradesPageProps) {
         {filteredTrades.length === 0 ? (
           <div className="positions-empty">
             <h3>Nog geen afgesloten trades</h3>
-            <p>Afgesloten optiecycli verschijnen na de volgende Flex-import.</p>
+            <p>Afgesloten optieposities (ook deels gesloten) verschijnen na de volgende Flex-import.</p>
           </div>
         ) : (
           <>
             <div className="positions-table-region" tabIndex={0} aria-label="Afgesloten trades; horizontaal scrollbaar op een klein scherm">
               <table className="trades-table">
-                <caption className="visually-hidden">Afgesloten optiecycli met resultaat en geannualiseerd rendement</caption>
+                <caption className="visually-hidden">Afgesloten optieposities (ook deels gesloten) met resultaat en geannualiseerd rendement</caption>
                 <thead>
                   <tr>
                     <th scope="col">Onderliggende waarde</th>

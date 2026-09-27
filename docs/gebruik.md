@@ -12,12 +12,27 @@ Het dashboard combineert saldoreeksen en gerealiseerde transactieresultaten uit 
 
 - **Saldo:** het laatste beschikbare totaal van `EquitySummaryByReportDateInBase`.
 - **Dagelijkse W&V:** het verschil tussen de twee laatste beschikbare handelsdagsaldi, zowel in dollars als als percentage van het saldo van de vorige handelsdag.
-- **Nettoresultaat 2026:** laatste netto liquidatiewaarde minus de startwaarde van 2026. Waar aanwezig wordt 31 december 2025 als nulmeting gebruikt.
-- **Nettoresultaat deze maand:** netto optiepremie plus gerealiseerde winst/verlies uit aandelenverkopen en gesloten synthetische posities in de huidige rapportmaand.
+- **Nettoresultaat jaar:** alle gerealiseerde optiepremies, aandelenresultaten en resultaten van gekochte opties met een sluitingsdatum in het rapportjaar. Ongerealiseerde koersbewegingen en stortingen tellen niet mee.
+- **Nettoresultaat deze maand:** netto optiepremie plus gerealiseerde winst/verlies uit aandelenverkopen en verkochte of verlopen gekochte opties in de huidige rapportmaand.
 - **Nettoresultaat vorige maand:** dezelfde gerealiseerde berekening voor de voorgaande kalendermaand.
-- **Gemiddeld per maand:** winst 2026 gedeeld door het aantal verstreken kalendermaanden, inclusief de lopende maand.
+- **Gemiddeld per maand:** gerealiseerd jaarresultaat gedeeld door het aantal verstreken kalendermaanden, inclusief de lopende maand.
 
-Bij een gesloten synthetic zit het resultaat van de korte optieleg al in netto premie. Daarom telt de aanvullende component **SYNT** uitsluitend het gerealiseerde resultaat van de lange leg. Aandelenverkopen gebruiken FIFO-winst/verlies inclusief commissie. Onder iedere maandkaart staat de uitsplitsing `premie · aandelen · SYNT`, zodat de optelling controleerbaar blijft.
+### Alleen gerealiseerde resultaten
+
+De openingsdatum bepaalt nooit de resultaatmaand. Een CSP geopend op 31 januari en teruggekocht op 5 februari geeft in januari geen premie of resultaat; de ontvangen openingspremie minus de terugkoop en beide commissies komt volledig in februari. Hetzelfde geldt over een jaargrens. De rapportmaand volgt de laatste Flex-saldodatum; transacties daarna worden nog niet meegenomen.
+
+- **Netto premie:** uitsluitend afgesloten short opties (waaronder CSP, CC en short synthetische legs). Ontvangen premie minus terugkoop en evenredige openings-/sluitingscommissies wordt geboekt bij sluiten, bevestigde expiratie of assignment. Een open geschreven optie telt nog niet mee.
+- **Aandelen:** verkoopopbrengst minus de FIFO-aanschafwaarde van de verkochte aandelen, inclusief kosten. Dit geldt voor gewone verkopen, verkoop door CC-assignment en ETF's zoals SPCX. Een aankoop verlaagt het nettoresultaat niet. Een toegewezen CSP realiseert zijn premie; de aangekochte aandelen krijgen afzonderlijk hun werkelijke aanschafkosten.
+- **Gekochte opties:** verkoopopbrengst minus aanschafpremie en kosten telt bij nettoresultaat, afzonderlijk van netto premie. Dit geldt ook voor losse gekochte calls en lange synthetische legs die op een andere dag sluiten. Een waardeloos verlopen long optie realiseert de aanschafkosten als verlies. Bij uitoefening gaan de kosten mee naar de resulterende aandelentransactie en komen ze bij aandelenverkoop in het resultaat.
+- **Gedeeltelijke sluiting:** alleen het afgesloten aantal realiseert resultaat. Openingspremie en openingskosten worden per FIFO-lot naar rato toegerekend; het resterende deel blijft open. Een roll sluit de oude optie en opent een nieuwe: uitsluitend het oude deel realiseert resultaat.
+
+De maandkaarten tonen de optelling **premie · aandelen · gekochte opties**. Premie en aandelenwinst bij assignment worden apart uit de werkelijke transacties berekend, zodat doorgeschoven premies uit IBKR's fiscale kostprijs niet dubbel tellen. Expiratie wordt alleen verwerkt bij een sluitingstransactie of expliciet OptionEAE-event, nooit alleen omdat een expiratiedatum verstreken is. Events die ook in Trades staan worden op contract, datum, richting, prijs en aantal gematcht en eenmaal verwerkt.
+
+Wanneer een historische opening buiten het beschikbare rapportbereik valt, gebruikt de importer het door IBKR gerapporteerde FIFO-nettoresultaat. Dat bevat al commissies; die worden niet nogmaals afgetrokken. De premiekaart toont dit deel afzonderlijk als **historisch netto (opening ontbreekt)**; openingsprijs en rendement worden niet verzonnen. Voor een volledige scheiding van historische assignmentpremies en aandelenkosten zijn ook de bijbehorende openingsrapporten nodig.
+
+Als voor een afsluiting zowel de opening als een bruikbaar IBKR-nettoresultaat ontbreekt, stopt de import met een concrete melding. Dat gebeurt ook bij onvolledig gematchte openingsaantallen of assignment/uitoefening zonder openingshistorie. Importeer dan eerdere Flex-bestanden; een onbekend resultaat wordt niet als nulwinst gepubliceerd.
+
+Zie de [IBKR Flex-velddefinitie](https://www.ibkrguides.com/reportingreference/reportguide/tradesfq.htm) voor het reeds in FIFO P/L opgenomen kostenbedrag en de [assignment-definitie](https://www.ibkrguides.com/reportingreference/reportguide/trades.htm) voor de door IBKR doorgeschoven optiepremie.
 
 ## Portefeuilleverdeling
 
@@ -70,10 +85,10 @@ De meerjarenplanning projecteert vijf jaar vooruit met dezelfde 30% en `$ 12.000
 
 ## Handelsactiviteit en optiepremie
 
-- **Totaal trades:** op het Dashboard uitsluitend de in het actuele kalenderjaar afgesloten optiecycli plus alle momenteel open optieposities. Voor 2026 zijn dit 171 gesloten en 10 open, samen 181. Een cyclus begint bij de eerste opening en eindigt wanneer de positie weer nul is; een trade die eerder opende maar in 2026 sloot, telt correct mee in 2026.
-- **Premie behouden:** netto optiepremie gedeeld door alle ontvangen brutopremie. Netto is ontvangen premie minus terugkoopkosten en commissies.
-- **Gemiddeld aangehouden:** gemiddelde kalenderduur van gesloten optiecycli waarvan zowel de openings- als sluitingsdatum in het rapport staat. Het getoonde bereik gebruikt dezelfde gemeten trades.
-- **Netto premie per maand:** ontvangen brutopremie minus terugkoop en commissie. De drie onderdelen blijven afzonderlijk onder het nettobedrag zichtbaar.
+- **Totaal trades:** afsluitingen van opties in het rapportjaar plus momenteel open optieposities. Gedeeltelijke afsluitingen tellen afzonderlijk mee.
+- **Premie behouden:** netto gerealiseerde short-optiepremie gedeeld door de bekende brutopremie van die afgesloten opties. Open posities tellen niet mee. Zonder openingshistorie is deze verhouding niet volledig onderbouwd.
+- **Gemiddeld aangehouden:** gemiddelde kalenderduur van afgesloten optieposities met bekende openingsdatum; bij meerdere FIFO-lots geldt de oudste gematchte opening.
+- **Netto premie per maand:** gerealiseerde premie op sluitingsdatum, met ontvangen premie, terugkoopkosten en commissies uit dezelfde afgesloten aantallen.
 
 Alle geldbedragen worden uitsluitend met het `$`-teken getoond. De totalen uit het Flex-rapport worden als dollars geïnterpreteerd; het dashboard voert geen aanvullende valutaconversie uit.
 
@@ -81,9 +96,9 @@ Een positief resultaat of een opbrengst wordt groen weergegeven. Een negatief re
 
 ## Trades
 
-De pagina **Trades** toont alle afgesloten optiecycli, gesorteerd van nieuw naar oud en verdeeld over pagina's van maximaal 50 regels. Met de jaarkeuze wissel je tussen 2025 en 2026; aantallen, winstpercentage, gerealiseerd resultaat, gemiddelde aanhoudduur en paginering worden voor het gekozen sluitingsjaar opnieuw berekend. Per trade staan de onderliggende waarde, long/short en call/put, strike, openings- en sluitingsdatum, aanhoudduur, openingspremie en netto winst of verlies.
+De pagina **Trades** toont alle afgesloten optieposities, gesorteerd van nieuw naar oud en verdeeld over pagina's van maximaal 50 regels. Met de jaarkeuze wissel je tussen 2025 en 2026; aantallen, winstpercentage, gerealiseerd resultaat, gemiddelde aanhoudduur en paginering worden voor het gekozen sluitingsjaar opnieuw berekend. Per trade staan de onderliggende waarde, long/short en call/put, strike, openings- en sluitingsdatum, aanhoudduur, openingspremie en netto winst of verlies.
 
-Het nettoresultaat van een volledig gemeten trade is de som van alle verkoop- en aankoopstromen plus commissies binnen de cyclus. **Rendement** is dit resultaat gedeeld door de absolute openingspremie. Daarmee is de berekening consistent voor zowel gekochte als geschreven opties.
+Het nettoresultaat van een volledig gemeten afsluiting is de verkoopopbrengst minus de gematchte FIFO-aankoopkosten en beide commissies. Elke gedeeltelijke afsluiting verschijnt in zijn eigen sluitingsmaand. **Rendement** is dit resultaat gedeeld door de absolute openingspremie. Daarmee is de berekening consistent voor zowel gekochte als geschreven opties.
 
 **Geannualiseerd (lineair)** rekent het trade-rendement om met:
 
@@ -109,7 +124,7 @@ De grafieken tonen:
 
 Het portefeuilleverloop gebruikt uitsluitend werkelijke maandeindsaldi uit de Flex-rapporten en toont beginwaarde, eindwaarde en verandering. Deze historische context heeft een eigen periodekeuze voor 2024, 2025, 2026 of alle jaren en staat los van het gekozen analysejaar voor trades. De grafiek opent standaard op 2026. Een benchmarkvergelijking wordt pas toegevoegd zodra daarvoor een betrouwbare koersbron is gekoppeld.
 
-Alle traderesultaten zijn gebaseerd op de afsluitdatum en nettocashflow van de gesloten optiecycli. Hierdoor sluiten de Stats-jaarkeuze en de Trades-jaarkeuze inhoudelijk op elkaar aan.
+Alle traderesultaten zijn gebaseerd op de afsluitdatum en nettocashflow van de gesloten optieposities. Hierdoor sluiten de Stats-jaarkeuze en de Trades-jaarkeuze inhoudelijk op elkaar aan.
 
 ## Data verversen
 
@@ -123,4 +138,4 @@ Herlaad daarna het dashboard.
 
 ## Aandachtspunt
 
-De eerste versie behandelt veranderingen in netto liquidatiewaarde als winst of verlies, precies volgens de gekozen definitie. Stortingen, opnames en valutabewegingen kunnen die uitkomst beïnvloeden. Een latere versie kan deze kasstromen apart corrigeren.
+Saldo, dagelijkse W&V, saldoverloop en Goals blijven gebaseerd op netto liquidatiewaarde; stortingen, opnames en ongerealiseerde koersbewegingen kunnen die cijfers beïnvloeden. Nettoresultaat, netto premie en het maandgemiddelde gebruiken uitsluitend afgesloten handelsresultaten. Stats en Trades analyseren uitsluitend optieafsluitingen; aandelenresultaten staan in het totale nettoresultaat op het Dashboard.

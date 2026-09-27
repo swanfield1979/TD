@@ -1,3 +1,4 @@
+import { mergeOptionEvents, realizedResults, premiumSummary, tradingResult, closedOptionTrades } from './realized-results.mjs'
 import { assignOptionStrategies } from '../shared/option-strategy.mjs'
 import { portfolioAllocation as buildPortfolioAllocation } from '../shared/portfolio-risk.mjs'
 
@@ -78,113 +79,6 @@ function normalizeOptionTrades(trades) {
     .sort((left, right) => left.dateTime.localeCompare(right.dateTime))
 }
 
-function closedTradesSummary(optionTrades) {
-  const tradesByContract = Map.groupBy(optionTrades, (trade) => trade.conid)
-  const closedTrades = []
-
-  for (const [conid, contractTrades] of tradesByContract) {
-    let position = 0
-    let cycleIndex = 0
-    let cycle = null
-    let priorPeriodCycle = null
-
-    for (const trade of contractTrades) {
-      const commission = Number.isFinite(trade.commission) ? trade.commission : 0
-
-      if (trade.openClose === 'O') {
-        if (priorPeriodCycle) {
-          closedTrades.push(priorPeriodCycle)
-          priorPeriodCycle = null
-        }
-        if (!cycle || Math.abs(position) < 0.000_001) {
-          cycleIndex += 1
-          cycle = {
-            id: `${conid}-${cycleIndex}`,
-            conid,
-            symbol: trade.symbol || conid,
-            name: trade.name || trade.symbol || conid,
-            optionRight: trade.optionRight || null,
-            strike: Number.isFinite(trade.strike) ? trade.strike : null,
-            expiry: trade.expiry || null,
-            direction: trade.quantity < 0 ? 'short' : 'long',
-            quantity: 0,
-            openedAt: trade.dateTime.slice(0, 10),
-            closedAt: null,
-            daysHeld: null,
-            openingValue: 0,
-            profit: 0,
-            profitPercentage: null,
-            annualizedPercentage: null,
-            cashFlow: 0,
-          }
-          position = 0
-        }
-        cycle.quantity += Math.abs(trade.quantity)
-        cycle.openingValue += Math.abs(trade.quantity * trade.tradePrice * 100)
-        cycle.cashFlow += -trade.quantity * trade.tradePrice * 100 + commission
-        position += trade.quantity
-        continue
-      }
-
-      if (trade.openClose !== 'C') continue
-      if (!cycle || Math.abs(position) < 0.000_001) {
-        const realizedPnl = Number.isFinite(trade.realizedPnl) ? trade.realizedPnl : 0
-        if (!priorPeriodCycle) {
-          cycleIndex += 1
-          priorPeriodCycle = {
-            id: `${conid}-prior-${cycleIndex}`,
-            conid,
-            symbol: trade.symbol || conid,
-            name: trade.name || trade.symbol || conid,
-            optionRight: trade.optionRight || null,
-            strike: Number.isFinite(trade.strike) ? trade.strike : null,
-            expiry: trade.expiry || null,
-            direction: trade.quantity > 0 ? 'short' : 'long',
-            quantity: 0,
-            openedAt: null,
-            closedAt: trade.dateTime.slice(0, 10),
-            daysHeld: null,
-            openingValue: null,
-            profit: 0,
-            profitPercentage: null,
-            annualizedPercentage: null,
-          }
-        }
-        priorPeriodCycle.quantity += Math.abs(trade.quantity)
-        priorPeriodCycle.closedAt = trade.dateTime.slice(0, 10)
-        priorPeriodCycle.profit += realizedPnl + commission
-        continue
-      }
-
-      cycle.cashFlow += -trade.quantity * trade.tradePrice * 100 + commission
-      position += trade.quantity
-      if (Math.abs(position) >= 0.000_001) continue
-
-      cycle.closedAt = trade.dateTime.slice(0, 10)
-      cycle.daysHeld = calendarDaysBetween(cycle.openedAt, cycle.closedAt)
-      cycle.profit = round(cycle.cashFlow)
-      cycle.openingValue = round(cycle.openingValue)
-      cycle.profitPercentage = cycle.openingValue ? round((cycle.profit / cycle.openingValue) * 100, 1) : null
-      cycle.annualizedPercentage = cycle.profitPercentage === null
-        ? null
-        : round(cycle.profitPercentage * (365 / Math.max(1, cycle.daysHeld)), 1)
-      delete cycle.cashFlow
-      closedTrades.push(cycle)
-      cycle = null
-      position = 0
-    }
-
-    if (priorPeriodCycle) {
-      priorPeriodCycle.profit = round(priorPeriodCycle.profit)
-      closedTrades.push(priorPeriodCycle)
-    }
-  }
-
-  return closedTrades.sort((left, right) =>
-    `${right.closedAt}${right.id}`.localeCompare(`${left.closedAt}${left.id}`),
-  )
-}
-
 function optionHoldingsSummary(optionTrades) {
   const tradesByContract = Map.groupBy(optionTrades, (trade) => trade.conid)
   const holdings = []
@@ -249,72 +143,10 @@ function optionHoldingsSummary(optionTrades) {
     .sort((left, right) => `${left.expiry || ''}${left.symbol}${left.strike}`.localeCompare(`${right.expiry || ''}${right.symbol}${right.strike}`))
 }
 
-function premiumSummary(optionTrades) {
-  const received = optionTrades
-    .filter((trade) => trade.openClose === 'O' && trade.quantity < 0)
-    .reduce((sum, trade) => sum + -trade.quantity * trade.tradePrice * 100, 0)
-  const buyback = optionTrades
-    .filter((trade) => trade.openClose === 'C' && trade.quantity > 0)
-    .reduce((sum, trade) => sum + trade.quantity * trade.tradePrice * 100, 0)
-  const rawCommission = optionTrades.reduce(
-    (sum, trade) => sum + (Number.isFinite(trade.commission) ? trade.commission : 0),
-    0,
-  )
-
-  return {
-    received: round(received),
-    buyback: round(buyback),
-    commission: round(Math.abs(rawCommission)),
-    net: round(received - buyback + rawCommission),
-  }
-}
-
-function stockSaleProfit(trades, month) {
-  return round(trades
-    .filter((trade) => (
-      trade.assetCategory === 'STK'
-      && trade.openCloseIndicator === 'C'
-      && trade.dateTime?.startsWith(month)
-      && Number(trade.quantity) < 0
-    ))
-    .reduce((sum, trade) => (
-      sum
-      + (Number.isFinite(Number(trade.fifoPnlRealized)) ? Number(trade.fifoPnlRealized) : 0)
-      + (Number.isFinite(Number(trade.ibCommission)) ? Number(trade.ibCommission) : 0)
-    ), 0))
-}
-
-function syntheticCloseProfit(optionTrades, month) {
-  const closingTrades = optionTrades.filter((trade) => trade.openClose === 'C' && trade.dateTime.startsWith(month))
-  const closingGroups = Map.groupBy(closingTrades, (trade) => (
-    `${trade.dateTime.slice(0, 10)}|${trade.symbol}|${trade.expiry}|${trade.strike}`
-  ))
-
-  return round([...closingGroups.values()]
-    .filter((group) => {
-      const callQuantity = group.filter((trade) => trade.optionRight === 'C').reduce((sum, trade) => sum + trade.quantity, 0)
-      const putQuantity = group.filter((trade) => trade.optionRight === 'P').reduce((sum, trade) => sum + trade.quantity, 0)
-      return callQuantity !== 0
-        && putQuantity !== 0
-        && Math.sign(callQuantity) === -Math.sign(putQuantity)
-        && Math.abs(Math.abs(callQuantity) - Math.abs(putQuantity)) < 0.000_001
-    })
-    .flat()
-    .filter((trade) => trade.quantity < 0)
-    .reduce((sum, trade) => sum + (Number.isFinite(trade.realizedPnl) ? trade.realizedPnl : 0), 0))
-}
-
-function monthlyTradingResult(trades, optionTrades, month, fromDate, toDate) {
-  const premium = premiumSummary(optionTrades.filter((trade) => trade.dateTime.startsWith(month))).net
-  const stockSales = stockSaleProfit(trades, month)
-  const syntheticClosures = syntheticCloseProfit(optionTrades, month)
-
-  return {
-    ...metric(premium + stockSales + syntheticClosures, fromDate, toDate),
-    premium,
-    stockSales,
-    syntheticClosures,
-  }
+function monthlyTradingResult(results, month, fromDate, toDate) {
+  const result = tradingResult(results, month)
+  return { ...metric(result.value, fromDate, toDate), premium: result.premium,
+    stockSales: result.stockSales, longOptionSales: result.longOptionSales }
 }
 
 function calendarDaysBetween(startDateTime, endDateTime) {
@@ -323,8 +155,8 @@ function calendarDaysBetween(startDateTime, endDateTime) {
   return Math.round((end.getTime() - start.getTime()) / 86_400_000)
 }
 
-function tradingActivitySummary(optionTrades, closedTrades, openTrades, year) {
-  const tradesInYear = optionTrades.filter((trade) => trade.dateTime.startsWith(`${year}-`))
+function tradingActivitySummary(results, closedTrades, openTrades, year) {
+  const tradesInYear = results.filter((trade) => trade.closedAt.startsWith(`${year}-`))
   const closedInYear = closedTrades.filter((trade) => trade.closedAt.startsWith(`${year}-`))
   const closedDurations = closedInYear
     .map((trade) => trade.daysHeld)
@@ -522,13 +354,12 @@ export function createPortfolioSummary({ equityXml, tradesXml, optionXml, curren
     .sort((left, right) => left.whenGenerated.localeCompare(right.whenGenerated))
     .at(-1)
   const seenExecutionIds = new Set()
-  const trades = extractTags(tradesXml, 'Trade').filter((trade) => {
+  const rawTrades = extractTags(tradesXml, 'Trade').filter((trade) => {
     if (!trade.ibExecID) return true
     if (seenExecutionIds.has(trade.ibExecID)) return false
     seenExecutionIds.add(trade.ibExecID)
     return true
   })
-  const optionTrades = normalizeOptionTrades(trades)
   const rowsByDate = new Map(extractTags(equityXml, 'EquitySummaryByReportDateInBase')
     .map((attributes) => ({
       date: attributes.reportDate,
@@ -543,6 +374,10 @@ export function createPortfolioSummary({ equityXml, tradesXml, optionXml, curren
   if (rows.length === 0) throw new Error('Geen dagsaldi gevonden in het Flex-rapport.')
 
   const latest = rows.at(-1)
+  const trades = mergeOptionEvents(rawTrades, extractTags(optionXml, 'OptionEAE'))
+    .filter((trade) => trade.dateTime?.slice(0, 10) <= latest.date)
+  const optionTrades = normalizeOptionTrades(trades)
+  const results = realizedResults(trades)
   const yearStartDate = `${latest.date.slice(0, 4)}-01-01`
   const start = lastBefore(rows, yearStartDate) ?? firstOnOrAfter(rows, yearStartDate)
   const currentMonthStart = dateAtMonthStart(latest.date)
@@ -552,16 +387,16 @@ export function createPortfolioSummary({ equityXml, tradesXml, optionXml, curren
 
   if (!start || !currentMonthBase || !previousMonthBase) throw new Error('Onvoldoende dagsaldi om alle periodes te berekenen.')
 
-  const yearProfit = latest.total - start.total
+  const yearProfit = tradingResult(results, latest.date.slice(0, 4)).value
   const monthCount = elapsedMonthCount(start.date, latest.date)
   const currentMonth = latest.date.slice(0, 7)
   const previousMonth = shiftMonth(`${currentMonth}-01`, -1).slice(0, 7)
   const stockHoldings = stockHoldingsSummary(trades)
   const optionHoldings = optionHoldingsSummary(optionTrades)
-  const closedTrades = closedTradesSummary(optionTrades)
+  const closedTrades = closedOptionTrades(results)
   const premiumForMonth = (month) => ({
     month,
-    ...premiumSummary(optionTrades.filter((trade) => trade.dateTime.startsWith(month))),
+    ...premiumSummary(results.filter((trade) => trade.closedAt.startsWith(month))),
   })
 
   return {
@@ -571,14 +406,14 @@ export function createPortfolioSummary({ equityXml, tradesXml, optionXml, curren
     premiumCurrency,
     sourceCounts: {
       equityDays: rows.length,
-      trades: trades.length,
+      trades: rawTrades.length,
       optionEvents: extractTags(optionXml, 'OptionEAE').length,
     },
     balance: metric(latest.total, undefined, latest.date),
     dailyProfit: metric(latest.total - rows.at(-2).total, rows.at(-2).date, latest.date),
     yearProfit: metric(yearProfit, start.date, latest.date),
-    currentMonthProfit: monthlyTradingResult(trades, optionTrades, currentMonth, currentMonthBase.date, latest.date),
-    previousMonthProfit: monthlyTradingResult(trades, optionTrades, previousMonth, previousMonthBase.date, currentMonthBase.date),
+    currentMonthProfit: monthlyTradingResult(results, currentMonth, currentMonthBase.date, latest.date),
+    previousMonthProfit: monthlyTradingResult(results, previousMonth, previousMonthBase.date, currentMonthBase.date),
     averageMonthlyProfit: { ...metric(yearProfit / monthCount, start.date, latest.date), monthCount },
     monthlyBalanceChanges: monthlyBalanceChangesForYear(rows, latest.date.slice(0, 4)),
     previousYearMonthlyBalanceChanges: monthlyBalanceChangesForYear(
@@ -586,7 +421,7 @@ export function createPortfolioSummary({ equityXml, tradesXml, optionXml, curren
       String(Number(latest.date.slice(0, 4)) - 1),
     ),
     portfolioHistory: monthlyPortfolioHistory(rows),
-    tradingActivity: tradingActivitySummary(optionTrades, closedTrades, optionHoldings.length, latest.date.slice(0, 4)),
+    tradingActivity: tradingActivitySummary(results, closedTrades, optionHoldings.length, latest.date.slice(0, 4)),
     stockHoldings,
     optionHoldings,
     closedTrades,

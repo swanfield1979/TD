@@ -10,7 +10,7 @@ export interface PortfolioMetric {
 export interface MonthlyTradingResult extends PortfolioMetric {
   premium: number
   stockSales: number
-  syntheticClosures: number
+  longOptionSales: number
 }
 
 export interface MonthlyBalanceChange {
@@ -30,6 +30,7 @@ export interface PortfolioHistoryPoint {
 }
 
 export interface PremiumPeriod {
+  historicalNet?: number
   month: string
   received: number
   buyback: number

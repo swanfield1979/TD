@@ -20,3 +20,7 @@ De read-only Node-backend luistert uitsluitend op `127.0.0.1:8787`. De browser b
 IBC start IB Gateway op een afgeschermd virtueel X-scherm. De gebruiker bevestigt de IB Key MFA in IBKR Mobile. Daarna vraagt de backend met een eigen client-ID accountupdates op. De browser ontvangt geen rekeningnummer of inloggegevens, maar alleen de netto liquidatiewaarde en genormaliseerde positiegegevens.
 
 De live snapshot vervangt in de interface uitsluitend actuele waarden: saldo, portefeuilleverdeling en open aandelen- en optieposities. Expiratie, strike en call/put komen uit het IBKR-contract; openingsdatum en gekozen DTE worden waar mogelijk aangevuld vanuit de lokale Flex-import. Historische maand- en jaarcijfers blijven afkomstig uit de lokale Flex-import.
+
+## Gerealiseerde resultaten
+
+`source/scripts/realized-results.mjs` vormt het gezamenlijke FIFO-register voor resultaatkaarten, jaarpremie en afgesloten optietrades. `mergeOptionEvents` vult ontbrekende OptionEAE-sluitingen en aandelentransacties aan zonder dezelfde uitvoering opnieuw te boeken. `realizedResults` bewaart aanschafkosten en commissies in open lots, verwerkt gedeeltelijke afsluitingen op hun eigen datum en scheidt short-premie, aandelen en gekochte opties. Uitoefeningskosten van long opties worden aan de resulterende aandelentransactie gekoppeld. De Flex-import begrenst dit register op de laatste beschikbare saldodag. Historische saldo- en doelgrafieken blijven op netto liquidatiewaarde gebaseerd.

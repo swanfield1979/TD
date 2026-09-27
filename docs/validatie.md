@@ -1,5 +1,15 @@
 # Validatie
 
+## Resultaat 27 september 2026 — versie 0.20.0
+
+- `npm test`: 31 van 31 tests geslaagd. De nieuwe regressies controleren sluitingsmaand/jaargrens, open posities, gedeeltelijke FIFO-sluitingen, rolls, gekochte calls, aandelen/ETF-verkopen, CC/CSP-assignment, expiratie, dubbele OptionEAE-events, uitoefening en commissies.
+- `npm run import:flex`: alle negen beschikbare lokale jaarbronnen opnieuw verwerkt; alle gerealiseerde posities hebben bijbehorende openingshistorie.
+- Onafhankelijke controle op de lokale bronnen: bij 444 volledig gesloten contracten/aandelenposities is de som van de resultaten gelijk aan de volledige transactiekasstroom inclusief commissies (tolerantie $ 0,001).
+- Jaarresultaat gecontroleerd tegen het realisatieregister. De JSON in de productiebuild is identiek aan de opnieuw geïmporteerde samenvatting.
+- `npm run build`: TypeScript-controle en Vite-productiebuild geslaagd.
+- Deze wijziging is functioneel en via de build gecontroleerd; er is geen nieuwe visuele browsercontrole uitgevoerd.
+- Ruwe XML, gegenereerde financiële JSON en tijdelijke bouwuitvoer blijven lokaal en buiten Git.
+
 ## IBKR-koppeling
 
 - De backend bindt alleen aan `127.0.0.1`.

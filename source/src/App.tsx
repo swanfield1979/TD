@@ -75,7 +75,7 @@ const directionLabel: Record<MetricDirection, string> = {
 const tradingResultContext = (result: MonthlyTradingResult, currency: string) => [
   `premie ${currencyFormatter(currency, true).format(result.premium)}`,
   `aandelen ${currencyFormatter(currency, true).format(result.stockSales)}`,
-  `SYNT ${currencyFormatter(currency, true).format(result.syntheticClosures)}`,
+  `gekochte opties ${currencyFormatter(currency, true).format(result.longOptionSales)}`,
 ].join(' · ')
 
 interface StatCardProps {
@@ -327,10 +327,10 @@ function App() {
             </section>
             <section className="dashboard-grid dashboard-grid--performance" aria-label="Portfoliostatistieken">
               <StatCard
-                label="Nettoresultaat 2026"
+                label={`Nettoresultaat ${summary.yearProfit.toDate.slice(0, 4)}`}
                 metric={summary.yearProfit}
                 currency={summary.currency}
-                context={`Mutatie netto liquidatiewaarde sinds ${formatDate(summary.yearProfit.fromDate!)}`}
+                context="Gerealiseerde premie, aandelen en gekochte opties"
               />
               <StatCard
                 label="Nettoresultaat deze maand"

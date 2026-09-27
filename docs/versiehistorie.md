@@ -1,5 +1,14 @@
 # Versiehistorie
 
+## 0.20.0 – uitsluitend gerealiseerde resultaten
+
+- Openingspremies en aankopen hebben geen invloed op netto premie of nettoresultaat. Alleen sluitingen, bevestigde expiraties en verkopen tellen mee in hun realisatiemaand.
+- FIFO verdeelt aankoopkosten en commissies over gedeeltelijke afsluitingen.
+- Aandelen/ETF-verkopen, CC-assignment en gekochte calls tellen mee; assignmentpremie en commissies worden niet dubbel geboekt.
+- Jaarresultaat, maandgemiddelde, premiekaarten en optietrades volgen dezelfde realisaties.
+- OptionEAE vult ontbrekende sluitingen aan en wordt met bestaande uitvoeringen gededupliceerd.
+- Nederlandse berekeningsdocumentatie en regressietests uitgebreid.
+
 ## 0.19.0 – cashreservering voor CSP
 
 - Iedere open short put reserveert `strike × 100 × aantal contracten`, inclusief de short-putleg van een synthetische positie.

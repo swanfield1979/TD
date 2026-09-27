@@ -55,11 +55,12 @@ function PremiumPeriodCard({
       </p>
       <p className="premium-card__breakdown">
         {formatMonth(premium.month)}<span aria-hidden="true"> · </span>
-        ontvangen <strong className={`metric--${receivedDirection}`}>{formatCurrency(premium.received, currency)}</strong>
+        ontvangen bij afgesloten opties <strong className={`metric--${receivedDirection}`}>{formatCurrency(premium.received, currency)}</strong>
         <span aria-hidden="true"> · </span>
         terugkoop <strong className={`metric--${buybackDirection}`}>{formatCurrency(-premium.buyback, currency)}</strong>
         <span aria-hidden="true"> · </span>
         commissie <strong className={`metric--${commissionDirection}`}>{formatCurrency(-premium.commission, currency)}</strong>
+        {premium.historicalNet !== undefined && <> · historisch netto (opening ontbreekt) <strong>{formatCurrency(premium.historicalNet, currency, 'always')}</strong></>}
       </p>
     </article>
   )
@@ -101,7 +102,7 @@ export default function TradingActivityCards({
             <strong className={`metric--${grossPremiumDirection}`}>
               {formatCurrency(activity.grossPremium, premiumCurrency)}
             </strong>{' '}
-            ontvangen brutopremie
+            brutopremie van afgesloten opties
           </p>
         </article>
 

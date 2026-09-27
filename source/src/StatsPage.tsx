@@ -163,13 +163,13 @@ function MonthlyResultChart({ trades, currency, year }: Pick<StatsPageProps, 'tr
       <header className="stats-panel__header">
         <div>
           <span><ChartMultipleRegular aria-hidden="true" /> Resultaatverloop</span>
-          <h2 id="stats-monthly-title">Gerealiseerd resultaat per maand</h2>
+          <h2 id="stats-monthly-title">Gerealiseerd optieresultaat per maand</h2>
         </div>
         <small>{year}</small>
       </header>
       <div className="stats-chart-scroll" tabIndex={0} aria-label={`Maandresultaten ${year}; horizontaal scrollbaar op een klein scherm`}>
         <svg className="stats-monthly-chart" viewBox="0 0 760 278" role="img" aria-labelledby="stats-monthly-svg-title stats-monthly-svg-desc">
-          <title id="stats-monthly-svg-title">Gerealiseerd resultaat per maand in {year}</title>
+          <title id="stats-monthly-svg-title">Gerealiseerd optieresultaat per maand in {year}</title>
           <desc id="stats-monthly-svg-desc">Groene balken zijn winst, rode balken verlies. Iedere balk heeft een direct bedraglabel.</desc>
           <line className="stats-chart-gridline" x1="52" x2="742" y1="44" y2="44" />
           <line className="stats-chart-gridline stats-chart-gridline--zero" x1="52" x2="742" y1={zeroY} y2={zeroY} />
