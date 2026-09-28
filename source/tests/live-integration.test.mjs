@@ -49,14 +49,53 @@ test('oude snapshotbestanden met dubbele posities tellen alleen de laatste contr
   assert.equal(merged.tradingActivity.openTrades, 0)
 })
 
-test('dagpercentage blijft bij het oorspronkelijke rapport en verandert niet met live saldo', () => {
+test('saldoverandering en percentage volgen het live saldo tegenover de laatste rapportdag', () => {
   const merged = resolvePortfolio(summary, snapshot)
   const html = renderToStaticMarkup(createElement(DailyProfitCard, {
-    metric: merged.dailyProfit, balance: summary.balance, currency: summary.currency,
+    metric: merged.dailyProfit, balance: merged.balance, currency: summary.currency,
   }))
-  assert.match(html, /\+10,00%/)
+  assert.equal(merged.dailyProfit.value, 400)
+  assert.match(html, /\+36,36%/)
   assert.match(html, /24 sep 2026/)
-  assert.match(html, /Saldoverandering rapportdag/)
+  assert.match(html, /27 sep 2026/)
+  assert.match(html, /Saldoverandering live/)
+  assert.match(html, /rapportsaldo/)
+})
+
+test('recentere vorige dagmeting krijgt voorrang en blijft vast bij meerdere live updates', () => {
+  const live = { ...snapshot, previousBalance: { date: '2026-09-26', value: 1600 } }
+  const merged = resolvePortfolio(summary, live)
+  assert.equal(merged.dailyProfit.value, -100)
+  assert.equal(merged.dailyProfit.fromDate, '2026-09-26')
+  assert.equal(resolvePortfolio(summary, { ...live, netLiquidation: 1650 }).dailyProfit.value, 50)
+  const html = renderToStaticMarkup(createElement(DailyProfitCard, {
+    metric: merged.dailyProfit, balance: merged.balance, currency: merged.currency,
+  }))
+  assert.match(html, /-6,25%/)
+  assert.match(html, /laatste meting/)
+})
+
+test('live op dezelfde rapportdag gebruikt de vorige rapportdag; nulbasis krijgt geen fictief percentage', () => {
+  const merged = resolvePortfolio(summary, { ...snapshot, asOfDate: summary.balance.toDate })
+  assert.equal(merged.dailyProfit.value, 500)
+  assert.equal(merged.dailyProfit.fromDate, '2026-09-23')
+  const html = renderToStaticMarkup(createElement(DailyProfitCard, {
+    metric: { value: 100, toDate: '2026-09-27', direction: 'positive' },
+    balance: { value: 100 }, currency: 'USD',
+  }))
+  assert.doesNotMatch(html, /0,00%/)
+  assert.match(html, /—/)
+})
+
+test('zonder eerdere dagstand blijft live saldo bruikbaar maar is saldoverandering onbekend', () => {
+  const singleDay = { ...summary, dailyProfit: { ...summary.dailyProfit, fromDate: undefined } }
+  const merged = resolvePortfolio(singleDay, { ...snapshot, asOfDate: summary.balance.toDate })
+  assert.equal(merged.dailyProfit.unavailable, true)
+  const html = renderToStaticMarkup(createElement(DailyProfitCard, {
+    metric: merged.dailyProfit, balance: merged.balance, currency: merged.currency,
+  }))
+  assert.match(html, /Vorige dagstand ontbreekt/)
+  assert.doesNotMatch(html, /0,00%/)
 })
 
 test('Goals weigert een nieuwjaarsaldo te combineren met de planning van vorig jaar', () => {

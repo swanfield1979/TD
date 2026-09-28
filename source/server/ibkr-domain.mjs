@@ -1,6 +1,17 @@
 import { optionExpiry } from '../shared/option-expiry.mjs'
 const round = (value, decimals = 2) => Number(Number(value).toFixed(decimals))
 
+// Preserve the last observation from an earlier day across refreshes and restarts.
+export function withPreviousBalance(snapshot, previous) {
+  if (!previous || previous.currency !== snapshot.currency) return snapshot
+  const reference = previous.asOfDate < snapshot.asOfDate
+    ? { date: previous.asOfDate, value: previous.netLiquidation }
+    : previous.previousBalance
+  return reference && reference.date < snapshot.asOfDate && Number.isFinite(reference.value)
+    ? { ...snapshot, previousBalance: reference }
+    : snapshot
+}
+
 export function updatePosition(positions, update) {
   const key = `${update.accountName || ''}|${update.conid}`
   const existing = positions.get(key)

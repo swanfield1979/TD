@@ -3,7 +3,7 @@ import { mkdir, readFile, rename, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { IBApi, EventName, MarketDataType } from '@stoqey/ib'
-import { createLiveSnapshot, updatePosition } from './ibkr-domain.mjs'
+import { createLiveSnapshot, updatePosition, withPreviousBalance } from './ibkr-domain.mjs'
 
 const PREVIOUS_CLOSE_TICK_TYPES = new Set([9, 75])
 const MARKET_DATA_REQUEST_ID_START = 900_000
@@ -186,6 +186,13 @@ function startGatewayService() {
 }
 
 async function saveSnapshot(snapshot) {
+  let previous
+  try {
+    previous = JSON.parse(await readFile(config.snapshotPath, 'utf8'))
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error
+  }
+  snapshot = withPreviousBalance(snapshot, previous)
   await mkdir(dirname(config.snapshotPath), { recursive: true })
   const temporaryPath = `${config.snapshotPath}.tmp`
   await writeFile(temporaryPath, `${JSON.stringify(snapshot, null, 2)}\n`, { mode: 0o600 })

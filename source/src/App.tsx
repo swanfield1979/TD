@@ -100,30 +100,33 @@ function StatCard({ label, metric, currency, context, prominent = false }: StatC
 }
 
 interface DailyProfitCardProps {
-  metric: PortfolioMetric
+  metric: PortfolioSummary['dailyProfit']
   balance: PortfolioMetric
   currency: string
 }
 
 export function DailyProfitCard({ metric, balance, currency }: DailyProfitCardProps) {
   const previousBalance = balance.value - metric.value
-  const percentage = previousBalance === 0 ? 0 : metric.value / Math.abs(previousBalance)
+  const percentage = previousBalance === 0 || metric.unavailable ? null : metric.value / Math.abs(previousBalance)
 
   return (
     <article className={`stat-card daily-profit-card stat-card--${metric.direction}`}>
-      <h2>Saldoverandering rapportdag</h2>
+      <h2>Saldoverandering{metric.source === 'live' ? ' live' : ' rapportdag'}</h2>
       <div className="daily-profit-card__values">
         <p className={`stat-card__value metric--${metric.direction}`}>
-          {currencyFormatter(currency, true).format(metric.value)}
+          {metric.unavailable ? '—' : currencyFormatter(currency, true).format(metric.value)}
         </p>
         <p className={`daily-profit-card__percentage metric--${metric.direction}`}>
-          {percentageFormatter.format(percentage)}
+          {percentage === null ? '—' : percentageFormatter.format(percentage)}
         </p>
       </div>
       <p className="stat-card__context">
-        {metric.fromDate && `${formatDate(metric.fromDate)} – `}{formatDate(metric.toDate)}
+        {metric.unavailable ? 'Vorige dagstand ontbreekt' : <>
+          {metric.fromDate && `${formatDate(metric.fromDate)} – `}{formatDate(metric.toDate)}
+          {metric.source === 'live' && <><br />Ten opzichte van {metric.referenceSource === 'snapshot' ? 'laatste meting' : 'rapportsaldo'} op {metric.fromDate && formatDate(metric.fromDate)}</>}
+        </>}
       </p>
-      <span className="visually-hidden">{directionLabel[metric.direction]} ten opzichte van de vorige handelsdag</span>
+      {!metric.unavailable && <span className="visually-hidden">{directionLabel[metric.direction]} ten opzichte van de vorige beschikbare dagstand</span>}
     </article>
   )
 }
@@ -353,7 +356,7 @@ function App() {
               />
               <DailyProfitCard
                 metric={summary.dailyProfit}
-                balance={importedSummary!.balance}
+                balance={summary.balance}
                 currency={summary.currency}
               />
               <PortfolioAllocationCard

@@ -12,6 +12,18 @@ export function resolvePortfolio(summary: PortfolioSummary | null, snapshot: Ibk
 }
 
 export function mergeLiveSnapshot(summary: PortfolioSummary, snapshot: IbkrLiveSnapshot): PortfolioSummary {
+  const reportReference = summary.balance.toDate < snapshot.asOfDate
+    ? { date: summary.balance.toDate, value: summary.balance.value }
+    : summary.dailyProfit.fromDate
+      ? { date: summary.dailyProfit.fromDate, value: summary.balance.value - summary.dailyProfit.value }
+      : null
+  const candidates = [
+    reportReference && { ...reportReference, source: 'report' as const },
+    snapshot.previousBalance && { ...snapshot.previousBalance, source: 'snapshot' as const },
+  ].filter((item) => item && item.date < snapshot.asOfDate && Number.isFinite(item.value))
+  // Prefer a reported closing balance when both sources cover the same date.
+  const reference = candidates.sort((a, b) => b!.date.localeCompare(a!.date))[0]
+  const dailyChange = reference ? round(snapshot.netLiquidation - reference.value) : 0
   const positions = [...new Map(snapshot.positions.map((position) => [position.conid, position])).values()]
     .filter((position) => position.quantity !== 0)
   const stockPositions = positions.filter((position) => position.assetCategory === 'STK')
@@ -50,6 +62,15 @@ export function mergeLiveSnapshot(summary: PortfolioSummary, snapshot: IbkrLiveS
     generatedAt: snapshot.generatedAt,
     sourceUpdatedAt: snapshot.generatedAt,
     currency: snapshot.currency,
+    dailyProfit: {
+      value: dailyChange,
+      fromDate: reference?.date,
+      toDate: snapshot.asOfDate,
+      direction: dailyChange > 0 ? 'positive' : dailyChange < 0 ? 'negative' : 'neutral',
+      source: 'live',
+      referenceSource: reference?.source,
+      unavailable: !reference,
+    },
     balance: {
       ...summary.balance,
       value: snapshot.netLiquidation,

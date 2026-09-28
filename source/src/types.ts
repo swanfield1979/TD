@@ -172,6 +172,7 @@ export interface IbkrLivePosition extends StockHolding {
 }
 
 export interface IbkrLiveSnapshot {
+  previousBalance?: { date: string; value: number }
   generatedAt: string
   asOfDate: string
   currency: string
@@ -194,7 +195,7 @@ export interface PortfolioSummary {
   }
   balance: PortfolioMetric
   startingBalance?: { value: number; date: string } | null
-  dailyProfit: PortfolioMetric
+  dailyProfit: PortfolioMetric & { source?: 'live' | 'report'; referenceSource?: 'snapshot' | 'report'; unavailable?: boolean }
   yearProfit: PortfolioMetric
   currentMonthProfit: MonthlyTradingResult
   previousMonthProfit: MonthlyTradingResult

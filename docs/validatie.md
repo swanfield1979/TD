@@ -1,5 +1,13 @@
 # Validatie
 
+## Resultaat 28 september 2026 — live saldoverandering (lokaal)
+
+- `npm test`: 53 van 53 tests geslaagd. `npm run build`: TypeScript en productiebuild geslaagd.
+- Getest: live bedrag/percentage, recentere referentie, meerdere updates, dezelfde rapportdag, ontbrekende referentie, nulbasis, dagwissel, herstart en verschillende valuta.
+- React-rendercontroles verifiëren bedragen, percentages, datums en bronlabels. Geen nieuwe visuele browsercontrole of live IBKR-aanvraag uitgevoerd.
+- Nog niet gepubliceerd; backendupdate vereist herstart van `trading-monitor-api.service`.
+
+
 ## Resultaat 27 september 2026 — versie 0.23.1
 
 - `npm test`: 49 van 49 tests geslaagd. `npm run build`: geslaagd.

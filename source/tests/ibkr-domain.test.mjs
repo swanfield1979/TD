@@ -1,7 +1,20 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { createLiveSnapshot, updatePosition } from '../server/ibkr-domain.mjs'
+import { createLiveSnapshot, updatePosition, withPreviousBalance } from '../server/ibkr-domain.mjs'
 import { optionExpiry } from '../shared/option-expiry.mjs'
+
+test('vorige dagmeting overleeft dagwissel, herhaalde updates en herstart', () => {
+  const previous = { asOfDate: '2026-09-27', netLiquidation: 1000, currency: 'USD' }
+  const current = { asOfDate: '2026-09-28', netLiquidation: 1100, currency: 'USD' }
+  const saved = withPreviousBalance(current, previous)
+  assert.deepEqual(saved.previousBalance, { date: '2026-09-27', value: 1000 })
+  const refreshed = withPreviousBalance({ ...current, netLiquidation: 1200 }, JSON.parse(JSON.stringify(saved)))
+  assert.deepEqual(refreshed.previousBalance, saved.previousBalance)
+  assert.deepEqual(withPreviousBalance({ ...current, asOfDate: '2026-09-29' }, refreshed).previousBalance,
+    { date: '2026-09-28', value: 1200 })
+  assert.equal(withPreviousBalance(current, { ...previous, currency: 'EUR' }).previousBalance, undefined)
+  assert.equal(withPreviousBalance(current, undefined).previousBalance, undefined)
+})
 
 test('herhaalde portfolio-events vervangen posities en een nulupdate sluit ze', () => {
   const positions = new Map()

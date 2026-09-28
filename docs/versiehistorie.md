@@ -1,5 +1,12 @@
 # Versiehistorie
 
+## Nog niet gepubliceerd – live saldoverandering
+
+- Saldoverandering en percentage volgen nu het actuele IBKR-saldo tegenover de vorige beschikbare dagstand.
+- De server bewaart de laatste meting van een eerdere dag; Flex blijft terugvalbron. Vergelijkingsdatum en bron blijven zichtbaar.
+- Geen fictief nulpercentage bij ontbrekende referentie of nulbasis.
+- Voor ingebruikname moeten frontend en backend worden bijgewerkt en de API-service worden herstart.
+
 ## 0.23.1 – zichtbare voortgang naar het jaardoel
 
 - De voortgangsbalk toont actueel saldo gedeeld door het totale jaardoel. Een negatief jaarresultaat maakt de balk daardoor niet meer leeg.

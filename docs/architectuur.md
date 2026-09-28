@@ -19,7 +19,7 @@ De read-only Node-backend luistert uitsluitend op `127.0.0.1:8787`. De browser b
 
 IBC start IB Gateway op een afgeschermd virtueel X-scherm. De gebruiker bevestigt de IB Key MFA in IBKR Mobile. Daarna vraagt de backend met een eigen client-ID accountupdates op. De browser ontvangt geen rekeningnummer of inloggegevens, maar alleen de netto liquidatiewaarde en genormaliseerde positiegegevens.
 
-De live snapshot vervangt in de interface uitsluitend actuele waarden: saldo, portefeuilleverdeling en open aandelen- en optieposities. Expiratie, strike en call/put komen uit het IBKR-contract; openingsdatum en gekozen DTE worden waar mogelijk aangevuld vanuit de lokale Flex-import. Historische maand- en jaarcijfers blijven afkomstig uit de lokale Flex-import.
+De live snapshot vervangt in de interface uitsluitend actuele waarden: saldo, saldoverandering, portefeuilleverdeling en open aandelen- en optieposities. Expiratie, strike en call/put komen uit het IBKR-contract; openingsdatum en gekozen DTE worden waar mogelijk aangevuld vanuit de lokale Flex-import. Historische maand- en jaarcijfers blijven afkomstig uit de lokale Flex-import.
 
 ## Gerealiseerde resultaten
 
@@ -28,3 +28,7 @@ De live snapshot vervangt in de interface uitsluitend actuele waarden: saldo, po
 ## Inleg en saldorendement
 
 De Flex-import levert `contributionPeriods` met netto basistotalen en bruto stortingen/opnames per bronvaluta. Alleen niet-identificerende jaargegevens gaan naar de browser; ruwe exports blijven privé. `shared/contribution-return.mjs` berekent winst en eenvoudig rendement na inlegcorrectie en controleert of de jaarreeks sinds het startsaldo compleet is. Live saldorefresh herberekent de UI-waarden met dezelfde kasstroomhistorie; peildatumverschillen blijven zichtbaar. Zie [Inleg en rendement](inleg.md).
+
+### Referentie voor live saldoverandering
+
+De opgeslagen live snapshot bevat optioneel `previousBalance` met datum en saldo van de laatste meting vóór de huidige UTC-snapshotdag. Bij een dagwissel wordt de vorige snapshot de referentie; binnen dezelfde dag blijft deze vast en overleeft een herstart. Valutawisselingen nemen de referentie niet over. De frontend kiest de recentste eerdere datum uit deze referentie en Flex, met voorrang voor Flex bij gelijke datum. Oude snapshotbestanden blijven ondersteund. Daggrenzen volgen de bestaande UTC-datering van snapshots.
