@@ -12,7 +12,7 @@ interface IbkrConnectionControlProps {
 
 const statusLabel: Record<IbkrConnectionStatus['state'], string> = {
   offline: 'IBKR niet verbonden',
-  refreshing: 'Posities ophalen',
+  refreshing: 'Posities en trades ophalen',
   awaiting_mfa: 'IB Key bevestigen',
   connected: 'IBKR verbonden',
   error: 'Koppeling mislukt',
@@ -73,8 +73,7 @@ export default function IbkrConnectionControl({ onSnapshot }: IbkrConnectionCont
   }, [loadStatus])
 
   useEffect(() => {
-    if (!status.isBusy) return
-    const timer = window.setInterval(() => void loadStatus(), 3_000)
+    const timer = window.setInterval(() => void loadStatus(), status.isBusy ? 3_000 : 15_000)
     return () => window.clearInterval(timer)
   }, [loadStatus, status.isBusy])
 
@@ -83,7 +82,7 @@ export default function IbkrConnectionControl({ onSnapshot }: IbkrConnectionCont
       setStatus((current) => ({
         ...current,
         state: 'refreshing',
-        message: 'IBKR Gateway en posities worden gecontroleerd.',
+        message: 'IBKR Gateway, posities en trades worden gecontroleerd.',
         isBusy: true,
       }))
       const response = await fetch('/api/ibkr/refresh', {

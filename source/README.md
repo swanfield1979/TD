@@ -2,7 +2,7 @@
 
 De webapp staat volledig in deze map. Voer alle ontwikkel- en bouwcommando's vanuit `source/` uit.
 
-Versie 0.24.0 bevat het nieuwe lichte dashboard, saldohistorie, een netto maandgrafiek, jaardoel en samengevoegde handelsdetails. Na een serverupdate zijn `npm ci`, `npm run import:flex`, `npm test`, `npm run build` en het publiceren van `dist/` nodig. Herstart de API-service om ook de bestaande live-saldoverbetering te activeren. Zie [PuTTY-update](../docs/installatie.md#bijwerken-via-putty-versie-0240). `npm test` bevat React/TypeScript-integratietests via Vite; hiervoor is geen actieve IBKR-verbinding nodig.
+Versie 0.25.0 voegt Gateway-uitvoeringen toe aan Trades en Stats. Na een serverupdate zijn `npm ci`, `npm test`, `npm run build`, het publiceren van `dist/` en een API-herstart nodig. Zie [PuTTY-update](../docs/installatie.md#gateway-trades-bijwerken-versie-0250). `npm test` bevat integratietests via Vite en een gesimuleerde Gateway; hiervoor is geen actieve IBKR-verbinding nodig.
 
 Live saldoverandering werkt mee met **Vernieuwen**. Publiceer de nieuwe `dist/` en backendbestanden samen en herstart `trading-monitor-api.service` om eerdere dagmetingen te bewaren. Zie [gebruik en berekeningen](../docs/gebruik.md) voor de vergelijkingsbron en terugval bij ontbrekende dagen.
 

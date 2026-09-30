@@ -2,7 +2,7 @@
 
 Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voortgang op basis van Interactive Brokers Flex-rapporten.
 
-**Versie/status:** 0.24.0, lichte portefeuille-interface met groene positieve en rode negatieve resultaten, saldohistorie, netto maandresultaten, jaardoel en samengevoegde handelsdetails. Productiebuild en tests zijn lokaal gecontroleerd; installatie op de liveserver verloopt via Git en PuTTY. De read-only IBKR-koppeling en afzonderlijke Stocks-, Options-, Goals-, Stats- en Trades-overzichten blijven beschikbaar.
+**Versie/status:** 0.25.0, afgesloten optietrades via de bestaande IBKR Gateway-koppeling, inclusief rolls en lokaal bewaarde uitvoeringen. Productiebuild en tests zijn lokaal gecontroleerd; deze versie is nog niet op de liveserver geïnstalleerd. De lichte portefeuille-interface en afzonderlijke Stocks-, Options-, Goals-, Stats- en Trades-overzichten blijven beschikbaar.
 
 | Map | Inhoud |
 | --- | --- |
@@ -12,7 +12,7 @@ Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voort
 
 ## Starten
 
-Zie [bijwerken via PuTTY](docs/installatie.md#bijwerken-via-putty-versie-0240) voor het publiceren van 0.24.0. De Flex-import moet opnieuw worden uitgevoerd voor de netto maandgrafiek. Herstart de API-service ook wanneer de vorige live-saldoverbetering nog niet op de server staat.
+Zie [bijwerken via PuTTY](docs/installatie.md#gateway-trades-bijwerken-versie-0250) voor het installeren van 0.25.0. Publiceer frontend en backend samen en herstart de API-service.
 
 Zie [`docs/installatie.md`](docs/installatie.md) voor de installatie en [`source/README.md`](source/README.md) voor alle ontwikkelcommando's.
 
@@ -30,6 +30,7 @@ Zie [`docs/installatie.md`](docs/installatie.md) voor de installatie en [`source
 - Goals-pagina met historische jaarresultaten, een jaarlijks doel van 30% rendement boven op de vorige jaarafsluiting, $ 12.000 inleg, voortgang ten opzichte van het jaarschema en een vijfjarenplanning.
 - Stats-pagina met analyse per jaar, standaard op 2026, meerjarig portefeuilleverloop, kerncijfers, maandresultaten, winst/verliesverdeling, resultaat per onderliggende waarde en verdeling van de aanhoudduur.
 - Trades-pagina met jaarkeuze 2025/2026, afgesloten optieposities, nettoresultaat, trade-rendement, lineair geannualiseerd rendement en paginering van maximaal 50 regels.
+- Gateway-uitvoeringen worden elke minuut opgehaald en lokaal bewaard; Trades en Stats bevatten ook nieuwe optiesluitingen. Vernieuwen haalt ze direct op.
 - Portefeuilleverloop met jaarkeuze, maandeindsaldi en grijze referentiebalken voor het voorgaande kalenderjaar.
 - Netto maandgrafiek op basis van gerealiseerde short-optiepremie en aandelenverkopen, inclusief kosten; jaardoel met saldovoortgang en jaarschema.
 - Aanvullende maanddetails en handelsstatistieken onder de grafieken, zonder afzonderlijke dubbele netto-premiekaarten.

@@ -1,5 +1,13 @@
 # Validatie
 
+## Resultaat 30 september 2026 — versie 0.25.0 (lokaal)
+
+- `npm test`: 65 van 65 tests geslaagd. TypeScript/Vite-productiebuild geslaagd; `git diff --check` zonder whitespacefouten.
+- Gesimuleerde Gateway controleert de rekeningfilter zonder clientfilter, wachten op uitvoeringen en later ontvangen commissies, en weigeren van afgebroken uitvoeringsdownloads.
+- Regressies voor twee rolls, gedeeltelijke sluitingen, heropenen dezelfde dag, opgeslagen historie, herhaalde refresh, uitvoeringscorrecties, latere Flex-overlap, ontbrekende openingsgegevens en IBKR-sentinelwaarden.
+- React/TypeScript-integratie controleert dat Gateway-sluitingen in de portefeuille en handelsaantallen verschijnen en bij herladen niet verdubbelen.
+- De eigen IBKR Gateway is in deze omgeving niet getest. Serverpublicatie, Master API client ID en zichtbaarheid van de twee werkelijke rolls moeten na installatie worden gecontroleerd; geen live-publicatie geclaimd.
+
 ## Resultaat 30 september 2026 — versie 0.24.0
 
 - `npm run import:flex`: lokale Flex-import geslaagd; de nieuwe maandreeks is opgenomen in de gegenereerde private samenvatting.

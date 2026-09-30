@@ -414,7 +414,7 @@ function App() {
         )}
 
         {!isLoading && summary && currentPage === 'trades' && (
-          <TradesPage trades={summary.closedTrades ?? []} currency={summary.premiumCurrency ?? summary.currency} />
+          <TradesPage trades={summary.closedTrades ?? []} currency={summary.premiumCurrency ?? summary.currency} pendingGatewayClosures={summary.pendingGatewayClosures} />
         )}
 
         {!isLoading && summary && currentPage === 'stats' && (

@@ -440,6 +440,7 @@ export function createPortfolioSummary({ equityXml, tradesXml, optionXml, contri
 
   return {
     generatedAt,
+    tradesThroughDate: extractTags(tradesXml, 'FlexStatement').map((item) => item.toDate?.replace(/^(\d{4})(\d{2})(\d{2})$/, '$1-$2-$3')).filter(Boolean).sort().at(-1) || latest.date,
     sourceUpdatedAt: statement?.whenGenerated ?? latest.date,
     currency,
     premiumCurrency,

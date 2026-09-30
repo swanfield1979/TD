@@ -3,6 +3,7 @@ import { calculateCoveredCallCoverage } from '../shared/covered-call.mjs'
 import { assignOptionStrategies } from '../shared/option-strategy.mjs'
 import { optionStrike, portfolioAllocation } from '../shared/portfolio-risk.mjs'
 import { optionExpiry } from '../shared/option-expiry.mjs'
+import { gatewayClosures } from '../shared/gateway-trades.mjs'
 
 const round = (value: number, decimals = 2) => Number(value.toFixed(decimals))
 
@@ -12,6 +13,11 @@ export function resolvePortfolio(summary: PortfolioSummary | null, snapshot: Ibk
 }
 
 export function mergeLiveSnapshot(summary: PortfolioSummary, snapshot: IbkrLiveSnapshot): PortfolioSummary {
+  const { closures, pending } = gatewayClosures(summary, snapshot)
+  const closedTrades = [...(summary.closedTrades ?? []), ...closures]
+    .sort((a, b) => b.closedAt.localeCompare(a.closedAt) || b.id.localeCompare(a.id))
+  const closedInYear = closedTrades.filter((trade) => trade.closedAt.startsWith(snapshot.asOfDate.slice(0, 4)))
+  const durations = closedInYear.flatMap((trade) => trade.daysHeld === null ? [] : [trade.daysHeld])
   const reportReference = summary.balance.toDate < snapshot.asOfDate
     ? { date: summary.balance.toDate, value: summary.balance.value }
     : summary.dailyProfit.fromDate
@@ -59,6 +65,8 @@ export function mergeLiveSnapshot(summary: PortfolioSummary, snapshot: IbkrLiveS
 
   return {
     ...summary,
+    closedTrades,
+    pendingGatewayClosures: pending,
     generatedAt: snapshot.generatedAt,
     sourceUpdatedAt: snapshot.generatedAt,
     currency: snapshot.currency,
@@ -94,8 +102,13 @@ export function mergeLiveSnapshot(summary: PortfolioSummary, snapshot: IbkrLiveS
     optionHoldings: liveOptionHoldings,
     tradingActivity: summary.tradingActivity ? {
       ...summary.tradingActivity,
+      closedTrades: closedInYear.length,
       openTrades: liveOptionHoldings.length,
-      totalTrades: summary.tradingActivity.closedTrades + liveOptionHoldings.length,
+      totalTrades: closedInYear.length + liveOptionHoldings.length,
+      averageDaysHeld: durations.length ? round(durations.reduce((sum, days) => sum + days, 0) / durations.length, 1) : 0,
+      minimumDaysHeld: durations.length ? Math.min(...durations) : 0,
+      maximumDaysHeld: durations.length ? Math.max(...durations) : 0,
+      measuredClosedTrades: durations.length,
     } : summary.tradingActivity,
     portfolioAllocation: portfolioAllocation({
       balance: snapshot.netLiquidation,

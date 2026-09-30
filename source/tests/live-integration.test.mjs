@@ -60,6 +60,21 @@ test('snapshot voor of na Flex en opnieuw laden behouden dezelfde actuele portef
   assert.deepEqual(merged.yearProfit, summary.yearProfit)
 })
 
+test('Gateway-sluitingen verschijnen in de portefeuille zonder dubbele regels na verversen', () => {
+  const current = { ...snapshot, asOfDate: '2026-09-30', positions: [], executions: [{
+    execId: 'roll.01', account: 'A', conid: '42', dateTime: '2026-09-30T15:00:00', quantity: 2,
+    price: 0.2, symbol: 'SOFI', name: 'SOFI PUT', assetCategory: 'OPT', currency: 'USD',
+    multiplier: 100, optionRight: 'P', strike: 17, expiry: '20261002', realizedPNL: 78,
+  }] }
+  const merged = resolvePortfolio(summary, current)
+  assert.equal(merged.closedTrades.length, summary.closedTrades.length + 1)
+  assert.equal(merged.closedTrades[0].profit, 78)
+  assert.equal(merged.tradingActivity.closedTrades, 1)
+  assert.deepEqual(resolvePortfolio(summary, current), merged)
+  const imported = { ...summary, tradesThroughDate: '2026-09-30', closedTrades: merged.closedTrades }
+  assert.equal(resolvePortfolio(imported, current).closedTrades.length, 1)
+})
+
 test('oudere of anders gewaardeerde snapshots vervangen de Flex-portefeuille niet', () => {
   assert.equal(resolvePortfolio(summary, { ...snapshot, asOfDate: '2026-09-20' }), summary)
   assert.equal(resolvePortfolio(summary, { ...snapshot, currency: 'EUR' }), summary)

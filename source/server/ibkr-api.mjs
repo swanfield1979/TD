@@ -2,11 +2,9 @@ import { createServer } from 'node:http'
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { spawnSync } from 'node:child_process'
-import { IBApi, EventName, MarketDataType } from '@stoqey/ib'
-import { createLiveSnapshot, updatePosition, withPreviousBalance } from './ibkr-domain.mjs'
-
-const PREVIOUS_CLOSE_TICK_TYPES = new Set([9, 75])
-const MARKET_DATA_REQUEST_ID_START = 900_000
+import { collectSnapshot } from './gateway-client.mjs'
+import { withPreviousBalance } from './ibkr-domain.mjs'
+import { mergeExecutions } from '../shared/gateway-trades.mjs'
 
 const config = {
   listenHost: process.env.IBKR_API_HOST || '127.0.0.1',
@@ -46,133 +44,6 @@ function delay(milliseconds) {
   return new Promise((resolveDelay) => setTimeout(resolveDelay, milliseconds))
 }
 
-function collectSnapshot(timeoutMs = 12_000) {
-  return new Promise((resolveSnapshot, rejectSnapshot) => {
-    const accountValues = new Map()
-    const positions = new Map()
-    const quoteRequests = new Map()
-    let activeAccount
-    let quoteTimeout
-    let settled = false
-    const ib = new IBApi({ host: config.gatewayHost, port: config.gatewayPort })
-
-    const finish = (error, snapshot) => {
-      if (settled) return
-      settled = true
-      clearTimeout(timeout)
-      clearTimeout(quoteTimeout)
-      try {
-        for (const requestId of quoteRequests.keys()) ib.cancelMktData(requestId)
-        if (activeAccount) ib.reqAccountUpdates(false, activeAccount)
-        ib.disconnect()
-      } catch {
-        // De socket kan al gesloten zijn; opruimen blijft best-effort.
-      }
-      if (error) rejectSnapshot(error)
-      else resolveSnapshot(snapshot)
-    }
-
-    const createSnapshot = () => {
-      try {
-        finish(null, createLiveSnapshot({ accountValues, positions: [...positions.values()] }))
-      } catch (error) {
-        finish(error)
-      }
-    }
-
-    const requestPreviousCloses = () => {
-      const stockPositions = [...positions.values()].filter((position) => position.position !== 0 && position.assetCategory === 'STK' && position.contract)
-      if (stockPositions.length === 0) return createSnapshot()
-
-      try {
-        // IBKR levert live data als die beschikbaar is en valt anders terug op vertraagde koersen.
-        ib.reqMarketDataType(MarketDataType.DELAYED)
-        stockPositions.forEach((position, index) => {
-          const requestId = MARKET_DATA_REQUEST_ID_START + index
-          const marketDataContract = {
-            ...position.contract,
-            exchange: position.contract.exchange || 'SMART',
-          }
-          quoteRequests.set(requestId, position)
-          ib.reqMktData(requestId, marketDataContract, '', false, false)
-        })
-        quoteTimeout = setTimeout(createSnapshot, 4_000)
-      } catch {
-        createSnapshot()
-      }
-    }
-
-    const timeout = setTimeout(() => finish(new Error('Geen tijdige reactie van IB Gateway.')), timeoutMs)
-
-    ib.on(EventName.connected, () => ib.reqManagedAccts())
-    ib.on(EventName.managedAccounts, (accountsList) => {
-      const accounts = accountsList.split(',').map((value) => value.trim()).filter(Boolean)
-      if (accounts.length === 0) return finish(new Error('IBKR heeft geen toegankelijke rekening teruggegeven.'))
-      activeAccount = accounts[0]
-      ib.reqAccountUpdates(true, activeAccount)
-    })
-    ib.on(EventName.updateAccountValue, (key, value, currency, accountName) => {
-      if (accountName !== activeAccount) return
-      accountValues.set(key, { value, currency })
-    })
-    ib.on(EventName.updatePortfolio, (contract, position, marketPrice, marketValue, averageCost, unrealizedPnl, realizedPnl, accountName) => {
-      if (accountName !== activeAccount) return
-      updatePosition(positions, {
-        accountName,
-        conid: contract.conId,
-        symbol: contract.symbol,
-        localSymbol: contract.localSymbol,
-        assetCategory: contract.secType,
-        optionRight: contract.right ? String(contract.right) : null,
-        optionStrike: contract.strike ?? null,
-        optionExpiry: contract.lastTradeDateOrContractMonth || contract.lastTradeDate || null,
-        multiplier: contract.multiplier ?? null,
-        currency: contract.currency,
-        position,
-        marketPrice,
-        marketValue,
-        averageCost,
-        unrealizedPnl,
-        realizedPnl,
-        contract,
-      })
-    })
-    ib.on(EventName.accountDownloadEnd, (accountName) => {
-      if (accountName !== activeAccount) return
-      requestPreviousCloses()
-    })
-    ib.on(EventName.tickPrice, (requestId, tickType, price) => {
-      const position = quoteRequests.get(requestId)
-      if (!position || !PREVIOUS_CLOSE_TICK_TYPES.has(tickType) || !Number.isFinite(price) || price <= 0) return
-      position.previousClose = price
-      quoteRequests.delete(requestId)
-      try {
-        ib.cancelMktData(requestId)
-      } catch {
-        // De quote kan al door Gateway zijn afgesloten.
-      }
-      if (quoteRequests.size === 0) createSnapshot()
-    })
-    ib.on(EventName.error, (...args) => {
-      const error = args.find((value) => value instanceof Error)
-      const hasConnectionCode = args.some((value) => value === 502 || value === 504)
-      const message = args.filter((value) => typeof value === 'string').join(' ')
-      if (hasConnectionCode || /connect|ECONNREFUSED|socket/i.test(`${error?.message || ''} ${message}`)) {
-        finish(error || new Error(message || 'Kan geen verbinding maken met IB Gateway.'))
-      }
-    })
-    ib.on(EventName.disconnected, () => {
-      if (!settled && !activeAccount) finish(new Error('IB Gateway heeft de verbinding gesloten.'))
-    })
-
-    try {
-      ib.connect(config.clientId)
-    } catch (error) {
-      finish(error)
-    }
-  })
-}
-
 function startGatewayService() {
   const result = spawnSync('/usr/bin/sudo', [
     '-n',
@@ -193,21 +64,39 @@ async function saveSnapshot(snapshot) {
     if (error.code !== 'ENOENT') throw error
   }
   snapshot = withPreviousBalance(snapshot, previous)
+  snapshot.executions = mergeExecutions(previous?.executions, snapshot.executions)
+    .filter((execution) => execution.account === snapshot.account)
   await mkdir(dirname(config.snapshotPath), { recursive: true })
   const temporaryPath = `${config.snapshotPath}.tmp`
   await writeFile(temporaryPath, `${JSON.stringify(snapshot, null, 2)}\n`, { mode: 0o600 })
   await rename(temporaryPath, config.snapshotPath)
 }
 
+// Capture executions while Gateway is running, also when no browser is open.
+// Background checks never start Gateway or initiate an MFA login.
+async function refreshConnectedGateway() {
+  if (runtime.isBusy) return
+  runtime.isBusy = true
+  try {
+    const snapshot = await collectSnapshot(config)
+    await saveSnapshot(snapshot)
+    setStatus('connected', 'IBKR-posities en uitgevoerde trades zijn bijgewerkt.', {
+      lastUpdatedAt: snapshot.generatedAt, isBusy: false,
+    })
+  } catch (error) {
+    setStatus('offline', error instanceof Error ? error.message : 'IBKR Gateway is niet verbonden.', { isBusy: false })
+  }
+}
+
 async function refreshInBackground() {
   if (runtime.isBusy) return
-  setStatus('refreshing', 'Actuele posities worden bij IBKR opgehaald.', { isBusy: true })
+  setStatus('refreshing', 'Posities en uitgevoerde trades worden bij IBKR opgehaald.', { isBusy: true })
 
   try {
     try {
-      const snapshot = await collectSnapshot()
+      const snapshot = await collectSnapshot(config)
       await saveSnapshot(snapshot)
-      return setStatus('connected', 'Actuele IBKR-posities zijn bijgewerkt.', {
+      return setStatus('connected', 'IBKR-posities en uitgevoerde trades zijn bijgewerkt.', {
         lastUpdatedAt: snapshot.generatedAt,
         isBusy: false,
       })
@@ -221,9 +110,9 @@ async function refreshInBackground() {
     while (Date.now() < deadline) {
       await delay(5_000)
       try {
-        const snapshot = await collectSnapshot(10_000)
+        const snapshot = await collectSnapshot(config, 10_000)
         await saveSnapshot(snapshot)
-        return setStatus('connected', 'Actuele IBKR-posities zijn bijgewerkt.', {
+        return setStatus('connected', 'IBKR-posities en uitgevoerde trades zijn bijgewerkt.', {
           lastUpdatedAt: snapshot.generatedAt,
           isBusy: false,
         })
@@ -263,7 +152,10 @@ const server = createServer(async (request, response) => {
     if (request.method === 'GET' && request.url === '/api/ibkr/snapshot') {
       try {
         const snapshot = JSON.parse(await readFile(config.snapshotPath, 'utf8'))
-        return sendJson(response, 200, snapshot)
+        // Keep the real account identifier only in the private server ledger.
+        return sendJson(response, 200, { ...snapshot, account: snapshot.account ? 'selected' : undefined,
+          executions: snapshot.executions?.map((execution) => ({ ...execution, account: 'selected' })),
+        })
       } catch {
         return sendJson(response, 404, { message: 'Er is nog geen actuele IBKR-snapshot.' })
       }
@@ -283,4 +175,6 @@ const server = createServer(async (request, response) => {
 
 server.listen(config.listenPort, config.listenHost, () => {
   console.log(`Trading Monitor IBKR API luistert op http://${config.listenHost}:${config.listenPort}`)
+  void refreshConnectedGateway()
+  setInterval(() => void refreshConnectedGateway(), 60_000).unref()
 })

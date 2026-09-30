@@ -17,9 +17,13 @@ De productiebuild gebruikt `/` als basispad en wordt vanuit `/var/www/trading-mo
 
 De read-only Node-backend luistert uitsluitend op `127.0.0.1:8787`. De browser bereikt deze via dezelfde Nginx-origin onder `/api/`. Een refreshopdracht start zo nodig de vaste `ibc-gateway.service`; vrije shellopdrachten of door de browser bepaalde unitnamen zijn niet mogelijk.
 
-IBC start IB Gateway op een afgeschermd virtueel X-scherm. De gebruiker bevestigt de IB Key MFA in IBKR Mobile. Daarna vraagt de backend met een eigen client-ID accountupdates op. De browser ontvangt geen rekeningnummer of inloggegevens, maar alleen de netto liquidatiewaarde en genormaliseerde positiegegevens.
+IBC start IB Gateway op een afgeschermd virtueel X-scherm. De gebruiker bevestigt de IB Key MFA in IBKR Mobile. Daarna vraagt de backend met een eigen client-ID accountupdates en uitvoeringen op. De browser ontvangt geen rekeningnummer of inloggegevens; accountidentificatie in uitvoeringen wordt voor de response vervangen door `selected`.
 
 De live snapshot vervangt in de interface uitsluitend actuele waarden: saldo, saldoverandering, portefeuilleverdeling en open aandelen- en optieposities. Expiratie, strike en call/put komen uit het IBKR-contract; openingsdatum en gekozen DTE worden waar mogelijk aangevuld vanuit de lokale Flex-import. Historische maand- en jaarcijfers blijven afkomstig uit de lokale Flex-import.
+
+Sinds 0.25.0 voegt `shared/gateway-trades.mjs` ook optieafsluitingen toe aan Trades en Stats. `server/gateway-client.mjs` vraagt accountgefilterde `reqExecutions` op zonder clientfilter, wacht op `execDetailsEnd`, posities en commissierapporten, en weigert incomplete uitvoeringsdownloads. De API bewaart de uitvoeringhistorie atomair in de private snapshot. Uitvoerings-ID's worden gededupliceerd en IBKR-correcties vervangen de oorspronkelijke uitvoering. De poll van 60 seconden start geen Gateway of MFA; handmatig Verbinden behoudt de bestaande aanmeldflow. Resultaten komen uit `commissionReport.realizedPNL`; IBKR-sentinelwaarden worden niet als winst gebruikt.
+
+De huidige positie wordt met de opgeslagen uitvoeringen teruggerekend om sluitingshoeveelheden te bepalen. Passende Flex-openingsgegevens worden gebruikt voor aanhoudduur en rendement; bij ontbrekende aansluiting blijven deze velden leeg. `tradesThroughDate` begrenst de overlap met Flex. Oude samenvattingen vallen terug op de Flex-saldodatum. Dit is een technische overgang: voor exact begrensde overlap kan de bestaande lokale import opnieuw worden uitgevoerd.
 
 ## Gerealiseerde resultaten
 

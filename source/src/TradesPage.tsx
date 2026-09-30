@@ -5,6 +5,7 @@ import type { ClosedTrade } from './types'
 interface TradesPageProps {
   trades: ClosedTrade[]
   currency: string
+  pendingGatewayClosures?: number
 }
 
 const PAGE_SIZE = 50
@@ -45,7 +46,7 @@ function paginationItems(currentPage: number, pageCount: number): Array<number |
   return items
 }
 
-export default function TradesPage({ trades, currency }: TradesPageProps) {
+export default function TradesPage({ trades, currency, pendingGatewayClosures = 0 }: TradesPageProps) {
   const years = useMemo(
     () => [...new Set(trades.map((trade) => trade.closedAt.slice(0, 4)))].sort((left, right) => right.localeCompare(left)),
     [trades],
@@ -124,7 +125,8 @@ export default function TradesPage({ trades, currency }: TradesPageProps) {
         <header className="positions-data__header">
           <div>
             <h2 id="closed-trades-title">Afgesloten trades {selectedYear}</h2>
-            <p>Alle gesloten opties inclusief gekochte opties. Het dashboard telt uitsluitend short-premie en gerealiseerde aandelenwinst.</p>
+            <p>Afgesloten opties uit de historie en IBKR Gateway. Vernieuwen haalt ook de uitvoeringen van vandaag op.</p>
+            {pendingGatewayClosures > 0 && <p role="status">Voor {pendingGatewayClosures} sluiting(en) ontbreekt het IBKR-resultaat nog. Klik op Vernieuwen om dit opnieuw op te halen.</p>}
           </div>
           <span className="positions-data__status positions-data__status--live">{firstItem}–{lastItem} van {filteredTrades.length}</span>
         </header>
@@ -132,7 +134,7 @@ export default function TradesPage({ trades, currency }: TradesPageProps) {
         {filteredTrades.length === 0 ? (
           <div className="positions-empty">
             <h3>Nog geen afgesloten trades</h3>
-            <p>Afgesloten optieposities (ook deels gesloten) verschijnen na de volgende Flex-import.</p>
+            <p>Klik op Vernieuwen bij de IBKR-koppeling om de uitgevoerde trades op te halen.</p>
           </div>
         ) : (
           <>

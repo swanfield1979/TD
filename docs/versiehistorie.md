@@ -1,5 +1,12 @@
 # Versiehistorie
 
+## 0.25.0 – afgesloten trades via IBKR Gateway
+
+- Bestaande koppeling haalt ook uitvoeringen en resultaten op; rolls en gedeeltelijke sluitingen verschijnen in Trades en Stats.
+- Automatisch ophalen elke minuut; handmatig Vernieuwen haalt direct op. Private uitvoeringhistorie blijft bewaard bij dagwissel en herstart.
+- Deduplicatie, uitvoeringscorrecties, accountfiltering en melding bij ontbrekende resultaten; bijgewerkte historie voorkomt dubbele trades.
+- Lokale tests met gesimuleerde Gateway en productiebuild gecontroleerd. Live-publicatie en controle op de eigen Gateway staan nog open.
+
 ## 0.24.0 – lichte portefeuille-interface
 
 - Nieuwe lichte vormgeving met rustige kaartlijnen, witruimte, groen voor positieve resultaten en rood voor negatieve resultaten; dezelfde stijl op alle pagina's.

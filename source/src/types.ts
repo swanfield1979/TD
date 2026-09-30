@@ -172,6 +172,8 @@ export interface IbkrLivePosition extends StockHolding {
 }
 
 export interface IbkrLiveSnapshot {
+  account?: string
+  executions?: GatewayExecution[]
   previousBalance?: { date: string; value: number }
   generatedAt: string
   asOfDate: string
@@ -183,6 +185,8 @@ export interface IbkrLiveSnapshot {
 }
 
 export interface PortfolioSummary {
+  tradesThroughDate?: string
+  pendingGatewayClosures?: number
   contributionPeriods?: ContributionPeriod[]
   generatedAt: string
   sourceUpdatedAt: string
@@ -216,6 +220,26 @@ export interface PortfolioSummary {
     currentMonth: PremiumPeriod
     previousMonth: PremiumPeriod
   }
+}
+
+export interface GatewayExecution {
+  execId: string
+  account: string
+  conid: string
+  dateTime: string
+  quantity: number
+  price: number
+  symbol: string
+  name: string
+  assetCategory: string
+  currency: string
+  multiplier: number
+  optionRight: string | null
+  strike: number | null
+  expiry: string | null
+  commission?: number
+  commissionCurrency?: string
+  realizedPNL?: number
 }
 
 export interface ContributionPeriod {

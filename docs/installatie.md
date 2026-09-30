@@ -12,6 +12,23 @@
 
 De ruwe rapporten en de gegenereerde financiële samenvatting worden niet aan Git toegevoegd.
 
+## Gateway-trades bijwerken (versie 0.25.0)
+
+Nadat de gewijzigde broncode op de server staat, voer via PuTTY uit:
+
+```bash
+cd /home/gerard/TD/source
+npm ci
+npm test
+npm run build
+sudo rsync -a --delete dist/ /var/www/trading-monitor/
+sudo systemctl restart trading-monitor-api.service
+```
+
+Een nieuwe Flex-export is niet nodig om de uitvoeringen van vandaag op te halen. Controleer in IB Gateway onder API → Settings dat **Master API client ID** overeenkomt met `IBKR_CLIENT_ID` (standaard 77); dit is nodig om commissierapporten van andere clients te ontvangen. De uitvoeringaanvraag gebruikt een rekeningfilter zonder clientfilter, zodat ook handmatige trades worden opgehaald. Zie [IBKR-uitvoeringen en commissies](https://interactivebrokers.github.io/tws-api/executions_commissions.html).
+
+Herlaad de website en klik op **Vernieuwen**. Controleer of de twee oude roll-contracten in Trades en de nieuwe contracten in Options staan. Laat de API-service tijdens handelsdagen draaien: Gateway levert standaard alleen uitvoeringen vanaf middernacht. De service bewaart deze in `/var/lib/trading-monitor/live-snapshot.json` (of `IBKR_SNAPSHOT_PATH`); verwijder dit bestand niet bij updates. De achtergrondcontrole haalt iedere minuut op en start geen nieuwe MFA-aanmelding.
+
 ## Productie-installatie op Linux, webroot en poort 80
 
 Met deze installatie is Trading Monitor bereikbaar via `http://<intern-ip>/`, zonder poortnummer of submap. Nginx luistert op de standaard HTTP-poort 80. De Vite-ontwikkelserver op poort 5173 blijft uitsluitend bedoeld voor lokaal ontwikkelen.
