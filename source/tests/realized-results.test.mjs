@@ -160,6 +160,11 @@ test('dashboard gebruikt dezelfde afsluitmaand en peildatum voor maand, jaar, pr
   assert.equal(summary.premiumPeriods.currentMonth.net, 198)
   assert.equal(summary.closedTrades.length, 1)
   assert.equal(summary.closedTrades[0].profit, 198)
+  assert.deepEqual(summary.monthlyTradingResults.map(({ month, value, toDate }) => ({ month, value, toDate })), [
+    { month: '2026-01', value: 0, toDate: '2026-01-31' },
+    { month: '2026-02', value: 198, toDate: '2026-02-20' },
+  ])
+  assert.equal(summary.monthlyTradingResults.reduce((total, row) => total + row.value, 0), summary.yearProfit.value)
 })
 
 

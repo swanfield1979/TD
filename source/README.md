@@ -2,9 +2,9 @@
 
 De webapp staat volledig in deze map. Voer alle ontwikkel- en bouwcommando's vanuit `source/` uit.
 
-Versie 0.23.0 corrigeert IBKR-synchronisatie en de nettoverdeling. Na een serverupdate zijn `npm run import:flex`, `npm run build`, het publiceren van `dist/` en `sudo systemctl restart trading-monitor-api.service` nodig. `npm test` bevat ook React/TypeScript-integratietests via Vite; hiervoor is geen actieve IBKR-verbinding nodig.
+Versie 0.24.0 bevat het nieuwe lichte dashboard, saldohistorie, een netto maandgrafiek, jaardoel en samengevoegde handelsdetails. Na een serverupdate zijn `npm ci`, `npm run import:flex`, `npm test`, `npm run build` en het publiceren van `dist/` nodig. Herstart de API-service om ook de bestaande live-saldoverbetering te activeren. Zie [PuTTY-update](../docs/installatie.md#bijwerken-via-putty-versie-0240). `npm test` bevat React/TypeScript-integratietests via Vite; hiervoor is geen actieve IBKR-verbinding nodig.
 
-De lokale wijziging voor live saldoverandering werkt mee met **Vernieuwen**. Publiceer de nieuwe `dist/` en backendbestanden samen en herstart `trading-monitor-api.service` om eerdere dagmetingen te bewaren. Zie [gebruik en berekeningen](../docs/gebruik.md) voor de vergelijkingsbron en terugval bij ontbrekende dagen.
+Live saldoverandering werkt mee met **Vernieuwen**. Publiceer de nieuwe `dist/` en backendbestanden samen en herstart `trading-monitor-api.service` om eerdere dagmetingen te bewaren. Zie [gebruik en berekeningen](../docs/gebruik.md) voor de vergelijkingsbron en terugval bij ontbrekende dagen.
 
 ## Vereisten
 

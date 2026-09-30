@@ -69,6 +69,39 @@ sudo rsync -a --delete dist/ /var/www/trading-monitor/
 
 Een herstart van Nginx is bij alleen gewijzigde websitebestanden niet nodig.
 
+## Bijwerken via PuTTY (versie 0.24.0)
+
+Voer het hele blok uit op de bestaande Linux-server. Bij een fout stopt het blok. `git pull --ff-only` overschrijft geen conflicterende lokale wijzigingen. De private Flex-XML blijft op de server. De nieuwe maandgrafiek vereist een herimport; de API-herstart activeert tevens de eerder toegevoegde live-saldovergelijking.
+
+```bash
+(
+set -e
+cd /home/gerard/TD
+test "$(git branch --show-current)" = "main"
+git pull --ff-only origin main
+cd source
+npm ci
+npm run import:flex
+npm test
+npm run build
+test -s dist/index.html
+test -s dist/data/portfolio-summary.json
+backup_dir="/var/backups/trading-monitor/$(date +%Y%m%d-%H%M%S)"
+sudo mkdir -p "$backup_dir"
+sudo cp -a /var/www/trading-monitor "$backup_dir/webroot"
+sudo rsync -a --delete dist/ /var/www/trading-monitor/
+sudo systemctl restart trading-monitor-api.service
+sudo systemctl is-active trading-monitor-api.service
+curl --fail --silent --show-error http://127.0.0.1/ -o /dev/null
+curl --fail --silent --show-error http://127.0.0.1/api/ibkr/status
+printf '\nTrading Monitor 0.24.0 bijgewerkt. Webroot-back-up: %s/webroot\n' "$backup_dir"
+)
+```
+
+De documentroot is hier expliciet `/var/www/trading-monitor/`; `--delete` geldt uitsluitend voor deze map. Nginx hoeft bij deze update niet te worden herladen. Open daarna `http://192.168.1.22/` en vernieuw de browser met **Ctrl+F5**. Controleer Dashboard, Stocks, Options, Goals, Stats en Trades. De IBKR-status kan na de API-herstart eerst niet verbonden zijn; gebruik indien nodig **Verbinden** en bevestig IB Key op de telefoon.
+
+Voor terugzetten van alleen de frontend: gebruik het exacte back-uppad dat het blok toont en synchroniseer de inhoud van de map `webroot/` terug naar `/var/www/trading-monitor/`. De back-up bevat private dashboarddata en blijft uitsluitend op de server.
+
 ## IBKR Gateway-koppeling met mobiele MFA
 
 De koppeling bestaat uit vier lokaal afgeschermde onderdelen:

@@ -29,7 +29,7 @@ export default function PortfolioAllocationCard({
 
   return (
     <article className="allocation-card" aria-label={`Portefeuilleverdeling. ${summary}`}>
-      <h2 className="visually-hidden">Portefeuilleverdeling</h2>
+      <h2>Portefeuilleverdeling</h2>
       <div className="allocation-card__chart" aria-hidden="true">
         <svg viewBox="0 0 120 120">
           <circle className="allocation-card__track" cx="60" cy="60" r="48" pathLength="100" />
@@ -74,6 +74,7 @@ export default function PortfolioAllocationCard({
         {allocation.isEstimated ? ' · aandelen op resterende kostprijs' : ''}
         {!canChart ? ' · negatieve bedragen: zie verdeling' : ''}
       </p>
+      <div className="allocation-card__free"><span>Vrij besteedbaar</span><strong>{formatCurrency(allocation.freeToSpend ?? 0, currency)}</strong>{allocation.unpricedContractCount > 0 && <small>{allocation.unpricedContractCount} contracten zonder strike · reservering onvolledig</small>}</div>
     </article>
   )
 }

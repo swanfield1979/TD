@@ -1,6 +1,16 @@
 # Versiehistorie
 
-## Nog niet gepubliceerd – live saldoverandering
+## 0.24.0 – lichte portefeuille-interface
+
+- Nieuwe lichte vormgeving met rustige kaartlijnen, witruimte, groen voor positieve resultaten en rood voor negatieve resultaten; dezelfde stijl op alle pagina's.
+- Kerncijfers bovenaan: portefeuillesaldo, totale winst, saldoverandering en jaarresultaat.
+- Saldohistorie met jaarkeuze en vorig jaar als referentie; netto maandgrafiek uit gerealiseerde short-optiepremie en aandelenverkopen na kosten.
+- Compact jaardoel met bestaande saldovoortgang en berekening van het jaarschema, plus verwijzing naar Goals.
+- Maandresultaat en premiedetails samengevoegd per maand onder de grafieken; handelsstatistieken daaronder. Het jaarresultaat verschijnt één keer.
+- De importer exporteert `monthlyTradingResults`; voer de import opnieuw uit bij de serverupdate.
+- Live-installatie gebeurt door de gebruiker via Git en PuTTY; dit is geen bevestiging van serverpublicatie.
+
+## Live saldoverandering – meegenomen in de update naar 0.24.0
 
 - Saldoverandering en percentage volgen nu het actuele IBKR-saldo tegenover de vorige beschikbare dagstand.
 - De server bewaart de laatste meting van een eerdere dag; Flex blijft terugvalbron. Vergelijkingsdatum en bron blijven zichtbaar.

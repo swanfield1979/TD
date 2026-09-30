@@ -1,9 +1,7 @@
-import type { PremiumPeriod, TradingActivitySummary } from './types'
+import type { TradingActivitySummary } from './types'
 
 interface TradingActivityCardsProps {
   activity: TradingActivitySummary
-  currentPremium: PremiumPeriod
-  previousPremium: PremiumPeriod
   premiumCurrency: string
   year: string
 }
@@ -25,51 +23,8 @@ function formatCurrency(value: number, currency: string, signDisplay: 'auto' | '
   }).format(value)
 }
 
-function formatMonth(value: string) {
-  return new Intl.DateTimeFormat('nl-NL', { month: 'long', year: 'numeric' }).format(
-    new Date(`${value}-01T12:00:00`),
-  )
-}
-
-function PremiumPeriodCard({
-  label,
-  premium,
-  currency,
-  isCurrent = false,
-}: {
-  label: string
-  premium: PremiumPeriod
-  currency: string
-  isCurrent?: boolean
-}) {
-  const netDirection = directionFor(premium.net)
-  const receivedDirection = directionFor(premium.received)
-  const buybackDirection = premium.buyback > 0 ? 'negative' : 'neutral'
-  const commissionDirection = premium.commission > 0 ? 'negative' : 'neutral'
-
-  return (
-    <article className={`premium-card premium-card--${netDirection}${isCurrent ? ' premium-card--current' : ''}`}>
-      <h2>{label}</h2>
-      <p className={`premium-card__value metric--${netDirection}`}>
-        {formatCurrency(premium.net, currency, 'always')}
-      </p>
-      <p className="premium-card__breakdown">
-        {formatMonth(premium.month)}<span aria-hidden="true"> · </span>
-        ontvangen bij afgesloten opties <strong className={`metric--${receivedDirection}`}>{formatCurrency(premium.received, currency)}</strong>
-        <span aria-hidden="true"> · </span>
-        terugkoop <strong className={`metric--${buybackDirection}`}>{formatCurrency(-premium.buyback, currency)}</strong>
-        <span aria-hidden="true"> · </span>
-        commissie <strong className={`metric--${commissionDirection}`}>{formatCurrency(-premium.commission, currency)}</strong>
-        {premium.historicalNet !== undefined && <> · historisch netto (opening ontbreekt) <strong>{formatCurrency(premium.historicalNet, currency, 'always')}</strong></>}
-      </p>
-    </article>
-  )
-}
-
 export default function TradingActivityCards({
   activity,
-  currentPremium,
-  previousPremium,
   premiumCurrency,
   year,
 }: TradingActivityCardsProps) {
@@ -82,7 +37,7 @@ export default function TradingActivityCards({
   const grossPremiumDirection = directionFor(activity.grossPremium)
 
   return (
-      <section className="activity-grid" aria-label={`Handelsactiviteit ${year} en optiepremie`}>
+      <>
         <article className="activity-card activity-card--trades">
           <h2>Totaal trades</h2>
           <p className="activity-card__value">{numberFormatter.format(activity.totalTrades)}</p>
@@ -117,17 +72,6 @@ export default function TradingActivityCards({
             <span className="activity-card__sample"> · {activity.measuredClosedTrades} gemeten</span>
           </p>
         </article>
-        <PremiumPeriodCard
-          label="Netto premie deze maand"
-          premium={currentPremium}
-          currency={premiumCurrency}
-          isCurrent
-        />
-        <PremiumPeriodCard
-          label="Netto premie vorige maand"
-          premium={previousPremium}
-          currency={premiumCurrency}
-        />
-      </section>
+      </>
   )
 }

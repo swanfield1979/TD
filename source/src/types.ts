@@ -203,6 +203,7 @@ export interface PortfolioSummary {
     monthCount: number
   }
   monthlyBalanceChanges: MonthlyBalanceChange[]
+  monthlyTradingResults?: (MonthlyTradingResult & { month: string })[]
   previousYearMonthlyBalanceChanges: MonthlyBalanceChange[]
   portfolioHistory: PortfolioHistoryPoint[]
   tradingActivity: TradingActivitySummary

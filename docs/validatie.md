@@ -1,5 +1,14 @@
 # Validatie
 
+## Resultaat 30 september 2026 — versie 0.24.0
+
+- `npm run import:flex`: lokale Flex-import geslaagd; de nieuwe maandreeks is opgenomen in de gegenereerde private samenvatting.
+- `npm test`: 55 van 55 tests geslaagd. `npm run build`: TypeScript en Vite-productiebuild geslaagd. `git diff --check`: geen whitespacefouten.
+- Regressie controleert dat maandresultaten dezelfde sluitingsdatum, kosten en peildatum gebruiken als het jaarresultaat; toekomstige transacties blijven uitgesloten en de som van maanden sluit aan op het jaarresultaat.
+- React-rendercontrole: jaardoel zonder inleg verzint geen jaarschema; een oud doel past niet op een nieuwjaarsaldo; historische netto-premie blijft zichtbaar; oude JSON zonder maandreeks geeft een herimportmelding.
+- Lokale browsercontrole: dashboard, jaarkeuze 2025/2026, navigatie naar Stocks, Options, Goals, Stats en Trades; mobiele weergave op 390 × 844 en desktopweergave. Positieve maandbalken zijn groen, negatieve rood.
+- De liveserver is bereikbaar maar SSH-aanmelding via de huidige omgeving is geweigerd. Publicatie op de server wordt door de gebruiker via PuTTY uitgevoerd; geen live IBKR-refresh of serverpublicatie geclaimd.
+
 ## Resultaat 28 september 2026 — live saldoverandering (lokaal)
 
 - `npm test`: 53 van 53 tests geslaagd. `npm run build`: TypeScript en productiebuild geslaagd.

@@ -10,8 +10,8 @@ import {
   NavigationRegular,
   TargetArrowRegular,
 } from '@fluentui/react-icons'
-import type { MetricDirection, MonthlyTradingResult, PortfolioMetric, PortfolioSummary } from './types'
-import MonthlyBalanceChart from './MonthlyBalanceChart'
+import type { MetricDirection, PortfolioMetric, PortfolioSummary } from './types'
+import { AnnualGoal, MonthDetail, NetMonthlyResults, PortfolioTrend } from './DashboardPanels'
 import PortfolioAllocationCard from './PortfolioAllocationCard'
 import StocksPage from './StocksPage'
 import OptionsPage from './OptionsPage'
@@ -72,11 +72,6 @@ const directionLabel: Record<MetricDirection, string> = {
   negative: 'Negatief',
   neutral: 'Ongewijzigd',
 }
-
-const tradingResultContext = (result: MonthlyTradingResult, currency: string) => [
-  `premie ${currencyFormatter(currency, true).format(result.premium)}`,
-  `aandelen ${currencyFormatter(currency, true).format(result.stockSales)}`,
-].join(' · ')
 
 interface StatCardProps {
   label: string
@@ -259,7 +254,7 @@ function App() {
 
       <aside className={`side-nav${isMenuOpen ? ' side-nav--open' : ''}`} aria-label="Hoofdnavigatie">
         <div className="brand">
-          <img src="/assets/trading-monitor-logo.png" alt="Trading Monitor" />
+          <DataTrendingRegular aria-hidden="true" /><span>Trading Monitor</span>
         </div>
         <nav>
           <p className="nav-label">Overzicht</p>
@@ -319,6 +314,7 @@ function App() {
         <header className="page-header">
           <div>
             <h1>{pageTitles[currentPage]}</h1>
+            {currentPage === 'dashboard' && <p className="page-subtitle">Je portefeuille in één oogopslag</p>}
           </div>
           {summary && (
             <div className="data-freshness" title={showLiveFreshness ? `IBKR-snapshot opgehaald op ${summary.sourceUpdatedAt}; Flex-resultaten t/m ${importedSummary?.balance.toDate}` : `Bronbestand gegenereerd op ${importedSummary?.sourceUpdatedAt}`}>
@@ -346,68 +342,55 @@ function App() {
 
         {!isLoading && summary && currentPage === 'dashboard' && (
           <>
-            <section className="portfolio-summary" aria-label="Saldo, dagelijkse winst en verlies en portefeuilleverdeling">
+            <section className="portfolio-summary" aria-label="Portefeuillesaldo, totale winst, saldoverandering en jaarresultaat">
               <StatCard
-                label="Saldo"
+                label="Portefeuillesaldo"
                 metric={summary.balance}
                 currency={summary.currency}
                 context={`Netto liquidatiewaarde op ${formatDate(summary.balance.toDate)}`}
                 prominent
               />
+              <TotalProfitCard contributions={summary.contributionPeriods} startingBalance={summary.startingBalance} balance={summary.balance} currency={summary.currency} />
               <DailyProfitCard
                 metric={summary.dailyProfit}
                 balance={summary.balance}
                 currency={summary.currency}
               />
-              <PortfolioAllocationCard
-                allocation={summary.portfolioAllocation}
-                balance={summary.balance}
-                currency={summary.currency}
-              />
-              <TotalProfitCard contributions={summary.contributionPeriods} startingBalance={summary.startingBalance} balance={summary.balance} currency={summary.currency} />
-            </section>
-            <section className="dashboard-grid dashboard-grid--performance" aria-label="Portfoliostatistieken">
               <StatCard
-                label={`Nettoresultaat ${summary.yearProfit.toDate.slice(0, 4)}`}
+                label={`Jaarresultaat ${summary.yearProfit.toDate.slice(0, 4)}`}
                 metric={summary.yearProfit}
                 currency={summary.currency}
                 context="Gerealiseerde premie en aandelen"
               />
-              <StatCard
-                label="Nettoresultaat deze maand"
-                metric={summary.currentMonthProfit}
-                currency={summary.currency}
-                context={tradingResultContext(summary.currentMonthProfit, summary.premiumCurrency ?? summary.currency)}
-              />
-              <StatCard
-                label="Nettoresultaat vorige maand"
-                metric={summary.previousMonthProfit}
-                currency={summary.currency}
-                context={tradingResultContext(summary.previousMonthProfit, summary.premiumCurrency ?? summary.currency)}
-              />
+            </section>
+            <div className="monitor-row monitor-row--overview">
+              <PortfolioTrend summary={summary} />
+              <PortfolioAllocationCard allocation={summary.portfolioAllocation} balance={summary.balance} currency={summary.currency} />
+            </div>
+            <div className="monitor-row monitor-row--results">
+              <NetMonthlyResults summary={summary} />
+              <AnnualGoal summary={summary} />
+            </div>
+            <h2 className="details-heading">Handelsdetails <span>{summary.yearProfit.toDate.slice(0, 4)}</span></h2>
+            <div className="monitor-row monitor-row--months">
+              <MonthDetail label="Deze maand" result={summary.currentMonthProfit} premium={summary.premiumPeriods?.currentMonth} currency={summary.currency} premiumCurrency={summary.premiumCurrency ?? summary.currency} />
+              <MonthDetail label="Vorige maand" result={summary.previousMonthProfit} premium={summary.premiumPeriods?.previousMonth} currency={summary.currency} premiumCurrency={summary.premiumCurrency ?? summary.currency} />
+            </div>
+            <section className="activity-grid" aria-label="Handelsstatistieken">
               <StatCard
                 label="Gemiddeld per maand"
                 metric={summary.averageMonthlyProfit}
                 currency={summary.currency}
                 context={`Gemiddelde over ${summary.averageMonthlyProfit.monthCount} kalendermaanden`}
               />
+              {summary.tradingActivity && (
+                <TradingActivityCards
+                  activity={summary.tradingActivity}
+                  premiumCurrency={summary.premiumCurrency ?? 'USD'}
+                  year={summary.yearProfit.toDate.slice(0, 4)}
+                />
+              )}
             </section>
-            {summary.tradingActivity && summary.premiumPeriods && (
-              <TradingActivityCards
-                activity={summary.tradingActivity}
-                currentPremium={summary.premiumPeriods.currentMonth}
-                previousPremium={summary.premiumPeriods.previousMonth}
-                premiumCurrency={summary.premiumCurrency ?? 'USD'}
-                year={summary.yearProfit.toDate.slice(0, 4)}
-              />
-            )}
-            <MonthlyBalanceChart
-              data={summary.monthlyBalanceChanges ?? []}
-              referenceData={summary.previousYearMonthlyBalanceChanges ?? []}
-              currency={summary.currency}
-              year={summary.yearProfit.toDate.slice(0, 4)}
-              referenceYear={String(Number(summary.yearProfit.toDate.slice(0, 4)) - 1)}
-            />
           </>
         )}
 

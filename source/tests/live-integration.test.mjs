@@ -11,6 +11,7 @@ after(() => server.close())
 const { resolvePortfolio } = await server.ssrLoadModule('/src/ibkr.ts')
 const { default: GoalsPage } = await server.ssrLoadModule('/src/GoalsPage.tsx')
 const { DailyProfitCard } = await server.ssrLoadModule('/src/App.tsx')
+const { AnnualGoal, MonthDetail, NetMonthlyResults } = await server.ssrLoadModule('/src/DashboardPanels.tsx')
 const summary = createPortfolioSummary({
   equityXml: '<EquitySummaryByReportDateInBase reportDate="2025-12-31" total="1000"/><EquitySummaryByReportDateInBase reportDate="2026-09-23" total="1000"/><EquitySummaryByReportDateInBase reportDate="2026-09-24" total="1100"/>',
   tradesXml: '', optionXml: '',
@@ -19,6 +20,28 @@ const snapshot = createLiveSnapshot({
   accountValues: new Map([['NetLiquidation', { value: 1500, currency: 'USD' }]]),
   positions: [{ conid: 42, position: -2, assetCategory: 'OPT', optionRight: 'P', marketValue: -100,
     localSymbol: 'SOFI 261023P00016000', symbol: 'SOFI' }], generatedAt: '2026-09-27T12:00:00Z',
+})
+
+test('dashboardjaardoel toont geen verzonnen jaarschema zonder inleg en weigert een oud doel', () => {
+  const html = renderToStaticMarkup(createElement(AnnualGoal, { summary }))
+  assert.match(html, /inleggegevens ontbreken/)
+  assert.doesNotMatch(html, /Voor op jaarschema|Achter op jaarschema/)
+  const newYear = { ...summary, balance: { ...summary.balance, toDate: '2027-01-01' } }
+  assert.match(renderToStaticMarkup(createElement(AnnualGoal, { summary: newYear })), /vorige jaarafsluiting/)
+})
+
+test('maanddetails behouden historische premie en maandgrafiek verzint ontbrekende data niet', () => {
+  const html = renderToStaticMarkup(createElement(MonthDetail, {
+    label: 'Deze maand', result: summary.currentMonthProfit,
+    premium: { ...summary.premiumPeriods.currentMonth, historicalNet: 148 },
+    currency: 'USD', premiumCurrency: 'USD',
+  }))
+  assert.match(html, /Historisch netto/)
+  assert.match(html, /148,00/)
+  assert.match(html, /Opening ontbreekt/)
+  assert.doesNotMatch(html, /Netto premie deze maand/)
+  const oldSummary = { ...summary, monthlyTradingResults: undefined }
+  assert.match(renderToStaticMarkup(createElement(NetMonthlyResults, { summary: oldSummary })), /Importeer Flex-gegevens opnieuw/)
 })
 
 test('snapshot voor of na Flex en opnieuw laden behouden dezelfde actuele portefeuille', () => {

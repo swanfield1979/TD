@@ -456,6 +456,11 @@ export function createPortfolioSummary({ equityXml, tradesXml, optionXml, contri
     currentMonthProfit: monthlyTradingResult(results, currentMonth, currentMonthBase.date, latest.date),
     previousMonthProfit: monthlyTradingResult(results, previousMonth, previousMonthBase.date, currentMonthBase.date),
     averageMonthlyProfit: { ...metric(yearProfit / monthCount, start.date, latest.date), monthCount },
+    monthlyTradingResults: Array.from({ length: Number(latest.date.slice(5, 7)) }, (_, index) => {
+      const month = `${latest.date.slice(0, 4)}-${String(index + 1).padStart(2, '0')}`
+      const monthEnd = new Date(Date.UTC(Number(month.slice(0, 4)), index + 1, 0)).toISOString().slice(0, 10)
+      return { month, ...monthlyTradingResult(results, month, `${month}-01`, month === currentMonth ? latest.date : monthEnd) }
+    }),
     monthlyBalanceChanges: monthlyBalanceChangesForYear(rows, latest.date.slice(0, 4)),
     previousYearMonthlyBalanceChanges: monthlyBalanceChangesForYear(
       rows,

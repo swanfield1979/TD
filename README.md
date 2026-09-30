@@ -2,7 +2,7 @@
 
 Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voortgang op basis van Interactive Brokers Flex-rapporten.
 
-**Versie/status:** 0.23.1, intern dashboard met meerjarige Flex-import, CSP-reservering en vrij besteedbaar vermogen, actuele saldoverandering tegenover de vorige beschikbare dagstand in dollars en procenten, afzonderlijke Stocks-, Options-, Goals-, Stats- en Trades-overzichten, automatische strategieherkenning, jaarlijkse doelplanning, Nginx-hosting op poort 80 en een read-only IBKR Gateway-koppeling met mobiele IB Key MFA.
+**Versie/status:** 0.24.0, lichte portefeuille-interface met groene positieve en rode negatieve resultaten, saldohistorie, netto maandresultaten, jaardoel en samengevoegde handelsdetails. Productiebuild en tests zijn lokaal gecontroleerd; installatie op de liveserver verloopt via Git en PuTTY. De read-only IBKR-koppeling en afzonderlijke Stocks-, Options-, Goals-, Stats- en Trades-overzichten blijven beschikbaar.
 
 | Map | Inhoud |
 | --- | --- |
@@ -12,13 +12,13 @@ Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voort
 
 ## Starten
 
-Lokale wijziging (nog niet gepubliceerd): saldoverandering volgt het actuele IBKR-saldo tegenover de vorige beschikbare dagstand. Tests en productiebuild zijn geslaagd; ingebruikname vereist ook een backendupdate en API-herstart.
+Zie [bijwerken via PuTTY](docs/installatie.md#bijwerken-via-putty-versie-0240) voor het publiceren van 0.24.0. De Flex-import moet opnieuw worden uitgevoerd voor de netto maandgrafiek. Herstart de API-service ook wanneer de vorige live-saldoverbetering nog niet op de server staat.
 
 Zie [`docs/installatie.md`](docs/installatie.md) voor de installatie en [`source/README.md`](source/README.md) voor alle ontwikkelcommando's.
 
 ## Functies
 
-- Donker, responsief dashboard met het Trading Monitor-logo.
+- Licht, responsief dashboard met groene accenten, herkenbare Trading Monitor-navigatie en IBKR-status.
 - Totale winst sinds start 2025 gecorrigeerd voor netto inleg, met winstpercentage over ingebracht kapitaal en huidig (live) saldo.
 - Saldo en nettoresultaatstatistieken uit lokale IBKR Flex XML-rapporten.
 - Saldoverandering volgt het actuele IBKR-saldo, in dollars en procenten tegenover de vorige beschikbare dagstand, met zichtbare vergelijkingsdatum.
@@ -30,7 +30,9 @@ Zie [`docs/installatie.md`](docs/installatie.md) voor de installatie en [`source
 - Goals-pagina met historische jaarresultaten, een jaarlijks doel van 30% rendement boven op de vorige jaarafsluiting, $ 12.000 inleg, voortgang ten opzichte van het jaarschema en een vijfjarenplanning.
 - Stats-pagina met analyse per jaar, standaard op 2026, meerjarig portefeuilleverloop, kerncijfers, maandresultaten, winst/verliesverdeling, resultaat per onderliggende waarde en verdeling van de aanhoudduur.
 - Trades-pagina met jaarkeuze 2025/2026, afgesloten optieposities, nettoresultaat, trade-rendement, lineair geannualiseerd rendement en paginering van maximaal 50 regels.
-- Jaarverloop met de actuele jaarlijn en grijze referentiebalken voor het voorgaande kalenderjaar.
+- Portefeuilleverloop met jaarkeuze, maandeindsaldi en grijze referentiebalken voor het voorgaande kalenderjaar.
+- Netto maandgrafiek op basis van gerealiseerde short-optiepremie en aandelenverkopen, inclusief kosten; jaardoel met saldovoortgang en jaarschema.
+- Aanvullende maanddetails en handelsstatistieken onder de grafieken, zonder afzonderlijke dubbele netto-premiekaarten.
 - Optietrades, premiebehoud, gemiddelde looptijd en netto maandpremies.
 - Positieve en negatieve resultaten met tekst, pictogram en kleur.
 - Lokale verwerking: de ruwe financiële bestanden worden niet aan Git toegevoegd.

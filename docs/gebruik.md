@@ -1,5 +1,15 @@
 # Gebruik en berekeningen
 
+## Dashboardindeling vanaf 0.24.0
+
+De vier bovenste kaarten tonen portefeuillesaldo, totale winst na netto inleg, saldoverandering tegenover de vorige beschikbare dagstand en het gerealiseerde jaarresultaat. Daaronder staan het portefeuilleverloop met jaarkeuze en de portefeuilleverdeling inclusief vrij besteedbaar vermogen. De verdeling bewaart de bestaande nettoberekening: opties omvatten zowel de actuele optiewaarde als CSP-reservering en mogen daarom niet uitsluitend als CSP worden gelabeld.
+
+De volgende rij toont netto maandresultaten en het jaardoel. De netto maandgrafiek gebruikt dezelfde FIFO-resultaten en commissies als het jaarresultaat: uitsluitend gerealiseerde short-optiepremie en aandelenverkopen, geboekt op de sluitingsdatum. Long-optieresultaten tellen hierin niet mee. De huidige rapportmaand is voorlopig; toekomstige maanden blijven leeg. De saldografiek toont maandeindsaldi, inclusief inleg en open posities, en is dus geen grafiek van gerealiseerde winst.
+
+Het jaardoel toont actueel saldo gedeeld door de doelwaarde. Het verschil met het jaarschema gebruikt de bestaande Goals-berekening: startsaldo plus werkelijke netto inleg plus het rendementsdoel naar verstreken deel van het jaar. Zonder stortingsgegevens wordt geen voorsprong/achterstand verzonnen. De link opent de volledige Goals-planning.
+
+Onder deze rij staan de handelsdetails. Deze en vorige maand combineren nettoresultaat, premie/aandelen en ontvangen premie, terugkoop en commissie in één kaart per maand. Er zijn geen afzonderlijke dubbele netto-premiekaarten. Daaronder staan maandgemiddelde, aantal trades, premiebehoud en gemiddelde aanhoudduur. Groen en rood ondersteunen het teken in de bedragen; de betekenis blijft ook zonder kleur leesbaar.
+
 ## IBKR-gegevens vernieuwen
 
 Linksonder staat de IBKR-status. Klik op **Verbinden** wanneer Gateway niet actief is. De webapp start dan IBC en toont **IB Key bevestigen**. Keur de melding binnen drie minuten goed in IBKR Mobile.
