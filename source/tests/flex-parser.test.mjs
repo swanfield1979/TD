@@ -182,6 +182,21 @@ test('dedupliceert overlappende saldodagen en IBKR-uitvoeringen bij meerjarige b
   assert.equal(result.closedTrades.length, 1)
 })
 
+test('begrens Gateway-overlap op de laatste werkelijke trade en niet op een lege rapportdag', () => {
+  const equityXml = `<FlexStatement whenGenerated="2026-09-25 10:00:00">
+    <EquitySummaryByReportDateInBase reportDate="2026-07-31" total="900" />
+    <EquitySummaryByReportDateInBase reportDate="2026-08-31" total="1000" />
+    <EquitySummaryByReportDateInBase reportDate="2026-09-24" total="1100" />
+  </FlexStatement>`
+  const tradesXml = `<FlexStatement toDate="20260924">
+    <Trade ibExecID="latest" assetCategory="OPT" conid="1" dateTime="2026-09-23 10:00:00" quantity="-1" tradePrice="2" openCloseIndicator="O" />
+  </FlexStatement>`
+  const result = createPortfolioSummary({ equityXml, tradesXml, optionXml: '<Options />' })
+
+  assert.equal(result.balance.toDate, '2026-09-24')
+  assert.equal(result.tradesThroughDate, '2026-09-23')
+})
+
 test('begrenst de dashboardactiviteit tot het actuele jaar en telt huidige open posities mee', () => {
   const equityXml = `<FlexStatement whenGenerated="2026-03-20 10:00:00">
     <EquitySummaryByReportDateInBase reportDate="2025-12-31" total="1000" />

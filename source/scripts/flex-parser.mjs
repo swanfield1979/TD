@@ -415,6 +415,11 @@ export function createPortfolioSummary({ equityXml, tradesXml, optionXml, contri
     ?? rows.find((row) => row.date.startsWith('2025-'))
   const trades = mergeOptionEvents(rawTrades, extractTags(optionXml, 'OptionEAE'))
     .filter((trade) => trade.dateTime?.slice(0, 10) <= latest.date)
+  const tradesThroughDate = rawTrades
+    .map((trade) => trade.dateTime?.slice(0, 10))
+    .filter((date) => date && date <= latest.date)
+    .sort()
+    .at(-1)
   const optionTrades = normalizeOptionTrades(trades)
   const results = realizedResults(trades)
   const yearStartDate = `${latest.date.slice(0, 4)}-01-01`
@@ -440,7 +445,9 @@ export function createPortfolioSummary({ equityXml, tradesXml, optionXml, contri
 
   return {
     generatedAt,
-    tradesThroughDate: extractTags(tradesXml, 'FlexStatement').map((item) => item.toDate?.replace(/^(\d{4})(\d{2})(\d{2})$/, '$1-$2-$3')).filter(Boolean).sort().at(-1) || latest.date,
+    // The statement end date can be a day without executions. Using it as the
+    // overlap boundary would discard Gateway mutations made on that day.
+    tradesThroughDate: tradesThroughDate || latest.date,
     sourceUpdatedAt: statement?.whenGenerated ?? latest.date,
     currency,
     premiumCurrency,

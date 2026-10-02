@@ -2,7 +2,7 @@
 
 Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voortgang op basis van Interactive Brokers Flex-rapporten.
 
-**Versie/status:** 0.25.0, afgesloten optietrades via de bestaande IBKR Gateway-koppeling, inclusief rolls en lokaal bewaarde uitvoeringen. Productiebuild en tests zijn lokaal gecontroleerd; deze versie is nog niet op de liveserver geïnstalleerd. De lichte portefeuille-interface en afzonderlijke Stocks-, Options-, Goals-, Stats- en Trades-overzichten blijven beschikbaar.
+**Versie/status:** 0.25.1, afgesloten optietrades via de bestaande IBKR Gateway-koppeling, inclusief mutaties op een Flex-saldodag zonder Flex-uitvoeringen. Productiebuild en tests zijn lokaal gecontroleerd; deze versie is nog niet op de liveserver geïnstalleerd. De lichte portefeuille-interface en afzonderlijke Stocks-, Options-, Goals-, Stats- en Trades-overzichten blijven beschikbaar.
 
 | Map | Inhoud |
 | --- | --- |
@@ -12,7 +12,7 @@ Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voort
 
 ## Starten
 
-Zie [bijwerken via PuTTY](docs/installatie.md#gateway-trades-bijwerken-versie-0250) voor het installeren van 0.25.0. Publiceer frontend en backend samen en herstart de API-service.
+Zie [bijwerken via PuTTY](docs/installatie.md#gateway-trades-bijwerken-versie-0251) voor het installeren van 0.25.1. Publiceer frontend en backend samen en herstart de API-service.
 
 Zie [`docs/installatie.md`](docs/installatie.md) voor de installatie en [`source/README.md`](source/README.md) voor alle ontwikkelcommando's.
 

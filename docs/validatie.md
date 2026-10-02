@@ -1,5 +1,12 @@
 # Validatie
 
+## Resultaat 2 oktober 2026 — versie 0.25.1 (lokaal)
+
+- De werkelijke lokale bron is gereproduceerd: saldohistorie t/m 24 september 2026, laatste Flex-trade op 23 september 2026. De oude overlapgrens sloot daardoor Gateway-mutaties van 24 september ten onrechte uit.
+- `npm run import:flex` schrijft nu 23 september 2026 als `tradesThroughDate`; de private samenvatting is opnieuw gegenereerd.
+- `npm test`: 67 van 67 tests geslaagd. Nieuwe regressies controleren zowel de berekende overlapgrens als een Gateway-sluiting op de daaropvolgende saldodag.
+- `npm run build`: TypeScript- en Vite-productiebuild geslaagd. Live-publicatie en controle tegen de eigen IBKR Gateway staan nog open.
+
 ## Resultaat 30 september 2026 — versie 0.25.0 (lokaal)
 
 - `npm test`: 65 van 65 tests geslaagd. TypeScript/Vite-productiebuild geslaagd; `git diff --check` zonder whitespacefouten.

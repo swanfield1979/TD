@@ -42,6 +42,15 @@ test('nieuwe historie verdringt Gateway-trades zonder dubbele sluitingen', () =>
   assert.equal(gatewayClosures({ ...summary, balance: { toDate: '2026-09-30' }, tradesThroughDate: '2026-09-24' }, snapshot).closures.length, 2)
 })
 
+test('verwerkt een mutatie op de saldodag wanneer de laatste Flex-trade ouder is', () => {
+  const sameDay = { positions: [], executions: [execution('same-day.01', 1, 2, 78, '20260924 15:00:00')] }
+  const { closures } = gatewayClosures({ ...summary, tradesThroughDate: '2026-09-23' }, sameDay)
+
+  assert.equal(closures.length, 1)
+  assert.equal(closures[0].closedAt, '2026-09-24')
+  assert.equal(closures[0].profit, 78)
+})
+
 test('gedeeltelijke sluiting en heropening op dezelfde dag blijven apart', () => {
   const live = { positions: [{ conid: '1', quantity: -1 }], executions: [
     execution('a.01', 1, 1, 39, '20260930 14:00:00'),

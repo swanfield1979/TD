@@ -1,5 +1,11 @@
 # Versiehistorie
 
+## 0.25.1 – Gateway-mutaties op de Flex-saldodag
+
+- De overlapgrens gebruikt voortaan de laatste werkelijk geïmporteerde Flex-trade, niet de einddatum van het Flex-rapport.
+- Daardoor worden Gateway-uitvoeringen niet meer weggefilterd wanneer de saldohistorie een dag verder loopt dan de tradehistorie.
+- Regeneratie van de lokale portfoliosamenvatting, regressietests en productiebuild zijn gecontroleerd; live-publicatie staat nog open.
+
 ## 0.25.0 – afgesloten trades via IBKR Gateway
 
 - Bestaande koppeling haalt ook uitvoeringen en resultaten op; rolls en gedeeltelijke sluitingen verschijnen in Trades en Stats.
