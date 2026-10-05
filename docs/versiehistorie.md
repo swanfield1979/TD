@@ -1,5 +1,12 @@
 # Versiehistorie
 
+## 0.26.0 – volledige actuele synchronisatie
+
+- **Vernieuwen** zet de dashboardperiode voortaan op de actuele IBKR-kalendermaand; oktober blijft niet meer op september staan.
+- Nieuwe Gateway-resultaten werken maand, jaar, gemiddelde, premie, aandelenresultaat, maandgrafiek en handelsstatistieken gezamenlijk bij.
+- Het actuele IBKR-saldo vult ook de lopende maand in saldohistorie en doelen aan.
+- Gateway-nettoresultaat wordt apart vermeld wanneer de bruto premiecomponenten alleen uit Flex bekend zijn.
+
 ## 0.25.1 – Gateway-mutaties op de Flex-saldodag
 
 - De overlapgrens gebruikt voortaan de laatste werkelijk geïmporteerde Flex-trade, niet de einddatum van het Flex-rapport.

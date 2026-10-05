@@ -57,7 +57,48 @@ test('snapshot voor of na Flex en opnieuw laden behouden dezelfde actuele portef
   assert.equal(merged.optionHoldings[0].chosenDte, null)
   assert.equal(merged.portfolioAllocation.categories[1].value, 3100)
   assert.equal(merged.portfolioAllocation.categories.reduce((sum, row) => sum + row.value, 0), 1500)
-  assert.deepEqual(merged.yearProfit, summary.yearProfit)
+  assert.deepEqual(merged.yearProfit, { ...summary.yearProfit, toDate: snapshot.asOfDate })
+})
+
+test('oktobersynchronisatie werkt maand, jaar, premie, grafieken en doelen samen bij', () => {
+  const october = {
+    ...snapshot,
+    generatedAt: '2026-10-05T10:00:00Z',
+    asOfDate: '2026-10-05',
+    netLiquidation: 1600,
+    positions: [],
+    executions: [{
+      execId: 'option-close.01', account: 'A', conid: '42', dateTime: '2026-10-03T15:00:00', quantity: 2,
+      price: 0.2, symbol: 'SOFI', name: 'SOFI PUT', assetCategory: 'OPT', currency: 'USD',
+      multiplier: 100, optionRight: 'P', strike: 16, expiry: '20261023', realizedPNL: 78,
+    }, {
+      execId: 'stock-sale.01', account: 'A', conid: 'stock', dateTime: '2026-10-04T15:00:00', quantity: -10,
+      price: 20, symbol: 'TEST', name: 'TEST', assetCategory: 'STK', currency: 'USD',
+      multiplier: 1, optionRight: null, strike: null, expiry: null, realizedPNL: 50,
+    }],
+  }
+  const merged = resolvePortfolio(summary, october)
+
+  assert.equal(merged.currentMonthProfit.toDate, '2026-10-05')
+  assert.equal(merged.currentMonthProfit.premium, 78)
+  assert.equal(merged.currentMonthProfit.stockSales, 50)
+  assert.equal(merged.currentMonthProfit.value, 128)
+  assert.equal(merged.previousMonthProfit.toDate, summary.currentMonthProfit.toDate)
+  assert.equal(merged.yearProfit.value, summary.yearProfit.value + 128)
+  assert.equal(merged.averageMonthlyProfit.monthCount, 10)
+  assert.equal(merged.monthlyTradingResults.at(-1).month, '2026-10')
+  assert.equal(merged.premiumPeriods.currentMonth.month, '2026-10')
+  assert.equal(merged.premiumPeriods.currentMonth.liveNet, 78)
+  assert.equal(merged.portfolioHistory.at(-1).month, '2026-10')
+  assert.equal(merged.monthlyBalanceChanges[9].balance, 1600)
+  assert.equal(merged.goalPlan.years.find((goal) => goal.status === 'current').resultDate, '2026-10-05')
+
+  const currentHtml = renderToStaticMarkup(createElement(MonthDetail, {
+    label: 'Deze maand', result: merged.currentMonthProfit, premium: merged.premiumPeriods.currentMonth,
+    currency: 'USD', premiumCurrency: 'USD',
+  }))
+  assert.match(currentHtml, /oktober 2026/)
+  assert.match(currentHtml, /Gateway netto/)
 })
 
 test('Gateway-sluitingen verschijnen in de portefeuille zonder dubbele regels na verversen', () => {

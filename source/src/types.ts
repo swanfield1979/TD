@@ -30,6 +30,7 @@ export interface PortfolioHistoryPoint {
 
 export interface PremiumPeriod {
   historicalNet?: number
+  liveNet?: number
   month: string
   received: number
   buyback: number

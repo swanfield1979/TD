@@ -40,7 +40,7 @@ export function PortfolioTrend({ summary }: { summary: PortfolioSummary }) {
       {points.map(point => <circle key={point.month} cx={x(point.month)} cy={y(point.balance)} r="4" fill="var(--tm-accent-primary)"><title>{point.date}: {money(point.balance, summary.currency)}</title></circle>)}
       {months.map((label, index) => <text key={label} className="chart-month-label" textAnchor="middle" x={78 + index / 11 * 660} y="265">{label}</text>)}
     </svg>}
-    <p className="monitor-note">Maandeindsaldi uit Flex · inclusief inleg en open posities</p>
+    <p className="monitor-note">Flex-historie · actuele maand uit IBKR-synchronisatie</p>
   </section>
 }
 
@@ -57,7 +57,7 @@ export function NetMonthlyResults({ summary }: { summary: PortfolioSummary }) {
         {point && <rect x={px - 14} y={Math.min(zero, zero - point.value / high * 88)} width="28" height={Math.max(2, Math.abs(point.value) / high * 88)} rx="3" fill={`var(--tm-status-${point.value > 0 ? 'success' : point.value < 0 ? 'danger' : 'neutral'})`}><title>{label}: {money(point.value, summary.currency, true)} · premie {money(point.premium, summary.premiumCurrency)} · aandelen {money(point.stockSales, summary.currency)}</title></rect>}
         <text className="chart-month-label" x={px} y="245" textAnchor="middle">{label}</text></g> })}
     </svg>}
-    <p className="monitor-note">Gerealiseerde premie en aandelen · na commissies · ontbrekende maanden blijven leeg</p>
+    <p className="monitor-note">Flex-historie plus IBKR-uitvoeringen · gerealiseerd na kosten</p>
   </section>
 }
 
@@ -89,7 +89,7 @@ export function MonthDetail({ label, result, premium, currency, premiumCurrency 
   return <article className="monitor-panel month-detail">
     <h2>{label} · {monthLabel}</h2><strong className={`month-detail__value metric--${result.direction}`}>{money(result.value, currency, true)}</strong><span className="monitor-note">Nettoresultaat</span>
     <div className="month-detail__columns"><dl><div><dt>Premie</dt><dd className={`metric--${direction(result.premium)}`}>{money(result.premium, premiumCurrency, true)}</dd></div><div><dt>Aandelen</dt><dd className={`metric--${direction(result.stockSales)}`}>{money(result.stockSales, currency, true)}</dd></div></dl>
-      {premium && <dl><div><dt>Ontvangen</dt><dd className={`metric--${direction(premium.received)}`}>{money(premium.received, premiumCurrency)}</dd></div><div><dt>Terugkoop</dt><dd className={`metric--${direction(-premium.buyback)}`}>{money(-premium.buyback, premiumCurrency)}</dd></div><div><dt>Commissie</dt><dd className={`metric--${direction(-premium.commission)}`}>{money(-premium.commission, premiumCurrency)}</dd></div>{premium.historicalNet !== undefined && <div><dt>Historisch netto *</dt><dd>{money(premium.historicalNet, premiumCurrency, true)}</dd></div>}</dl>}
+      {premium && <dl><div><dt>Ontvangen</dt><dd className={`metric--${direction(premium.received)}`}>{money(premium.received, premiumCurrency)}</dd></div><div><dt>Terugkoop</dt><dd className={`metric--${direction(-premium.buyback)}`}>{money(-premium.buyback, premiumCurrency)}</dd></div><div><dt>Commissie</dt><dd className={`metric--${direction(-premium.commission)}`}>{money(-premium.commission, premiumCurrency)}</dd></div>{premium.liveNet !== undefined && premium.liveNet !== 0 && <div><dt>Gateway netto</dt><dd className={`metric--${direction(premium.liveNet)}`}>{money(premium.liveNet, premiumCurrency, true)}</dd></div>}{premium.historicalNet !== undefined && <div><dt>Historisch netto *</dt><dd>{money(premium.historicalNet, premiumCurrency, true)}</dd></div>}</dl>}
     </div>{premium?.historicalNet !== undefined && <p className="monitor-note">* Opening ontbreekt in het rapport.</p>}
   </article>
 }

@@ -317,11 +317,11 @@ function App() {
             {currentPage === 'dashboard' && <p className="page-subtitle">Je portefeuille in één oogopslag</p>}
           </div>
           {summary && (
-            <div className="data-freshness" title={showLiveFreshness ? `IBKR-snapshot opgehaald op ${summary.sourceUpdatedAt}; Flex-resultaten t/m ${importedSummary?.balance.toDate}` : `Bronbestand gegenereerd op ${importedSummary?.sourceUpdatedAt}`}>
+            <div className="data-freshness" title={showLiveFreshness ? `IBKR-snapshot opgehaald op ${summary.sourceUpdatedAt}; historische Flex-basis t/m ${importedSummary?.balance.toDate}` : `Bronbestand gegenereerd op ${importedSummary?.sourceUpdatedAt}`}>
               <span className="data-freshness__pulse" aria-hidden="true" />
               <span>
                 <strong>Bijgewerkt t/m {formatDate((showLiveFreshness ? summary : importedSummary)!.balance.toDate)}</strong>
-                <small>{showLiveFreshness ? `IBKR-posities · Flex t/m ${formatDate(importedSummary!.balance.toDate)}` : 'Historische Flex-gegevens'}</small>
+                <small>{showLiveFreshness ? `IBKR live · Flex-basis t/m ${formatDate(importedSummary!.balance.toDate)}` : 'Historische Flex-gegevens'}</small>
               </span>
             </div>
           )}

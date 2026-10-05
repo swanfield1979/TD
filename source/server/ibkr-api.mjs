@@ -80,7 +80,7 @@ async function refreshConnectedGateway() {
   try {
     const snapshot = await collectSnapshot(config)
     await saveSnapshot(snapshot)
-    setStatus('connected', 'IBKR-posities en uitgevoerde trades zijn bijgewerkt.', {
+    setStatus('connected', 'Alle actuele IBKR-gegevens zijn bijgewerkt.', {
       lastUpdatedAt: snapshot.generatedAt, isBusy: false,
     })
   } catch (error) {
@@ -90,13 +90,13 @@ async function refreshConnectedGateway() {
 
 async function refreshInBackground() {
   if (runtime.isBusy) return
-  setStatus('refreshing', 'Posities en uitgevoerde trades worden bij IBKR opgehaald.', { isBusy: true })
+  setStatus('refreshing', 'Alle actuele gegevens worden bij IBKR opgehaald.', { isBusy: true })
 
   try {
     try {
       const snapshot = await collectSnapshot(config)
       await saveSnapshot(snapshot)
-      return setStatus('connected', 'IBKR-posities en uitgevoerde trades zijn bijgewerkt.', {
+      return setStatus('connected', 'Alle actuele IBKR-gegevens zijn bijgewerkt.', {
         lastUpdatedAt: snapshot.generatedAt,
         isBusy: false,
       })
@@ -112,7 +112,7 @@ async function refreshInBackground() {
       try {
         const snapshot = await collectSnapshot(config, 10_000)
         await saveSnapshot(snapshot)
-        return setStatus('connected', 'IBKR-posities en uitgevoerde trades zijn bijgewerkt.', {
+        return setStatus('connected', 'Alle actuele IBKR-gegevens zijn bijgewerkt.', {
           lastUpdatedAt: snapshot.generatedAt,
           isBusy: false,
         })

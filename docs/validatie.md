@@ -1,5 +1,14 @@
 # Validatie
 
+## Resultaat 5 oktober 2026 — versie 0.26.0 (lokaal)
+
+- De aangeleverde Flex YTD-bronnen van 2026 zijn verwerkt: saldo en trades lopen t/m 2 oktober, de dashboardmaand is oktober en de Gateway-overlapgrens staat op 2 oktober.
+- De gegenereerde basis toont oktober als actuele maand; volgende Gateway-uitvoeringen worden vanaf de nieuwe overlapgrens zonder dubbeltelling toegevoegd. Exacte portefeuillebedragen blijven buiten Git.
+- Regressiesnapshot van 5 oktober 2026 controleert dat **Deze maand** oktober toont en september naar **Vorige maand** schuift.
+- Dezelfde synchronisatie verwerkt een gerealiseerde optiesluiting en aandelenverkoop in maand, jaar, gemiddelde, premie, maandgrafiek, saldohistorie en het actuele doel.
+- `npm test`: 68 van 68 tests geslaagd. `npm run build`: TypeScript- en Vite-productiebuild geslaagd.
+- Live-publicatie en controle tegen de eigen IBKR Gateway staan nog open.
+
 ## Resultaat 2 oktober 2026 — versie 0.25.1 (lokaal)
 
 - De werkelijke lokale bron is gereproduceerd: saldohistorie t/m 24 september 2026, laatste Flex-trade op 23 september 2026. De oude overlapgrens sloot daardoor Gateway-mutaties van 24 september ten onrechte uit.

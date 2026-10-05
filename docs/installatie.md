@@ -12,7 +12,7 @@
 
 De ruwe rapporten en de gegenereerde financiële samenvatting worden niet aan Git toegevoegd.
 
-## Gateway-trades bijwerken (versie 0.25.1)
+## Volledige synchronisatie bijwerken (versie 0.26.0)
 
 Nadat de gewijzigde broncode op de server staat, voer via PuTTY uit:
 
@@ -26,9 +26,9 @@ sudo rsync -a --delete dist/ /var/www/trading-monitor/
 sudo systemctl restart trading-monitor-api.service
 ```
 
-Een nieuwe Flex-export is niet nodig om de uitvoeringen van vandaag op te halen. `npm run import:flex` is bij deze update wel nodig om de overlapgrens in de bestaande samenvatting opnieuw te bepalen op basis van de laatste werkelijke Flex-trade. Controleer in IB Gateway onder API → Settings dat **Master API client ID** overeenkomt met `IBKR_CLIENT_ID` (standaard 77); dit is nodig om commissierapporten van andere clients te ontvangen. De uitvoeringaanvraag gebruikt een rekeningfilter zonder clientfilter, zodat ook handmatige trades worden opgehaald. Zie [IBKR-uitvoeringen en commissies](https://interactivebrokers.github.io/tws-api/executions_commissions.html).
+Een nieuwe Flex-export is niet nodig om de actuele kalendermaand, het saldo, posities, uitvoeringen en de daarvan afgeleide dashboardcijfers op te halen. `npm run import:flex` houdt de lokale historische basis en overlapgrens actueel. Controleer in IB Gateway onder API → Settings dat **Master API client ID** overeenkomt met `IBKR_CLIENT_ID` (standaard 77); dit is nodig om commissierapporten van andere clients te ontvangen. De uitvoeringaanvraag gebruikt een rekeningfilter zonder clientfilter, zodat ook handmatige trades worden opgehaald. Zie [IBKR-uitvoeringen en commissies](https://interactivebrokers.github.io/tws-api/executions_commissions.html).
 
-Herlaad de website en klik op **Vernieuwen**. Controleer of de twee oude roll-contracten in Trades en de nieuwe contracten in Options staan. Laat de API-service tijdens handelsdagen draaien: Gateway levert standaard alleen uitvoeringen vanaf middernacht. De service bewaart deze in `/var/lib/trading-monitor/live-snapshot.json` (of `IBKR_SNAPSHOT_PATH`); verwijder dit bestand niet bij updates. De achtergrondcontrole haalt iedere minuut op en start geen nieuwe MFA-aanmelding.
+Herlaad de website en klik op **Vernieuwen**. Controleer dat **Deze maand** de actuele kalendermaand toont en dat saldo, posities, maand-/jaarresultaten, Trades en Stats dezelfde peildatum volgen. Laat de API-service tijdens handelsdagen draaien: Gateway levert standaard alleen uitvoeringen vanaf middernacht. De service bewaart deze in `/var/lib/trading-monitor/live-snapshot.json` (of `IBKR_SNAPSHOT_PATH`); verwijder dit bestand niet bij updates. De achtergrondcontrole haalt iedere minuut op en start geen nieuwe MFA-aanmelding.
 
 ## Productie-installatie op Linux, webroot en poort 80
 
