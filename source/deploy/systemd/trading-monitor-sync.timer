@@ -1,0 +1,11 @@
+[Unit]
+Description=Uurlijkse IBKR-synchronisatie tijdens NYSE pre-market en beursuren
+
+[Timer]
+OnCalendar=Mon..Fri *-*-* 04..16:00:00 America/New_York
+Persistent=true
+AccuracySec=1min
+Unit=trading-monitor-sync.service
+
+[Install]
+WantedBy=timers.target

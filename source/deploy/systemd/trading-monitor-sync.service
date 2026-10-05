@@ -1,0 +1,19 @@
+[Unit]
+Description=Trading Monitor geplande IBKR-synchronisatie
+Wants=network-online.target trading-monitor-api.service
+After=network-online.target trading-monitor-api.service
+
+[Service]
+Type=oneshot
+User=gerard
+Group=gerard
+WorkingDirectory=/home/gerard/TD/source
+EnvironmentFile=/etc/trading-monitor/ibkr.env
+ExecStart=/usr/bin/node /home/gerard/TD/source/scripts/sync-ibkr-hourly.mjs
+UMask=0077
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=read-only
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+LockPersonality=true

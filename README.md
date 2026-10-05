@@ -2,7 +2,7 @@
 
 Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voortgang op basis van Interactive Brokers Flex-rapporten.
 
-**Versie/status:** 0.26.0. Synchroniseren werkt nu alle beschikbare actuele IBKR-data bij, inclusief de kalendermaand, maand- en jaarresultaten, premie, aandelenresultaat, saldohistorie, handelsstatistieken en doelen. Productiebuild en tests zijn lokaal gecontroleerd; deze versie is nog niet op de liveserver geïnstalleerd.
+**Versie/status:** 0.26.1. Synchroniseren werkt alle beschikbare actuele IBKR-data bij. Een systemd-timer controleert dit ieder uur tijdens NYSE pre-market en reguliere handelsuren, slaat weekenden en beursfeestdagen over en start zo nodig de bestaande IB Key-aanmelding. Productiebuild en tests zijn lokaal gecontroleerd; deze versie is nog niet op de liveserver geïnstalleerd.
 
 | Map | Inhoud |
 | --- | --- |
@@ -12,7 +12,7 @@ Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voort
 
 ## Starten
 
-Zie [bijwerken via PuTTY](docs/installatie.md#volledige-synchronisatie-bijwerken-versie-0260) voor het installeren van 0.26.0. Publiceer frontend en backend samen en herstart de API-service.
+Zie [bijwerken via PuTTY](docs/installatie.md#automatische-handelssessie-synchronisatie-versie-0261) voor het installeren van 0.26.1. Publiceer frontend en backend samen, herstart de API-service en activeer de timer.
 
 Zie [`docs/installatie.md`](docs/installatie.md) voor de installatie en [`source/README.md`](source/README.md) voor alle ontwikkelcommando's.
 
@@ -31,6 +31,7 @@ Zie [`docs/installatie.md`](docs/installatie.md) voor de installatie en [`source
 - Stats-pagina met analyse per jaar, standaard op 2026, meerjarig portefeuilleverloop, kerncijfers, maandresultaten, winst/verliesverdeling, resultaat per onderliggende waarde en verdeling van de aanhoudduur.
 - Trades-pagina met jaarkeuze 2025/2026, afgesloten optieposities, nettoresultaat, trade-rendement, lineair geannualiseerd rendement en paginering van maximaal 50 regels.
 - Gateway-gegevens worden elke minuut opgehaald en lokaal bewaard; **Vernieuwen** werkt saldo, posities, trades en alle daarvan afleidbare dashboardcijfers samen bij.
+- Uurlijkse verbindingscontrole van 04:00 t/m 16:00 New York-tijd, inclusief pre-market, met automatische zomertijd en uitsluiting van gepubliceerde NYSE-feestdagen.
 - Portefeuilleverloop met jaarkeuze, maandeindsaldi en grijze referentiebalken voor het voorgaande kalenderjaar.
 - Netto maandgrafiek op basis van gerealiseerde short-optiepremie en aandelenverkopen, inclusief kosten; jaardoel met saldovoortgang en jaarschema.
 - Aanvullende maanddetails en handelsstatistieken onder de grafieken, zonder afzonderlijke dubbele netto-premiekaarten.

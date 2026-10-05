@@ -12,7 +12,7 @@
 
 De ruwe rapporten en de gegenereerde financiële samenvatting worden niet aan Git toegevoegd.
 
-## Volledige synchronisatie bijwerken (versie 0.26.0)
+## Automatische handelssessie-synchronisatie (versie 0.26.1)
 
 Nadat de gewijzigde broncode op de server staat, voer via PuTTY uit:
 
@@ -23,12 +23,26 @@ npm run import:flex
 npm test
 npm run build
 sudo rsync -a --delete dist/ /var/www/trading-monitor/
+sudo cp deploy/systemd/trading-monitor-sync.service /etc/systemd/system/trading-monitor-sync.service
+sudo cp deploy/systemd/trading-monitor-sync.timer /etc/systemd/system/trading-monitor-sync.timer
+sudo systemctl daemon-reload
 sudo systemctl restart trading-monitor-api.service
+sudo systemctl enable --now trading-monitor-sync.timer
 ```
 
 Een nieuwe Flex-export is niet nodig om de actuele kalendermaand, het saldo, posities, uitvoeringen en de daarvan afgeleide dashboardcijfers op te halen. `npm run import:flex` houdt de lokale historische basis en overlapgrens actueel. Controleer in IB Gateway onder API → Settings dat **Master API client ID** overeenkomt met `IBKR_CLIENT_ID` (standaard 77); dit is nodig om commissierapporten van andere clients te ontvangen. De uitvoeringaanvraag gebruikt een rekeningfilter zonder clientfilter, zodat ook handmatige trades worden opgehaald. Zie [IBKR-uitvoeringen en commissies](https://interactivebrokers.github.io/tws-api/executions_commissions.html).
 
 Herlaad de website en klik op **Vernieuwen**. Controleer dat **Deze maand** de actuele kalendermaand toont en dat saldo, posities, maand-/jaarresultaten, Trades en Stats dezelfde peildatum volgen. Laat de API-service tijdens handelsdagen draaien: Gateway levert standaard alleen uitvoeringen vanaf middernacht. De service bewaart deze in `/var/lib/trading-monitor/live-snapshot.json` (of `IBKR_SNAPSHOT_PATH`); verwijder dit bestand niet bij updates. De achtergrondcontrole haalt iedere minuut op en start geen nieuwe MFA-aanmelding.
+
+De timer draait ieder heel uur van 04:00 t/m 16:00 in `America/New_York`. Daarmee volgt hij automatisch de Amerikaanse zomertijd en omvat hij de NYSE Arca pre-market en de reguliere sessie. Weekenden en de [gepubliceerde NYSE-feestdagen](https://www.nyse.com/trade/hours-calendars) voor 2026–2028 worden overgeslagen; op gepubliceerde vroege sluitingsdagen stopt hij na 13:00 ET. Controleer de kalender vóór 2029 opnieuw. Als Gateway niet bereikbaar is, start de bestaande API-flow IBC en verschijnt zo nodig een IB Key-melding. Goedkeuring in IBKR Mobile blijft handmatig.
+
+Controleer de planning en laatste uitvoer met:
+
+```bash
+systemctl list-timers trading-monitor-sync.timer
+sudo systemctl status trading-monitor-sync.timer
+sudo journalctl -u trading-monitor-sync.service -n 50 --no-pager
+```
 
 ## Productie-installatie op Linux, webroot en poort 80
 

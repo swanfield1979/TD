@@ -1,5 +1,12 @@
 # Versiehistorie
 
+## 0.26.1 – automatische synchronisatie tijdens handelssessies
+
+- Systemd-timer controleert ieder uur van 04:00 t/m 16:00 New York-tijd, inclusief NYSE Arca pre-market en met automatische Amerikaanse zomertijd.
+- Weekenden, officiële NYSE-feestdagen voor 2026–2028 en uren na een gepubliceerde vroege sluiting worden overgeslagen.
+- De timer start een gestopte API-service mee; bij een ontbrekende Gateway gebruikt hij de bestaande IBC- en IB Key-flow.
+- Maximaal één geplande MFA-poging per uur; IB Key-goedkeuring blijft handmatig.
+
 ## 0.26.0 – volledige actuele synchronisatie
 
 - **Vernieuwen** zet de dashboardperiode voortaan op de actuele IBKR-kalendermaand; oktober blijft niet meer op september staan.

@@ -1,5 +1,12 @@
 # Validatie
 
+## Resultaat 5 oktober 2026 — versie 0.26.1 (lokaal)
+
+- Kalendertests controleren pre-market vanaf 04:00 ET, slotcontrole om 16:00 ET, Amerikaanse zomer-/wintertijd, weekenden, NYSE-feestdagen in 2026–2028 en vroege sluiting om 13:00 ET.
+- De geplande service gebruikt uitsluitend de lokale beveiligde refreshroute; hij bevat geen IBKR-inloggegevens en kan IB Key niet automatisch goedkeuren.
+- `npm test`: 72 van 72 tests geslaagd. `npm run build`: TypeScript- en Vite-productiebuild geslaagd.
+- Systemd-units en installatie-/controlecommando's zijn toegevoegd; live-installatie op de server staat nog open.
+
 ## Resultaat 5 oktober 2026 — versie 0.26.0 (lokaal)
 
 - De aangeleverde Flex YTD-bronnen van 2026 zijn verwerkt: saldo en trades lopen t/m 2 oktober, de dashboardmaand is oktober en de Gateway-overlapgrens staat op 2 oktober.

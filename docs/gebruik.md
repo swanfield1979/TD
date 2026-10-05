@@ -16,6 +16,8 @@ Linksonder staat de IBKR-status. Klik op **Verbinden** wanneer Gateway niet acti
 
 Na verbinding toont de bediening **IBKR verbonden**. Met **Vernieuwen** worden de actuele netto liquidatiewaarde, open posities, marktprijzen en ongerealiseerde winst/verlies opnieuw opgehaald. Tijdens het ophalen is de knop geblokkeerd om dubbele aanvragen te voorkomen.
 
+Op de server controleert een systemd-timer de verbinding ieder heel uur tijdens NYSE Arca pre-market en reguliere handel: 04:00 t/m 16:00 New York-tijd, maandag–vrijdag. Amerikaanse zomertijd wordt automatisch gevolgd. Gepubliceerde NYSE-feestdagen worden overgeslagen en op vroege sluitingsdagen stopt de planning na 13:00 ET. Als Gateway niet actief is, start IBC en kan IBKR Mobile een IB Key-bevestiging tonen; die bevestiging blijft altijd handmatig.
+
 Wanneer de koppeling niet beschikbaar is, blijven de laatst geïmporteerde Flex-gegevens zichtbaar. Er worden via deze koppeling geen orders geplaatst.
 
 Het dashboard combineert saldoreeksen en gerealiseerde transactieresultaten uit de lokale Flex-bronnen:
