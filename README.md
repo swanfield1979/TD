@@ -2,7 +2,7 @@
 
 Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voortgang op basis van Interactive Brokers Flex-rapporten.
 
-**Versie/status:** 0.26.1. Synchroniseren werkt alle beschikbare actuele IBKR-data bij. Een systemd-timer controleert dit ieder uur tijdens NYSE pre-market en reguliere handelsuren, slaat weekenden en beursfeestdagen over en start zo nodig de bestaande IB Key-aanmelding. Productiebuild en tests zijn lokaal gecontroleerd; deze versie is nog niet op de liveserver geïnstalleerd.
+**Versie/status:** 0.26.2. Het gerealiseerde maand- en jaarresultaat omvat nu zowel long als short opties en aandelen. Synchroniseren werkt alle beschikbare actuele IBKR-data bij. Productiebuild en tests zijn lokaal gecontroleerd; deze versie is nog niet op de liveserver geïnstalleerd.
 
 | Map | Inhoud |
 | --- | --- |
@@ -12,7 +12,7 @@ Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voort
 
 ## Starten
 
-Zie [bijwerken via PuTTY](docs/installatie.md#automatische-handelssessie-synchronisatie-versie-0261) voor het installeren van 0.26.1. Publiceer frontend en backend samen, herstart de API-service en activeer de timer.
+Zie [bijwerken via PuTTY](docs/installatie.md#serverupdate-versie-0262) voor het installeren van 0.26.2. Publiceer frontend en backend samen en genereer de portfoliosamenvatting opnieuw.
 
 Zie [`docs/installatie.md`](docs/installatie.md) voor de installatie en [`source/README.md`](source/README.md) voor alle ontwikkelcommando's.
 
@@ -22,7 +22,7 @@ Zie [`docs/installatie.md`](docs/installatie.md) voor de installatie en [`source
 - Totale winst sinds start 2025 gecorrigeerd voor netto inleg, met winstpercentage over ingebracht kapitaal en huidig (live) saldo.
 - Saldo en nettoresultaatstatistieken uit lokale IBKR Flex XML-rapporten.
 - Saldoverandering volgt het actuele IBKR-saldo, in dollars en procenten tegenover de vorige beschikbare dagstand, met zichtbare vergelijkingsdatum.
-- Maand- en jaarresultaat uitsluitend uit gerealiseerde short-optiepremie en aandelenverkopen; FIFO-kosten en commissies tellen mee op de sluitingsdatum.
+- Maand- en jaarresultaat uit alle gerealiseerde long- en short-opties en aandelenverkopen; FIFO-kosten en commissies tellen mee op de sluitingsdatum.
 - Portefeuilleverdeling voor aandelen, opties inclusief gereserveerd CSP-bedrag en vrij geld/overig.
 - Stocks-pagina met open aandelen, covered-call-dekking, nettokostprijs, actuele nettowaarde, winst/verlies en procentuele koersbeweging van vandaag.
 - Options-pagina met open contracten, long/short-richting, strategie, strike, expiratie, gekozen DTE, resterende dagen, CSP-reservering, vrij te besteden bedrag en actueel winst/verlies.
@@ -33,7 +33,7 @@ Zie [`docs/installatie.md`](docs/installatie.md) voor de installatie en [`source
 - Gateway-gegevens worden elke minuut opgehaald en lokaal bewaard; **Vernieuwen** werkt saldo, posities, trades en alle daarvan afleidbare dashboardcijfers samen bij.
 - Uurlijkse verbindingscontrole van 04:00 t/m 16:00 New York-tijd, inclusief pre-market, met automatische zomertijd en uitsluiting van gepubliceerde NYSE-feestdagen.
 - Portefeuilleverloop met jaarkeuze, maandeindsaldi en grijze referentiebalken voor het voorgaande kalenderjaar.
-- Netto maandgrafiek op basis van gerealiseerde short-optiepremie en aandelenverkopen, inclusief kosten; jaardoel met saldovoortgang en jaarschema.
+- Netto maandgrafiek op basis van gerealiseerde long- en short-opties en aandelenverkopen, inclusief kosten; jaardoel met saldovoortgang en jaarschema.
 - Aanvullende maanddetails en handelsstatistieken onder de grafieken, zonder afzonderlijke dubbele netto-premiekaarten.
 - Optietrades, premiebehoud, gemiddelde looptijd en netto maandpremies.
 - Positieve en negatieve resultaten met tekst, pictogram en kleur.

@@ -360,7 +360,7 @@ function App() {
                 label={`Jaarresultaat ${summary.yearProfit.toDate.slice(0, 4)}`}
                 metric={summary.yearProfit}
                 currency={summary.currency}
-                context="Gerealiseerde premie en aandelen"
+                context="Gerealiseerde opties en aandelen"
               />
             </section>
             <div className="monitor-row monitor-row--overview">

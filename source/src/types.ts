@@ -9,6 +9,7 @@ export interface PortfolioMetric {
 
 export interface MonthlyTradingResult extends PortfolioMetric {
   premium: number
+  longOptions?: number
   stockSales: number
 }
 

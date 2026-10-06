@@ -144,8 +144,9 @@ export function tradingResult(results, period) {
   const selected = results.filter((result) => result.closedAt.startsWith(period))
   const total = (category) => round(selected.filter((result) => result.category === category).reduce((sum, result) => sum + result.profit, 0))
   const premium = total('premium')
+  const longOptions = total('longOptionSales')
   const stockSales = total('stockSales')
-  return { premium, stockSales, value: round(premium + stockSales) }
+  return { premium, longOptions, stockSales, value: round(premium + longOptions + stockSales) }
 }
 
 export function closedOptionTrades(results) {

@@ -1,5 +1,12 @@
 # Validatie
 
+## Resultaat 6 oktober 2026 — versie 0.26.2 (lokaal)
+
+- Regressies controleren winst en verlies op gekochte opties, waardeloze expiratie en een synthetic waarvan beide legs in dezelfde resultaatperiode sluiten.
+- Gesimuleerde Gateway-sluitingen controleren dat ook een actuele long-optiesluiting in maand, jaar en maandgemiddelde terechtkomt.
+- De private Flex-import is opnieuw berekend; de basis t/m 2 oktober 2026 geeft een gerealiseerd jaarresultaat van `$ +7.715,02`, gelijk aan de som van de getoonde maandresultaten uit alle afgesloten optielegs plus aandelenverkopen.
+- `npm test`: 72 van 72 tests geslaagd. `npm run build`: TypeScript- en Vite-productiebuild geslaagd.
+
 ## Resultaat 5 oktober 2026 — versie 0.26.1 (lokaal)
 
 - Kalendertests controleren pre-market vanaf 04:00 ET, slotcontrole om 16:00 ET, Amerikaanse zomer-/wintertijd, weekenden, NYSE-feestdagen in 2026–2028 en vroege sluiting om 13:00 ET.

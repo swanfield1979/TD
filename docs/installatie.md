@@ -12,6 +12,10 @@
 
 De ruwe rapporten en de gegenereerde financiële samenvatting worden niet aan Git toegevoegd.
 
+## Serverupdate versie 0.26.2
+
+Versie 0.26.2 wijzigt de historische resultaatberekening. Voer daarom na het ophalen van de broncode vanuit `source/` minimaal `npm ci`, `npm run import:flex`, `npm test` en `npm run build` uit. Publiceer daarna `dist/` zoals hieronder beschreven. Zonder een nieuwe import blijft de oude portfoliosamenvatting staan en ontbreken gerealiseerde long-optieresultaten in maand en jaar.
+
 ## Automatische handelssessie-synchronisatie (versie 0.26.1)
 
 Nadat de gewijzigde broncode op de server staat, voer via PuTTY uit:

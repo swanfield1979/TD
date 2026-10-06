@@ -2,7 +2,7 @@
 
 De webapp staat volledig in deze map. Voer alle ontwikkel- en bouwcommando's vanuit `source/` uit.
 
-Versie 0.26.1 voegt een uurlijkse systemd-controle toe tijdens NYSE pre-market en reguliere handel. Weekenden, gepubliceerde NYSE-feestdagen en uren buiten 04:00–16:00 New York-tijd worden overgeslagen; een ontbrekende verbinding start via de bestaande flow zo nodig IB Key. Na een serverupdate zijn `npm ci`, `npm run import:flex`, `npm test`, `npm run build`, het publiceren van `dist/`, een API-herstart en timeractivatie nodig. Zie [PuTTY-update](../docs/installatie.md#automatische-handelssessie-synchronisatie-versie-0261).
+Versie 0.26.2 telt in gerealiseerde maand- en jaarresultaten zowel long als short opties mee, naast aandelen. Na een serverupdate zijn `npm ci`, `npm run import:flex`, `npm test`, `npm run build` en het publiceren van `dist/` nodig. Zie [PuTTY-update](../docs/installatie.md#serverupdate-versie-0262).
 
 Live saldoverandering werkt mee met **Vernieuwen**. Publiceer de nieuwe `dist/` en backendbestanden samen en herstart `trading-monitor-api.service` om eerdere dagmetingen te bewaren. Zie [gebruik en berekeningen](../docs/gebruik.md) voor de vergelijkingsbron en terugval bij ontbrekende dagen.
 

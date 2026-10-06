@@ -1,5 +1,12 @@
 # Versiehistorie
 
+## 0.26.2 – volledig gerealiseerd optie- en aandelenresultaat
+
+- Maandresultaat, jaarresultaat en maandgemiddelde tellen gerealiseerde long én short opties plus aandelenverkopen.
+- Beide legs van een gesloten synthetic worden daardoor verwerkt; een open synthetic blijft ongerealiseerd en telt niet mee.
+- Flex-import en live Gateway-sluitingen gebruiken dezelfde categorieën. Premiebehoud en premiedetails blijven uitsluitend op short opties gebaseerd.
+- Maandkaarten en grafiektooltips tonen short opties, long opties en aandelen afzonderlijk.
+
 ## 0.26.1 – automatische synchronisatie tijdens handelssessies
 
 - Systemd-timer controleert ieder uur van 04:00 t/m 16:00 New York-tijd, inclusief NYSE Arca pre-market en met automatische Amerikaanse zomertijd.

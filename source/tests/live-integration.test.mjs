@@ -72,6 +72,10 @@ test('oktobersynchronisatie werkt maand, jaar, premie, grafieken en doelen samen
       price: 0.2, symbol: 'SOFI', name: 'SOFI PUT', assetCategory: 'OPT', currency: 'USD',
       multiplier: 100, optionRight: 'P', strike: 16, expiry: '20261023', realizedPNL: 78,
     }, {
+      execId: 'long-option-close.01', account: 'A', conid: '43', dateTime: '2026-10-03T15:01:00', quantity: -1,
+      price: 0.2, symbol: 'SOFI', name: 'SOFI CALL', assetCategory: 'OPT', currency: 'USD',
+      multiplier: 100, optionRight: 'C', strike: 16, expiry: '20261023', realizedPNL: -30,
+    }, {
       execId: 'stock-sale.01', account: 'A', conid: 'stock', dateTime: '2026-10-04T15:00:00', quantity: -10,
       price: 20, symbol: 'TEST', name: 'TEST', assetCategory: 'STK', currency: 'USD',
       multiplier: 1, optionRight: null, strike: null, expiry: null, realizedPNL: 50,
@@ -81,10 +85,11 @@ test('oktobersynchronisatie werkt maand, jaar, premie, grafieken en doelen samen
 
   assert.equal(merged.currentMonthProfit.toDate, '2026-10-05')
   assert.equal(merged.currentMonthProfit.premium, 78)
+  assert.equal(merged.currentMonthProfit.longOptions, -30)
   assert.equal(merged.currentMonthProfit.stockSales, 50)
-  assert.equal(merged.currentMonthProfit.value, 128)
+  assert.equal(merged.currentMonthProfit.value, 98)
   assert.equal(merged.previousMonthProfit.toDate, summary.currentMonthProfit.toDate)
-  assert.equal(merged.yearProfit.value, summary.yearProfit.value + 128)
+  assert.equal(merged.yearProfit.value, summary.yearProfit.value + 98)
   assert.equal(merged.averageMonthlyProfit.monthCount, 10)
   assert.equal(merged.monthlyTradingResults.at(-1).month, '2026-10')
   assert.equal(merged.premiumPeriods.currentMonth.month, '2026-10')

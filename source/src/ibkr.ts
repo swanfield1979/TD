@@ -21,15 +21,16 @@ function mergeLiveResults(summary: PortfolioSummary, snapshot: IbkrLiveSnapshot,
     (!account || execution.account === account)
     && execution.dateTime.slice(0, 10) > cutoff
     && execution.currency === summary.currency)
-  const liveByMonth = new Map<string, { premium: number; stockSales: number }>()
-  const add = (month: string, key: 'premium' | 'stockSales', value: number) => {
-    const result = liveByMonth.get(month) ?? { premium: 0, stockSales: 0 }
+  const liveByMonth = new Map<string, { premium: number; longOptions: number; stockSales: number }>()
+  const add = (month: string, key: 'premium' | 'longOptions' | 'stockSales', value: number) => {
+    const result = liveByMonth.get(month) ?? { premium: 0, longOptions: 0, stockSales: 0 }
     result[key] = round(result[key] + value)
     liveByMonth.set(month, result)
   }
 
-  closures.filter((trade) => trade.direction === 'short')
-    .forEach((trade) => add(trade.closedAt.slice(0, 7), 'premium', trade.profit))
+  closures.forEach((trade) => add(
+    trade.closedAt.slice(0, 7), trade.direction === 'short' ? 'premium' : 'longOptions', trade.profit,
+  ))
   executions.filter((execution) => execution.assetCategory === 'STK'
       && typeof execution.realizedPNL === 'number' && Number.isFinite(execution.realizedPNL)
       && Math.abs(execution.realizedPNL) < 1e100)
@@ -47,19 +48,20 @@ function mergeLiveResults(summary: PortfolioSummary, snapshot: IbkrLiveSnapshot,
   const monthlyTradingResults = Array.from({ length: currentMonthNumber }, (_, index) => {
     const month = `${liveYear}-${String(index + 1).padStart(2, '0')}`
     const imported = importedByMonth.get(month)
-    const live = liveByMonth.get(month) ?? { premium: 0, stockSales: 0 }
+    const live = liveByMonth.get(month) ?? { premium: 0, longOptions: 0, stockSales: 0 }
     const premium = round((imported?.premium ?? 0) + live.premium)
+    const longOptions = round((imported?.longOptions ?? 0) + live.longOptions)
     const stockSales = round((imported?.stockSales ?? 0) + live.stockSales)
-    const value = round(premium + stockSales)
+    const value = round(premium + longOptions + stockSales)
     return {
-      month, premium, stockSales, value, direction: direction(value),
+      month, premium, longOptions, stockSales, value, direction: direction(value),
       fromDate: imported?.fromDate ?? `${month}-01`,
       toDate: month === liveMonth ? snapshot.asOfDate : imported?.toDate ?? monthEnd(month),
     }
   })
   const resultFor = (month: string) => monthlyTradingResults.find((result) => result.month === month)
     ?? importedByMonth.get(month)
-    ?? { month, premium: 0, stockSales: 0, value: 0, direction: 'neutral' as const, fromDate: `${month}-01`, toDate: monthEnd(month) }
+    ?? { month, premium: 0, longOptions: 0, stockSales: 0, value: 0, direction: 'neutral' as const, fromDate: `${month}-01`, toDate: monthEnd(month) }
   const currentMonthProfit = resultFor(liveMonth)
   const previousMonthProfit = resultFor(previousMonth(liveMonth))
   const yearValue = round(monthlyTradingResults.reduce((total, result) => total + result.value, 0))

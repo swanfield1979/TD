@@ -65,9 +65,9 @@ test('deels sluiten verdeelt openingspremie en kosten FIFO over de sluitingsmaan
   assert.equal(tradingResult(ledger, '2026').value, 96)
 })
 
-test('gekochte calls blijven in het register maar tellen niet mee in nettoresultaat', () => {
+test('gerealiseerde gekochte calls tellen mee in nettoresultaat', () => {
   const ledger = results([trade('long', '2026-01-01', 1, 5, 'O'), trade('long', '2026-02-01', -1, 8, 'C')])
-  assert.deepEqual(tradingResult(ledger, '2026-02'), { premium: 0, stockSales: 0, value: 0 })
+  assert.deepEqual(tradingResult(ledger, '2026-02'), { premium: 0, longOptions: 298, stockSales: 0, value: 298 })
   assert.equal(premiumSummary(ledger).net, 0)
 })
 
@@ -115,7 +115,7 @@ test('een verlopen long call realiseert de aanschafkosten als verlies', () => {
   const ledger = results([trade('x', '2026-01-01', 1, 3, 'O')],
     [{ conid: 'x', assetCategory: 'OPT', date: '2026-02-01', quantity: -1, tradePrice: 0, transactionType: 'Expiration' }])
   assert.equal(ledger[0].profit, -301)
-  assert.equal(tradingResult(ledger, '2026-02').value, 0)
+  assert.equal(tradingResult(ledger, '2026-02').value, -301)
 })
 
 test('ontbrekende opening gebruikt IBKR-nettoresultaat zonder nogmaals commissie af te trekken', () => {
@@ -168,11 +168,11 @@ test('dashboard gebruikt dezelfde afsluitmaand en peildatum voor maand, jaar, pr
 })
 
 
-test('maand en jaar sluiten zowel winst als verlies van gekochte opties uit', () => {
+test('maand en jaar nemen zowel winst als verlies van gekochte opties mee', () => {
   const ledger = results([trade('short', '2026-01-01', -1, 3, 'O'), trade('short', '2026-02-01', 1, 1, 'C'),
     trade('long-win', '2026-01-01', 1, 2, 'O'), trade('long-win', '2026-02-01', -1, 5, 'C'),
     trade('long-loss', '2026-01-01', 1, 5, 'O'), trade('long-loss', '2026-03-01', -1, 1, 'C')])
-  assert.equal(tradingResult(ledger, '2026-02').value, 198)
-  assert.equal(tradingResult(ledger, '2026-03').value, 0)
-  assert.equal(tradingResult(ledger, '2026').value, 198)
+  assert.equal(tradingResult(ledger, '2026-02').value, 496)
+  assert.equal(tradingResult(ledger, '2026-03').value, -402)
+  assert.equal(tradingResult(ledger, '2026').value, 94)
 })

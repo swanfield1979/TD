@@ -145,7 +145,7 @@ function optionHoldingsSummary(optionTrades) {
 function monthlyTradingResult(results, month, fromDate, toDate) {
   const result = tradingResult(results, month)
   return { ...metric(result.value, fromDate, toDate), premium: result.premium,
-    stockSales: result.stockSales }
+    longOptions: result.longOptions, stockSales: result.stockSales }
 }
 
 function calendarDaysBetween(startDateTime, endDateTime) {
@@ -431,10 +431,15 @@ export function createPortfolioSummary({ equityXml, tradesXml, optionXml, contri
 
   if (!start || !currentMonthBase || !previousMonthBase) throw new Error('Onvoldoende dagsaldi om alle periodes te berekenen.')
 
-  const yearProfit = tradingResult(results, latest.date.slice(0, 4)).value
   const monthCount = elapsedMonthCount(start.date, latest.date)
   const currentMonth = latest.date.slice(0, 7)
   const previousMonth = shiftMonth(`${currentMonth}-01`, -1).slice(0, 7)
+  const monthlyTradingResults = Array.from({ length: Number(latest.date.slice(5, 7)) }, (_, index) => {
+    const month = `${latest.date.slice(0, 4)}-${String(index + 1).padStart(2, '0')}`
+    const monthEnd = new Date(Date.UTC(Number(month.slice(0, 4)), index + 1, 0)).toISOString().slice(0, 10)
+    return { month, ...monthlyTradingResult(results, month, `${month}-01`, month === currentMonth ? latest.date : monthEnd) }
+  })
+  const yearProfit = round(monthlyTradingResults.reduce((total, result) => total + result.value, 0))
   const stockHoldings = stockHoldingsSummary(trades)
   const optionHoldings = optionHoldingsSummary(optionTrades)
   const closedTrades = closedOptionTrades(results)
@@ -464,11 +469,7 @@ export function createPortfolioSummary({ equityXml, tradesXml, optionXml, contri
     currentMonthProfit: monthlyTradingResult(results, currentMonth, currentMonthBase.date, latest.date),
     previousMonthProfit: monthlyTradingResult(results, previousMonth, previousMonthBase.date, currentMonthBase.date),
     averageMonthlyProfit: { ...metric(yearProfit / monthCount, start.date, latest.date), monthCount },
-    monthlyTradingResults: Array.from({ length: Number(latest.date.slice(5, 7)) }, (_, index) => {
-      const month = `${latest.date.slice(0, 4)}-${String(index + 1).padStart(2, '0')}`
-      const monthEnd = new Date(Date.UTC(Number(month.slice(0, 4)), index + 1, 0)).toISOString().slice(0, 10)
-      return { month, ...monthlyTradingResult(results, month, `${month}-01`, month === currentMonth ? latest.date : monthEnd) }
-    }),
+    monthlyTradingResults,
     monthlyBalanceChanges: monthlyBalanceChangesForYear(rows, latest.date.slice(0, 4)),
     previousYearMonthlyBalanceChanges: monthlyBalanceChangesForYear(
       rows,
