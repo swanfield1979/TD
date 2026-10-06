@@ -130,7 +130,7 @@ export default function OptionsPage({ holdings, currency, asOfDate, reservedCash
         <header className="positions-data__header">
           <div>
             <h2 id="options-table-title">Open optieposities</h2>
-            <p>Expiratie, gekozen looptijd, resterende looptijd en actueel resultaat per contract.</p>
+            <p>Openingsdatum, expiratie, gekozen looptijd, resterende looptijd en actueel resultaat per contract.</p>
           </div>
           <span className={`positions-data__status${hasCompleteLiveValues ? ' positions-data__status--live' : ''}`}>
             {hasCompleteLiveValues ? 'Actuele IBKR-posities' : 'Koersen beschikbaar na IBKR-refresh'}
@@ -145,7 +145,7 @@ export default function OptionsPage({ holdings, currency, asOfDate, reservedCash
         ) : (
           <div className="positions-table-region" tabIndex={0} aria-label="Open optieposities; horizontaal scrollbaar op een klein scherm">
             <table className="options-table">
-              <caption className="visually-hidden">Open opties met strategie, positie, strike, expiratie, DTE, marktwaarde en winst of verlies</caption>
+              <caption className="visually-hidden">Open opties met strategie, positie, strike, openingsdatum, expiratie, DTE, marktwaarde en winst of verlies</caption>
               <thead>
                 <tr>
                   <th scope="col">Onderliggende waarde</th>
@@ -153,6 +153,7 @@ export default function OptionsPage({ holdings, currency, asOfDate, reservedCash
                   <th scope="col">Type</th>
                   <th scope="col" className="options-table__number">Aantal</th>
                   <th scope="col" className="options-table__number">Strike</th>
+                  <th scope="col">Geopend</th>
                   <th scope="col">Expiratie</th>
                   <th scope="col" className="options-table__number" title="Days to expiration bij het openen">DTE gekozen</th>
                   <th scope="col" className="options-table__number">Gem. premie</th>
@@ -187,6 +188,7 @@ export default function OptionsPage({ holdings, currency, asOfDate, reservedCash
                         <span className="option-position"><strong>{numberFormatter.format(Math.abs(holding.quantity))}</strong><small>{holding.quantity < 0 ? 'short' : 'long'}</small></span>
                       </td>
                       <td className="options-table__number">{holding.strike === null ? <UnavailableValue /> : formatCurrency(holding.strike, currency)}</td>
+                      <td>{holding.openedAt === null ? <UnavailableValue /> : formatDate(holding.openedAt)}</td>
                       <td>
                         {holding.expiry === null ? <UnavailableValue /> : (
                           <span className={`option-expiry option-expiry--${expiryStatus}`}>
@@ -214,6 +216,7 @@ export default function OptionsPage({ holdings, currency, asOfDate, reservedCash
                   <td />
                   <td />
                   <td className="options-table__number">{numberFormatter.format(openContracts)}</td>
+                  <td />
                   <td />
                   <td />
                   <td />
