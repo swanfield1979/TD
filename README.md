@@ -2,7 +2,7 @@
 
 Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voortgang op basis van Interactive Brokers Flex-rapporten.
 
-**Versie/status:** 0.26.2. Het gerealiseerde maand- en jaarresultaat omvat nu zowel long als short opties en aandelen. Synchroniseren werkt alle beschikbare actuele IBKR-data bij. Productiebuild en tests zijn lokaal gecontroleerd; deze versie is nog niet op de liveserver geïnstalleerd.
+**Versie/status:** 0.26.3. Nieuwe open optieposities krijgen hun openingsdatum en gekozen DTE nu ook uit de bewaarde IBKR Gateway-uitvoeringen. Productiebuild en tests zijn lokaal gecontroleerd; deze versie is nog niet op de liveserver geïnstalleerd.
 
 | Map | Inhoud |
 | --- | --- |
@@ -12,7 +12,7 @@ Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voort
 
 ## Starten
 
-Zie [bijwerken via PuTTY](docs/installatie.md#serverupdate-versie-0262) voor het installeren van 0.26.2. Publiceer frontend en backend samen en genereer de portfoliosamenvatting opnieuw.
+Zie [bijwerken via PuTTY](docs/installatie.md#serverupdate-versie-0263) voor het installeren van 0.26.3. Publiceer de nieuwe frontend; een nieuwe Flex-import is voor deze correctie niet vereist.
 
 Zie [`docs/installatie.md`](docs/installatie.md) voor de installatie en [`source/README.md`](source/README.md) voor alle ontwikkelcommando's.
 

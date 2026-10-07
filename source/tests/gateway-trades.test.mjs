@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { EventEmitter } from 'node:events'
 import { collectSnapshot } from '../server/gateway-client.mjs'
-import { gatewayClosures, mergeExecutions, normalizeExecution } from '../shared/gateway-trades.mjs'
+import { gatewayClosures, gatewayOpenings, mergeExecutions, normalizeExecution } from '../shared/gateway-trades.mjs'
 
 const contract = { conId: 1, symbol: 'SOFI', localSymbol: 'SOFI OLD PUT', secType: 'OPT', right: 'P', strike: 17, multiplier: '100', currency: 'USD' }
 const execution = (id, conid, quantity, realizedPNL, time = '20260930 15:00:00') => ({
@@ -40,6 +40,29 @@ test('herhaald ophalen, herstart en correcties dupliceren geen uitvoeringen', ()
 test('nieuwe historie verdringt Gateway-trades zonder dubbele sluitingen', () => {
   assert.equal(gatewayClosures({ ...summary, tradesThroughDate: '2026-09-30' }, snapshot).closures.length, 0)
   assert.equal(gatewayClosures({ ...summary, balance: { toDate: '2026-09-30' }, tradesThroughDate: '2026-09-24' }, snapshot).closures.length, 2)
+})
+
+test('reconstrueert openingsdata van nieuwe posities uit bewaarde Gateway-uitvoeringen', () => {
+  const live = {
+    account: 'A',
+    positions: [
+      { conid: '3', assetCategory: 'OPT', quantity: -2, optionExpiry: '2026-10-23' },
+      { conid: '4', assetCategory: 'OPT', quantity: -1, optionExpiry: '2026-10-30' },
+    ],
+    executions: [
+      { ...execution('open-a.01', 3, -1, Number.MAX_VALUE, '20261005 14:00:00'), price: 0.5 },
+      { ...execution('open-b.01', 3, -2, Number.MAX_VALUE, '20261006 14:00:00'), price: 0.8 },
+      execution('partial-close.01', 3, 1, 20, '20261007 14:00:00'),
+    ],
+  }
+
+  const openings = gatewayOpenings({ ...summary, tradesThroughDate: '2026-10-02' }, live)
+  assert.deepEqual(openings.get('3'), {
+    openedAt: '2026-10-06',
+    chosenDte: 17,
+    averageOpenPrice: 0.8,
+  })
+  assert.equal(openings.has('4'), false)
 })
 
 test('verwerkt een mutatie op de saldodag wanneer de laatste Flex-trade ouder is', () => {

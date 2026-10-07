@@ -2,7 +2,7 @@
 
 De webapp staat volledig in deze map. Voer alle ontwikkel- en bouwcommando's vanuit `source/` uit.
 
-Versie 0.26.2 telt in gerealiseerde maand- en jaarresultaten zowel long als short opties mee, naast aandelen. Na een serverupdate zijn `npm ci`, `npm run import:flex`, `npm test`, `npm run build` en het publiceren van `dist/` nodig. Zie [PuTTY-update](../docs/installatie.md#serverupdate-versie-0262).
+Versie 0.26.3 reconstrueert ontbrekende openingsgegevens van actuele optieposities uit de bewaarde Gateway-uitvoeringen. Na een serverupdate zijn `npm ci`, `npm test`, `npm run build` en het publiceren van `dist/` nodig; een nieuwe Flex-import is voor deze correctie niet vereist. Zie [PuTTY-update](../docs/installatie.md#serverupdate-versie-0263).
 
 Live saldoverandering werkt mee met **Vernieuwen**. Publiceer de nieuwe `dist/` en backendbestanden samen en herstart `trading-monitor-api.service` om eerdere dagmetingen te bewaren. Zie [gebruik en berekeningen](../docs/gebruik.md) voor de vergelijkingsbron en terugval bij ontbrekende dagen.
 

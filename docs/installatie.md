@@ -12,6 +12,10 @@
 
 De ruwe rapporten en de gegenereerde financiële samenvatting worden niet aan Git toegevoegd.
 
+## Serverupdate versie 0.26.3
+
+Versie 0.26.3 vult openingsdatum en gekozen DTE van nieuwe open optieposities aan vanuit reeds bewaarde Gateway-uitvoeringen. Voer na het ophalen van de broncode vanuit `source/` `npm ci`, `npm test` en `npm run build` uit en publiceer daarna `dist/` zoals hieronder beschreven. Een nieuwe Flex-import is voor deze correctie niet vereist. Alleen uitvoeringen die de backend daadwerkelijk heeft opgeslagen kunnen worden gereconstrueerd; ontbrekende historie wordt niet geschat.
+
 ## Serverupdate versie 0.26.2
 
 Versie 0.26.2 wijzigt de historische resultaatberekening. Voer daarom na het ophalen van de broncode vanuit `source/` minimaal `npm ci`, `npm run import:flex`, `npm test` en `npm run build` uit. Publiceer daarna `dist/` zoals hieronder beschreven. Zonder een nieuwe import blijft de oude portfoliosamenvatting staan en ontbreken gerealiseerde long-optieresultaten in maand en jaar.

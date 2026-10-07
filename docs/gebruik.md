@@ -78,7 +78,7 @@ De pagina **Options** toont uitsluitend nog open optiecontracten. Openings- en s
 
 Een long call en short put met dezelfde onderliggende waarde, strike en expiratie worden als **SYNT long** herkend. De omgekeerde combinatie wordt als **SYNT short** getoond. Andere legs worden benoemd als short call, short put, long call of long put.
 
-Na **Vernieuwen** vult IBKR de huidige optieprijs, marktwaarde en het ongerealiseerde winst/verlies in. Zolang geen actuele snapshot beschikbaar is, blijven deze velden `—`; de Flex-openingspremie wordt niet als actuele prijs gebruikt.
+Na **Vernieuwen** vult IBKR de huidige optieprijs, marktwaarde en het ongerealiseerde winst/verlies in. Openingsdatum en gekozen DTE van posities die na de laatste Flex-import zijn geopend worden uit de door de backend bewaarde Gateway-uitvoeringen gereconstrueerd, ook na een gedeeltelijke sluiting. Als de service de bijbehorende uitvoering niet heeft opgeslagen, blijven deze velden bewust `—`. Zolang geen actuele snapshot beschikbaar is, blijven ook de actuele waarderingsvelden `—`; de Flex-openingspremie wordt niet als actuele prijs gebruikt.
 
 **Gereserveerd voor CSP** telt voor iedere open short put het volledige bedrag voor eventuele assignment: `strike × 100 × aantal contracten`. De short put binnen een **SYNT long** telt daarbij volledig mee. Calls en gekochte puts reserveren geen cash. **Vrij te besteden** is `netto saldo − aandelenwaarde − CSP-reservering`.
 

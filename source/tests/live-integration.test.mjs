@@ -60,6 +60,28 @@ test('snapshot voor of na Flex en opnieuw laden behouden dezelfde actuele portef
   assert.deepEqual(merged.yearProfit, { ...summary.yearProfit, toDate: snapshot.asOfDate })
 })
 
+test('nieuwe Gateway-opties krijgen hun opening en gekozen DTE zonder nieuwe Flex-import', () => {
+  const live = {
+    ...snapshot,
+    generatedAt: '2026-10-07T12:00:00Z',
+    asOfDate: '2026-10-07',
+    positions: [{
+      ...snapshot.positions[0], conid: '99', name: 'ONDS 261030P00007000', symbol: 'ONDS',
+      optionStrike: 7, optionExpiry: '2026-10-30', quantity: -2, averagePurchasePrice: 55,
+    }],
+    executions: [{
+      execId: 'new-option.01', account: 'A', conid: '99', dateTime: '2026-10-05T15:00:00', quantity: -2,
+      price: 0.55, symbol: 'ONDS', name: 'ONDS 261030P00007000', assetCategory: 'OPT', currency: 'USD',
+      multiplier: 100, optionRight: 'P', strike: 7, expiry: '20261030',
+    }],
+  }
+  const merged = resolvePortfolio(summary, live)
+
+  assert.equal(merged.optionHoldings[0].openedAt, '2026-10-05')
+  assert.equal(merged.optionHoldings[0].chosenDte, 25)
+  assert.equal(merged.optionHoldings[0].averageOpenPrice, 0.55)
+})
+
 test('oktobersynchronisatie werkt maand, jaar, premie, grafieken en doelen samen bij', () => {
   const october = {
     ...snapshot,

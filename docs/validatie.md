@@ -1,5 +1,12 @@
 # Validatie
 
+## Resultaat 7 oktober 2026 — versie 0.26.3 (lokaal)
+
+- Regressietests reconstrueren openingsdatum, gewogen gekozen DTE en openingspremie van nieuwe Gateway-posities na de Flex-grens.
+- Een gedeeltelijke FIFO-sluiting laat uitsluitend het resterende openingslot meetellen; een positie zonder complete uitvoeringhistorie blijft onbekend.
+- Integratietest controleert dat de gereconstrueerde gegevens daadwerkelijk op de Options-pagina terechtkomen zonder nieuwe Flex-import.
+- `npm test`: 74 van 74 tests geslaagd. `npm run build`: TypeScript- en Vite-productiebuild geslaagd.
+
 ## Resultaat 6 oktober 2026 — versie 0.26.2 (lokaal)
 
 - Regressies controleren winst en verlies op gekochte opties, waardeloze expiratie en een synthetic waarvan beide legs in dezelfde resultaatperiode sluiten.

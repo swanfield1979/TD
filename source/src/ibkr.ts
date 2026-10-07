@@ -3,7 +3,7 @@ import { calculateCoveredCallCoverage } from '../shared/covered-call.mjs'
 import { assignOptionStrategies } from '../shared/option-strategy.mjs'
 import { optionStrike, portfolioAllocation } from '../shared/portfolio-risk.mjs'
 import { optionExpiry } from '../shared/option-expiry.mjs'
-import { gatewayClosures, mergeExecutions } from '../shared/gateway-trades.mjs'
+import { gatewayClosures, gatewayOpenings, mergeExecutions } from '../shared/gateway-trades.mjs'
 
 const round = (value: number, decimals = 2) => Number(value.toFixed(decimals))
 const direction = (value: number) => value > 0 ? 'positive' as const : value < 0 ? 'negative' as const : 'neutral' as const
@@ -151,6 +151,7 @@ export function mergeLiveSnapshot(summary: PortfolioSummary, snapshot: IbkrLiveS
   const stockPositions = positions.filter((position) => position.assetCategory === 'STK')
   const optionPositions = positions.filter((position) => position.assetCategory === 'OPT')
   const optionMetadata = new Map((summary.optionHoldings ?? []).map((position) => [position.conid, position]))
+  const gatewayMetadata = gatewayOpenings(summary, { ...snapshot, positions })
   const hasCoveredCallMetadata = optionPositions.every((position) => Object.hasOwn(position, 'optionRight'))
   const stockValue = stockPositions.reduce((sum, position) => sum + position.currentValue, 0)
   const optionValue = optionPositions.reduce((sum, position) => sum + position.currentValue, 0)
@@ -158,7 +159,8 @@ export function mergeLiveSnapshot(summary: PortfolioSummary, snapshot: IbkrLiveS
     ? Math.max(0, snapshot.netLiquidation - stockValue - optionValue)
     : Math.max(0, snapshot.totalCashValue)
   const liveOptionHoldings = assignOptionStrategies(optionPositions.map((position) => {
-    const metadata = optionMetadata.get(position.conid)
+    const importedMetadata = optionMetadata.get(position.conid)
+    const openingMetadata = gatewayMetadata.get(position.conid) ?? importedMetadata
     const multiplier = position.multiplier || 100
     const holding = {
       conid: position.conid,
@@ -166,11 +168,11 @@ export function mergeLiveSnapshot(summary: PortfolioSummary, snapshot: IbkrLiveS
       name: position.name,
       quantity: position.quantity,
       optionRight: position.optionRight,
-      strike: position.optionStrike ?? metadata?.strike ?? null,
-      expiry: optionExpiry(position.optionExpiry ?? metadata?.expiry, position.name),
-      openedAt: metadata?.openedAt ?? null,
-      chosenDte: metadata?.chosenDte ?? null,
-      averageOpenPrice: multiplier ? round(Math.abs(position.averagePurchasePrice) / multiplier, 4) : metadata?.averageOpenPrice ?? null,
+      strike: position.optionStrike ?? importedMetadata?.strike ?? null,
+      expiry: optionExpiry(position.optionExpiry ?? importedMetadata?.expiry, position.name),
+      openedAt: openingMetadata?.openedAt ?? null,
+      chosenDte: openingMetadata?.chosenDte ?? null,
+      averageOpenPrice: multiplier ? round(Math.abs(position.averagePurchasePrice) / multiplier, 4) : openingMetadata?.averageOpenPrice ?? null,
       currentPrice: position.currentPrice,
       currentValue: position.currentValue,
       difference: position.difference,

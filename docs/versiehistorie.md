@@ -1,5 +1,11 @@
 # Versiehistorie
 
+## 0.26.3 – volledige openingsgegevens voor actuele opties
+
+- Nieuwe optieposities na de laatste Flex-import krijgen openingsdatum en gekozen DTE uit de bewaarde Gateway-uitvoeringen.
+- De reconstructie verwerkt meerdere openingslots en gedeeltelijke sluitingen volgens FIFO en accepteert het resultaat alleen als het aansluit op de actuele IBKR-positie.
+- Bij werkelijk ontbrekende uitvoeringhistorie blijft de waarde onbekend; er wordt geen openingsdatum geschat.
+
 ## 0.26.2 – volledig gerealiseerd optie- en aandelenresultaat
 
 - Maandresultaat, jaarresultaat en maandgemiddelde tellen gerealiseerde long én short opties plus aandelenverkopen.

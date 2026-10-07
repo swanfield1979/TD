@@ -29,6 +29,87 @@ export function mergeExecutions(previous = [], incoming = []) {
   return [...ledger.values()].sort((a, b) => a.dateTime.localeCompare(b.dateTime) || a.execId.localeCompare(b.execId))
 }
 
+const quantityOf = (lots) => lots.reduce((total, lot) => total + lot.quantity, 0)
+const closeEnough = (left, right) => Math.abs(left - right) < 0.000_001
+
+function applyExecution(lots, execution) {
+  let remaining = Number(execution.quantity)
+  if (!Number.isFinite(remaining) || closeEnough(remaining, 0)) return lots
+
+  const result = lots.map((lot) => ({ ...lot }))
+  while (result.length && Math.sign(result[0].quantity) !== Math.sign(remaining)) {
+    const lot = result[0]
+    const matched = Math.min(Math.abs(lot.quantity), Math.abs(remaining))
+    lot.quantity += Math.sign(remaining) * matched
+    remaining -= Math.sign(remaining) * matched
+    if (closeEnough(lot.quantity, 0)) result.shift()
+    if (closeEnough(remaining, 0)) return result
+  }
+
+  result.push({
+    quantity: remaining,
+    openedAt: execution.dateTime.slice(0, 10),
+    averageOpenPrice: execution.price,
+  })
+  return result
+}
+
+function chosenDte(openedAt, expiry) {
+  if (!openedAt || !/^\d{4}-\d{2}-\d{2}$/.test(expiry || '')) return null
+  const days = Math.round((Date.parse(`${expiry}T00:00:00Z`) - Date.parse(`${openedAt}T00:00:00Z`)) / 86_400_000)
+  return Number.isFinite(days) && days >= 0 ? days : null
+}
+
+// Rebuild opening metadata for positions created after the latest Flex import.
+// The final Gateway position is authoritative: incomplete execution history is
+// never used to invent a date or opening price.
+export function gatewayOpenings(summary, snapshot) {
+  const cutoff = summary.tradesThroughDate || summary.balance.toDate
+  const account = snapshot.account
+  const lotsByContract = new Map()
+  const importedByContract = new Map((summary.optionHoldings || []).map((holding) => [holding.conid, holding]))
+
+  for (const holding of summary.optionHoldings || []) {
+    lotsByContract.set(holding.conid, [{
+      quantity: holding.quantity,
+      openedAt: holding.openedAt,
+      averageOpenPrice: holding.averageOpenPrice,
+    }])
+  }
+
+  const executions = mergeExecutions([], snapshot.executions).filter((execution) =>
+    (!account || execution.account === account)
+    && execution.assetCategory === 'OPT'
+    && execution.dateTime.slice(0, 10) > cutoff
+    && execution.currency === (summary.premiumCurrency || summary.currency))
+  for (const execution of executions) {
+    lotsByContract.set(execution.conid, applyExecution(lotsByContract.get(execution.conid) || [], execution))
+  }
+
+  const metadata = new Map()
+  for (const position of snapshot.positions.filter((candidate) => candidate.assetCategory === 'OPT')) {
+    const lots = lotsByContract.get(position.conid) || []
+    if (!closeEnough(quantityOf(lots), position.quantity) || lots.length === 0) continue
+    const absoluteQuantity = lots.reduce((total, lot) => total + Math.abs(lot.quantity), 0)
+    const openedLots = lots.filter((lot) => lot.openedAt)
+    const pricedLots = lots.filter((lot) => Number.isFinite(lot.averageOpenPrice))
+    const expiry = position.optionExpiry || importedByContract.get(position.conid)?.expiry || null
+    const dteLots = openedLots.map((lot) => ({ ...lot, dte: chosenDte(lot.openedAt, expiry) }))
+      .filter((lot) => lot.dte !== null)
+
+    metadata.set(position.conid, {
+      openedAt: openedLots.length === lots.length ? openedLots.map((lot) => lot.openedAt).sort()[0] : null,
+      chosenDte: dteLots.length === lots.length
+        ? Math.round(dteLots.reduce((total, lot) => total + lot.dte * Math.abs(lot.quantity), 0) / absoluteQuantity)
+        : null,
+      averageOpenPrice: pricedLots.length === lots.length
+        ? Number((pricedLots.reduce((total, lot) => total + lot.averageOpenPrice * Math.abs(lot.quantity), 0) / absoluteQuantity).toFixed(4))
+        : null,
+    })
+  }
+  return metadata
+}
+
 export function gatewayClosures(summary, snapshot) {
   const cutoff = summary.tradesThroughDate || summary.balance.toDate
   const executions = mergeExecutions([], snapshot.executions).filter((execution) =>
