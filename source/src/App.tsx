@@ -18,14 +18,16 @@ import OptionsPage from './OptionsPage'
 import GoalsPage from './GoalsPage'
 import TradesPage from './TradesPage'
 import StatsPage from './StatsPage'
+import ScansPage from './ScansPage'
 import TradingActivityCards from './TradingActivityCards'
 import IbkrConnectionControl from './IbkrConnectionControl'
 import { mergeLiveSnapshot, resolvePortfolio } from './ibkr'
 
 const DATA_URL = '/data/portfolio-summary.json'
-type Page = 'dashboard' | 'stocks' | 'options' | 'goals' | 'stats' | 'trades'
+type Page = 'dashboard' | 'stocks' | 'options' | 'goals' | 'stats' | 'trades' | 'scans'
 
 const pageFromHash = (): Page => {
+  if (window.location.hash === '#scans') return 'scans'
   if (window.location.hash === '#stocks') return 'stocks'
   if (window.location.hash === '#options') return 'options'
   if (window.location.hash === '#goals') return 'goals'
@@ -41,6 +43,7 @@ const pageTitles: Record<Page, string> = {
   goals: 'Goals',
   stats: 'Stats',
   trades: 'Trades',
+  scans: 'Scans',
 }
 
 const currencyFormatter = (currency: string, showSign = false) =>
@@ -174,6 +177,13 @@ function LoadingDashboard() {
 }
 
 function App() {
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    try { return localStorage.getItem('tm-theme') === 'light' ? 'light' : 'dark' } catch { return 'dark' }
+  })
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme
+    try { localStorage.setItem('tm-theme', theme) } catch { /* Theme also works without storage. */ }
+  }, [theme])
   const [importedSummary, setSummary] = useState<PortfolioSummary | null>(null)
   const [liveSnapshot, setLiveSnapshot] = useState<Parameters<typeof mergeLiveSnapshot>[1] | null>(null)
   const summary = useMemo(() => resolvePortfolio(importedSummary, liveSnapshot), [importedSummary, liveSnapshot])
@@ -282,6 +292,9 @@ function App() {
             <ArrowSwapRegular aria-hidden="true" />
             <span>Options</span>
           </a>
+          <a className={`nav-item${currentPage === 'scans' ? ' nav-item--active' : ''}`} href="#scans" aria-current={currentPage === 'scans' ? 'page' : undefined}>
+            <TargetArrowRegular aria-hidden="true" /><span>Scans</span>
+          </a>
           <a
             className={`nav-item${currentPage === 'goals' ? ' nav-item--active' : ''}`}
             href="#goals"
@@ -307,6 +320,9 @@ function App() {
             <span>Trades</span>
           </a>
         </nav>
+        <button className="theme-toggle" type="button" aria-pressed={theme === 'dark'} onClick={() => setTheme((value) => value === 'dark' ? 'light' : 'dark')}>
+          Donkere modus: {theme === 'dark' ? 'aan' : 'uit'}
+        </button>
         <IbkrConnectionControl onSnapshot={handleLiveSnapshot} />
       </aside>
 
@@ -316,7 +332,7 @@ function App() {
             <h1>{pageTitles[currentPage]}</h1>
             {currentPage === 'dashboard' && <p className="page-subtitle">Je portefeuille in één oogopslag</p>}
           </div>
-          {summary && (
+          {summary && currentPage !== 'scans' && (
             <div className="data-freshness" title={showLiveFreshness ? `IBKR-snapshot opgehaald op ${summary.sourceUpdatedAt}; historische Flex-basis t/m ${importedSummary?.balance.toDate}` : `Bronbestand gegenereerd op ${importedSummary?.sourceUpdatedAt}`}>
               <span className="data-freshness__pulse" aria-hidden="true" />
               <span>
@@ -327,9 +343,10 @@ function App() {
           )}
         </header>
 
-        {isLoading && <LoadingDashboard />}
+        {currentPage === 'scans' && <ScansPage />}
+        {isLoading && currentPage !== 'scans' && <LoadingDashboard />}
 
-        {!isLoading && error && (
+        {!isLoading && error && currentPage !== 'scans' && (
           <section className="state-panel state-panel--error" role="alert">
             <div>
               <h2>Dashboarddata ontbreekt</h2>

@@ -38,3 +38,8 @@ De Flex-import levert `contributionPeriods` met netto basistotalen en bruto stor
 ### Referentie voor live saldoverandering
 
 De opgeslagen live snapshot bevat optioneel `previousBalance` met datum en saldo van de laatste meting vóór de huidige UTC-snapshotdag. Bij een dagwissel wordt de vorige snapshot de referentie; binnen dezelfde dag blijft deze vast en overleeft een herstart. Valutawisselingen nemen de referentie niet over. De frontend kiest de recentste eerdere datum uit deze referentie en Flex, met voorrang voor Flex bij gelijke datum. Oude snapshotbestanden blijven ondersteund. Daggrenzen volgen de bestaande UTC-datering van snapshots.
+
+
+## CSP-scanner
+
+`source/shared/csp-scan.mjs` bevat filters, New York-datum, IVR en sortering. `source/server/csp-scanner.mjs` verzamelt read-only IBKR-marktdata via een aparte socket. `source/server/ibkr-api.mjs` beheert één asynchrone scan in geheugen met GET/POST `/api/scans`. `source/src/ScansPage.tsx` haalt voortgang op en toont twee tabellen. Het donkere thema overschrijft semantische CSS-tokens; de browservoorkeur staat in `tm-theme`. Zie [Scans](scans.md) voor dekking en berekeningen.

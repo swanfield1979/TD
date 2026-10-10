@@ -5,6 +5,27 @@ import { spawnSync } from 'node:child_process'
 import { collectSnapshot } from './gateway-client.mjs'
 import { withPreviousBalance } from './ibkr-domain.mjs'
 import { mergeExecutions } from '../shared/gateway-trades.mjs'
+import { runCspScan } from './csp-scanner.mjs'
+
+let scanState = { state: 'idle', portfolio: [], market: [], warnings: [], progress: '', symbolsChecked: 0, contractsChecked: 0 }
+
+async function startScan() {
+  try {
+    let portfolio
+    try { portfolio = JSON.parse(await readFile(config.snapshotPath, 'utf8')) }
+    catch { portfolio = JSON.parse(await readFile(new URL('../public/data/portfolio-summary.json', import.meta.url), 'utf8')) }
+    try {
+      const imported = JSON.parse(await readFile(new URL('../public/data/portfolio-summary.json', import.meta.url), 'utf8'))
+      if (imported.balance?.toDate > (portfolio.asOfDate ?? portfolio.balance?.toDate ?? '')) portfolio = imported
+    } catch { /* A live snapshot also works without a Flex import. */ }
+    scanState.portfolioAsOfDate = portfolio.asOfDate ?? portfolio.balance?.toDate
+    const positions = portfolio.positions ?? [...(portfolio.stockHoldings ?? []), ...(portfolio.optionHoldings ?? [])]
+    const symbols = [...new Set(positions.filter((position) => (position.quantity ?? position.position) !== 0)
+      .map((position) => position.symbol).filter((symbol) => typeof symbol === 'string' && /^[A-Z0-9. -]{1,20}$/.test(symbol)))]
+    scanState.portfolioSymbols = symbols
+    await runCspScan(config, symbols, scanState)
+  } catch (error) { scanState.state = 'error'; scanState.message = error.message }
+}
 
 const config = {
   listenHost: process.env.IBKR_API_HOST || '127.0.0.1',
@@ -145,6 +166,15 @@ function isAllowedPost(request) {
 
 const server = createServer(async (request, response) => {
   try {
+    if (request.method === 'GET' && request.url === '/api/scans') return sendJson(response, 200, scanState)
+    if (request.method === 'POST' && request.url === '/api/scans') {
+      if (!isAllowedPost(request)) return sendJson(response, 403, { message: 'Ongeldige aanvraag.' })
+      if (scanState.state !== 'running') {
+        scanState = { state: 'running', startedAt: new Date().toISOString(), portfolio: [], market: [], warnings: [], progress: 'Portfolio laden', symbolsChecked: 0, contractsChecked: 0 }
+        void startScan()
+      }
+      return sendJson(response, 202, scanState)
+    }
     if (request.method === 'GET' && request.url === '/api/ibkr/status') {
       return sendJson(response, 200, publicStatus())
     }

@@ -150,3 +150,8 @@ Herlaad daarna het dashboard.
 ## Aandachtspunt
 
 Saldo, saldoverandering per rapportdag, saldoverloop en Goals blijven gebaseerd op netto liquidatiewaarde; stortingen, opnames en ongerealiseerde koersbewegingen kunnen die cijfers beïnvloeden. Nettoresultaat en het maandgemiddelde gebruiken gerealiseerde long- en short-optieresultaten plus aandelenresultaten. Netto premie en premiebehoud blijven uitsluitend over afgesloten short opties gaan. Stats en Trades analyseren uitsluitend optieafsluitingen; aandelenresultaten staan in het totale nettoresultaat op het Dashboard.
+
+
+## Donkere modus en Scans
+
+Donkere modus staat standaard aan. De schakelaar onder het menu wisselt licht/donker en onthoudt je keuze in deze browser. **Scans** zoekt CSP’s met je criteria, eerst op portfolio-symbolen en daarna in een NASDAQ/S&P 500-shortlist. Zie [CSP-scans](scans.md) voor alle filters, berekeningen en vereiste IBKR-marktdata.

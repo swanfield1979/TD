@@ -1,5 +1,14 @@
 # Validatie
 
+## Resultaat 11 oktober 2026 — versie 0.27.0 (lokaal)
+
+- `npm test`: 80 van 80 tests geslaagd. `npm run build`: TypeScript- en Vite-productiebuild geslaagd. JavaScript-syntax van API en scanner gecontroleerd.
+- CSP-tests controleren inclusieve DTE 35/50 en koers 10/50, strikte POP/IVR-grenzen, ontbrekende data, negatieve putdelta, premie/onderpand/rendement, jaarhistorie en sortering.
+- Gesimuleerde Gateway-integratie controleert portfolio vóór marktverkenning, uitsluiting van bestaande symbolen en niet-S&P-aandelen, deltafilters, quote-opruiming en socketafsluiting.
+- Browser: donkere modus, wisselen naar licht, onthouden na herladen, Scans-navigatie, API-fout en scanvoortgang getest. Op 360 en 768 pixels geen horizontale pagina-overflow gemeten.
+- Echte lokale API gestart; starten van een scan retourneert actieve status en eindigt bij ontbrekende Gateway met een zichtbare fout en herstartmogelijkheid. Er zijn geen echte marktdataresultaten bevestigd: lokale Gateway op poort 4001 is niet beschikbaar.
+- Live IBKR-datadekking, Greeks, IV-historie, werkelijke kandidaten en installatie op de productieserver moeten nog worden gecontroleerd op de verbonden Gateway. De NASDAQ/S&P-verkenning is een begrensde shortlist.
+
 ## Resultaat 7 oktober 2026 — versie 0.26.3 (lokaal)
 
 - Regressietests reconstrueren openingsdatum, gewogen gekozen DTE en openingspremie van nieuwe Gateway-posities na de Flex-grens.

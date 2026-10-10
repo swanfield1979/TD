@@ -2,7 +2,7 @@
 
 Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voortgang op basis van Interactive Brokers Flex-rapporten.
 
-**Versie/status:** 0.26.3. Nieuwe open optieposities krijgen hun openingsdatum en gekozen DTE nu ook uit de bewaarde IBKR Gateway-uitvoeringen. Productiebuild en tests zijn lokaal gecontroleerd; deze versie is nog niet op de liveserver geïnstalleerd.
+**Versie/status:** 0.27.0. Donkere modus en CSP-scans voor portfolio en een NASDAQ/S&P 500-shortlist. Tests en productiebuild lokaal gecontroleerd; live IBKR-marktdata en installatie op de liveserver zijn nog niet bevestigd.
 
 | Map | Inhoud |
 | --- | --- |
@@ -12,13 +12,14 @@ Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voort
 
 ## Starten
 
-Zie [bijwerken via PuTTY](docs/installatie.md#serverupdate-versie-0263) voor het installeren van 0.26.3. Publiceer de nieuwe frontend; een nieuwe Flex-import is voor deze correctie niet vereist.
+Zie [serverupdate 0.27.0](docs/installatie.md#serverupdate-versie-0270): publiceer frontend en backend samen en herstart de API. Een nieuwe Flex-import is voor deze uitbreiding niet vereist.
 
 Zie [`docs/installatie.md`](docs/installatie.md) voor de installatie en [`source/README.md`](source/README.md) voor alle ontwikkelcommando's.
 
 ## Functies
 
-- Licht, responsief dashboard met groene accenten, herkenbare Trading Monitor-navigatie en IBKR-status.
+- Donkere modus als standaard, met onthouden donker/licht-keuze, responsieve navigatie en IBKR-status.
+- Scans: CSP’s op bestaande onderliggende portfoliowaarden eerst, daarnaast een NASDAQ/S&P 500-shortlist van $ 10–$ 50; sorteren op jaarrendement, rendement of premie. Zie [CSP-scans](docs/scans.md) voor criteria, datavereisten en dekking.
 - Totale winst sinds start 2025 gecorrigeerd voor netto inleg, met winstpercentage over ingebracht kapitaal en huidig (live) saldo.
 - Saldo en nettoresultaatstatistieken uit lokale IBKR Flex XML-rapporten.
 - Saldoverandering volgt het actuele IBKR-saldo, in dollars en procenten tegenover de vorige beschikbare dagstand, met zichtbare vergelijkingsdatum.

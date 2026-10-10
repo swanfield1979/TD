@@ -239,3 +239,22 @@ sudo journalctl -u trading-monitor-api.service -u ibc-gateway.service -n 100 --n
 ```
 
 Stel deze website en poort 8787 nooit rechtstreeks beschikbaar op internet. De backend luistert daarom uitsluitend op localhost; alleen Nginx mag `/api/` doorgeven.
+
+
+## Serverupdate versie 0.27.0
+
+Publiceer frontend én backend samen. Voer in `source/` uit:
+
+```bash
+npm ci
+npm test
+npm run build
+sudo rsync -a dist/ /var/www/trading-monitor/
+sudo systemctl restart trading-monitor-api.service
+```
+
+Deze stappen veronderstellen dat de checkout ook de installatiebron van de API is. Staat de API in een aparte map, kopieer dan eerst de gewijzigde `server/` en `shared/` naar de bestaande API-installatiemap (zie `WorkingDirectory`/`ExecStart` in de service) en herstart daarna. De nieuwe API importeert `server/csp-scanner.mjs` en `shared/csp-scan.mjs`; uitsluitend de frontend publiceren is onvoldoende. Geen nieuwe Flex-import nodig.
+
+Gebruik een verbonden Gateway en passende marktdatarechten voor IV, IV-historie en optie-Greeks. Houd client-ID `IBKR_CLIENT_ID + 20` vrij. De bestaande Nginx-route `/api/` ondersteunt de scanroutes; de scan loopt asynchroon en vereist geen langere proxytijdslimiet.
+
+Lokaal: start `npm run dev` en in een tweede terminal vanuit `source/` de API met `npm run start:api`. Configureer `IBKR_ALLOWED_ORIGINS` met `http://127.0.0.1:5173` en stel `IBKR_SNAPSHOT_PATH` in op je lokale snapshotbestand. Zie [CSP-scans](scans.md).

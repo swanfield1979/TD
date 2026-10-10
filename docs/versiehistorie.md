@@ -1,5 +1,13 @@
 # Versiehistorie
 
+## 0.27.0 – donkere modus en CSP-scans (11 oktober 2026)
+
+- Donkere modus standaard; licht/donker wordt per browser onthouden.
+- Nieuw menu Scans met portfolioresultaten eerst en afzonderlijke NASDAQ/S&P 500-shortlist voor aandelen van $ 10–$ 50.
+- Strikte filters: standaard USD-puts, 35–50 kalenderdagen, |delta| 0,16–0,22, IVR > 30, OTM en delta-POP > 80%.
+- Sortering op lineair jaarrendement, rendement op onderpand of premie; zichtbare koersbron en onvolledige-data-meldingen.
+- Nieuwe asynchrone read-only IBKR-scanroutes; ontbrekende data leidt niet tot gefingeerde matches.
+
 ## 0.26.3 – volledige openingsgegevens voor actuele opties
 
 - Nieuwe optieposities na de laatste Flex-import krijgen openingsdatum en gekozen DTE uit de bewaarde Gateway-uitvoeringen.
