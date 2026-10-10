@@ -6,3 +6,4 @@ export interface CspCandidate {
   quotedAt: string; universe?: string;
 }
 export function sortCandidates(rows: CspCandidate[], sort?: 'annualizedYield' | 'premium' | 'yieldPercentage'): CspCandidate[]
+export function matchingCandidates(rows: CspCandidate[], today?: string, discovery?: boolean): CspCandidate[]

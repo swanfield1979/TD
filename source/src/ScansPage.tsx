@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { sortCandidates, type CspCandidate } from '../shared/csp-scan.mjs'
+import { matchingCandidates, sortCandidates, type CspCandidate } from '../shared/csp-scan.mjs'
 
 interface ScanResult {
   state: 'idle' | 'running' | 'complete' | 'partial' | 'error'
@@ -68,6 +68,8 @@ export default function ScansPage() {
     finally { setSubmitting(false) }
   }
   const running = result.state === 'running'
+  const portfolioMatches = matchingCandidates(result.portfolio)
+  const marketMatches = matchingCandidates(result.market, undefined, true)
   return <div className="scans-page">
     <section className="monitor-panel">
       <div className="monitor-panel__header"><div><h2>Cash-secured puts zoeken</h2><p className="monitor-note">Eerst je bestaande onderliggende waarden, daarna interessante NASDAQ / S&P 500-aandelen van $ 10–$ 50.</p></div>
@@ -75,14 +77,14 @@ export default function ScansPage() {
       <ul className="scan-criteria" aria-label="CSP-criteria"><li>35–50 dagen</li><li>|Delta| 0,16–0,22</li><li>IVR &gt; 30</li><li>Put OTM: strike &lt; koers</li><li>POP &gt; 80%</li></ul>
       <p className="monitor-note">POP = (1 − |delta|) × 100%. Daardoor is de effectieve delta 0,16 tot onder 0,20. IVR gebruikt de actuele IV en het bereik van de afgelopen 12 maanden.</p>
       <div className="scan-command"><label htmlFor="scan-sort">Sorteer op</label><select id="scan-sort" value={sort} onChange={(event) => setSort(event.target.value as typeof sort)}><option value="annualizedYield">Jaarrendement, hoogste eerst</option><option value="yieldPercentage">Rendement op onderpand</option><option value="premium">Premie per contract</option></select></div>
-      <p role="status" aria-live="polite">{running ? result.progress : result.state === 'idle' ? 'Klaar om te scannen' : result.state === 'error' ? result.message : result.state === 'partial' ? 'Scan afgerond met ontbrekende data; zie meldingen.' : 'Scan afgerond'}{result.startedAt && <> · Gestart {date(result.startedAt)}</>}{result.finishedAt && <> · Afgerond {date(result.finishedAt)}</>}</p>
-      {result.startedAt && <p className="monitor-note">{result.symbolsChecked} aandelen en {result.contractsChecked} contracten gecontroleerd. Portfolio{result.portfolioAsOfDate ? ` t/m ${result.portfolioAsOfDate}` : ''}: {result.portfolioSymbols?.join(', ') || 'geen open onderliggende waarden'}.</p>}
+      <p role="status" aria-live="polite">{running ? 'CSP-criteria worden gecontroleerd…' : result.state === 'idle' ? 'Klaar om te scannen' : result.state === 'error' ? result.message : result.state === 'partial' ? 'Scan afgerond met ontbrekende data; zie meldingen.' : 'Scan afgerond'}{result.startedAt && <> · Gestart {date(result.startedAt)}</>}{result.finishedAt && <> · Afgerond {date(result.finishedAt)}</>}</p>
+      {result.startedAt && <p className="monitor-note">{result.symbolsChecked} aandelen en {result.contractsChecked} contracten gecontroleerd.{result.portfolioAsOfDate && <> Portfoliobasis t/m {result.portfolioAsOfDate}.</>} Alleen CSP’s die aan alle criteria voldoen worden getoond.</p>}
       <p className="monitor-note">De marktverkenning gebruikt maximaal 50 NASDAQ- en 50 Amerikaanse IBKR-scannerresultaten met de hoogste IV; Amerikaanse resultaten worden getoetst aan de S&P 500-ledenlijst. Dit is een shortlist, geen volledige marktscan. Ontbrekende koersdata, Greeks of IVR worden overgeslagen.</p>
     </section>
     {error && <section className="state-panel state-panel--error" role="alert"><p>{error}</p><button type="button" onClick={() => setRetry((value) => value + 1)}>Opnieuw proberen</button></section>}
-    <ScanTable title="CSP’s op je portfolio" rows={result.portfolio} running={running} sort={sort} />
-    <ScanTable title="Interessante NASDAQ / S&P 500-aandelen" rows={result.market} running={running} sort={sort} />
+    <ScanTable title="CSP’s op je portfolio" rows={portfolioMatches} running={running} sort={sort} />
+    <ScanTable title="Interessante NASDAQ / S&P 500-aandelen" rows={marketMatches} running={running} sort={sort} />
     <p className="monitor-note">¹ Eén standaardcontract: 100 aandelen. Premie = biedprijs × 100; onderpand = strike × 100, vóór kosten. ² Lineair geannualiseerd: premie / onderpand × 365 / DTE. POP is jouw delta-benadering. De scan controleert geen beschikbare cash en plaatst geen orders.</p>
-    {result.warnings.length > 0 && <details className="monitor-panel"><summary>{result.warnings.length} meldingen over dekking en marktdata</summary><ul>{result.warnings.map((warning, index) => <li key={`${index}:${warning}`}>{warning}</li>)}</ul></details>}
+    {result.warnings.length > 0 && <section className="monitor-panel" aria-label="Dekking en marktdata"><p>{result.warnings.length} meldingen over onvolledige dekking of ontbrekende marktdata. Kandidaten zonder volledige toetsbare gegevens zijn overgeslagen.</p></section>}
   </div>
 }

@@ -42,3 +42,7 @@ export function cspCandidate(quote, today, discovery = false) {
 export function sortCandidates(rows, sort = 'annualizedYield') {
   return [...rows].sort((a, b) => b[sort] - a[sort] || a.symbol.localeCompare(b.symbol) || a.strike - b.strike)
 }
+
+export function matchingCandidates(rows, today = scanDate(), discovery = false) {
+  return rows.map((row) => cspCandidate(row, today, discovery)).filter((row) => row !== null)
+}

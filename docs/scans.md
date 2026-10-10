@@ -38,7 +38,7 @@ De marktverkenning gebruikt maximaal 50 resultaten uit `STK.US.NASDAQ` en maxima
 
 Per geselecteerd aandeel worden alle door IBKR gemelde SMART-standaardketens met 35–50 DTE en beschikbare OTM-putstrikes gecontroleerd. Ketens kunnen niet-bestaande contractcombinaties bevatten; die worden overgeslagen en gemeld. Optiequotes worden in groepen van maximaal 15 gedurende 5 seconden verzameld om subscriptions en API-belasting te begrenzen. Een scan kan meerdere minuten duren. De browser haalt iedere 3 seconden voortgang en tussentijdse resultaten op.
 
-Een bestaande IB Gateway-verbinding en passende marktdatarechten voor Amerikaanse aandelen, optie-Greeks en IV-historie zijn nodig. Client-ID: `IBKR_CLIENT_ID + 20`; reserveer die ID. Ontbrekende data leidt tot een gedeeltelijke scan met meldingen. De scan start Gateway of MFA niet zelf: gebruik eerst de IBKR-koppeling.
+Een bestaande IB Gateway-verbinding en passende marktdatarechten voor Amerikaanse aandelen, optie-Greeks en IV-historie zijn nodig. Client-ID: `IBKR_CLIENT_ID + 20`; reserveer die ID. Ontbrekende data leidt tot een gedeeltelijke scan met een samengevat aantal meldingen. Alleen aandelen met een CSP die aan alle criteria voldoet zijn zichtbaar; afgewezen symbolen staan niet in voortgang, samenvatting of meldingen. De interface toetst ontvangen resultaten opnieuw aan de actuele looptijd en CSP-grenzen, zodat ook oude resultaten buiten de grenzen verdwijnen. De scan start Gateway of MFA niet zelf: gebruik eerst de IBKR-koppeling.
 
 ## Backend
 

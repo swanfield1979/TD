@@ -1,5 +1,11 @@
 # Validatie
 
+## Versie 0.27.1 — uitsluitend passende scanresultaten (lokaal)
+
+- `npm test`: 81 van 81 tests geslaagd. `npm run build`: TypeScript- en Vite-productiebuild geslaagd.
+- Nieuwe regressietest bevestigt dat afgewezen IVR/POP, ontbrekende delta, verlopen contracten en een te hoge marktkoers niet in de zichtbare resultaten terechtkomen.
+- Voortgang en portfoliosamenvatting bevatten geen onderzochte tickers; datameldingen tonen uitsluitend het aantal meldingen.
+
 ## Resultaat 11 oktober 2026 — versie 0.27.0 (lokaal)
 
 - `npm test`: 80 van 80 tests geslaagd. `npm run build`: TypeScript- en Vite-productiebuild geslaagd. JavaScript-syntax van API en scanner gecontroleerd.

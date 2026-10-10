@@ -2,7 +2,7 @@
 
 Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voortgang op basis van Interactive Brokers Flex-rapporten.
 
-**Versie/status:** 0.27.0. Donkere modus en CSP-scans voor portfolio en een NASDAQ/S&P 500-shortlist. Tests en productiebuild lokaal gecontroleerd; live IBKR-marktdata en installatie op de liveserver zijn nog niet bevestigd.
+**Versie/status:** 0.27.1. Donkere modus en CSP-scans voor portfolio en een NASDAQ/S&P 500-shortlist; uitsluitend passende aandelen zijn zichtbaar. Tests en productiebuild lokaal gecontroleerd; live IBKR-marktdata en installatie op de liveserver zijn nog niet bevestigd.
 
 | Map | Inhoud |
 | --- | --- |

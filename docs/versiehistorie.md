@@ -1,5 +1,11 @@
 # Versiehistorie
 
+## 0.27.1 – uitsluitend passende aandelen in Scans
+
+- Afgewezen aandelen verdwijnen uit de portfoliosamenvatting, voortgang en datameldingen.
+- Resultaten worden ook in de interface opnieuw getoetst aan alle CSP-criteria en de actuele resterende looptijd.
+- Meldingen over ontbrekende data blijven zichtbaar als een samenvatting zonder afgewezen tickers.
+
 ## 0.27.0 – donkere modus en CSP-scans (11 oktober 2026)
 
 - Donkere modus standaard; licht/donker wordt per browser onthouden.

@@ -1,10 +1,16 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { cspCandidate, daysToExpiry, ivRank, scanDate, sortCandidates } from '../shared/csp-scan.mjs'
+import { cspCandidate, daysToExpiry, ivRank, matchingCandidates, scanDate, sortCandidates } from '../shared/csp-scan.mjs'
 
 const today = '2026-10-11'
 const put = { symbol: 'TEST', expiry: '20261120', strike: 20, underlyingPrice: 24, delta: -0.18,
   ivr: 45, bid: 0.5, ask: 0.6, multiplier: 100, right: 'P', currency: 'USD' }
+test('visible scan results exclude rejected, expired and incomplete candidates', () => {
+  const rows = [put, { ...put, symbol: 'LOW_IVR', ivr: 25 }, { ...put, symbol: 'LOW_POP', delta: -0.21 },
+    { ...put, symbol: 'MISSING', delta: null }, { ...put, symbol: 'EXPIRED', expiry: '20261001' }]
+  assert.deepEqual(matchingCandidates(rows, today).map((row) => row.symbol), ['TEST'])
+  assert.deepEqual(matchingCandidates([{ ...put, underlyingPrice: 60 }], today, true), [])
+})
 test('CSP returns premium, collateral, delta POP and comparable annualized yield', () => {
   const row = cspCandidate(put, today)
   assert.equal(row.dte, 40)
