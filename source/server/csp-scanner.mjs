@@ -27,7 +27,7 @@ export async function runCspScan(config, symbols, state, Api = IBApi) {
     try { start(id) } catch (error) { task.finish(error) }
   })
   ib.on(EventName.error, (error, code, id) => {
-    if ([2104, 2106, 2107, 2108, 2158, 2176, 10167].includes(code)) return
+    if ([2104, 2106, 2107, 2108, 2158, 2176, 10167, 10090].includes(code)) return
     // Errors such as missing market-data permissions must never become valid candidates.
     if (pending.has(id)) pending.get(id).finish(new Error(`IBKR ${code}: ${error.message}`))
   })
@@ -59,6 +59,23 @@ export async function runCspScan(config, symbols, state, Api = IBApi) {
     subscriptions.add(id)
     ib.reqMktData(id, contract, generic, false, false)
   }, 'quote', config.scanQuoteWaitMs ?? 5000, true)
+  const completeQuote = (contract, value) => contract.secType === 'STK'
+    ? value.last > 0 || value.bid > 0 && value.ask >= value.bid
+    : value.bid > 0 && value.ask >= value.bid && Number.isFinite(value.delta) && Number.isFinite(value.underlyingPrice)
+  async function availableQuote(contract, generic = '') {
+    let lastQuote = {}, lastError
+    for (const type of [MarketDataType.DELAYED, MarketDataType.FROZEN, MarketDataType.DELAYED_FROZEN]) {
+      try {
+        ib.reqMarketDataType(type)
+        lastQuote = await quote(contract, generic)
+        // Data type is supplied by IBKR; never label an unspecified quote as live.
+        lastQuote.marketDataType ??= type
+        if (completeQuote(contract, lastQuote)) return lastQuote
+      } catch (error) { lastError = error }
+    }
+    if (lastError && !Object.keys(lastQuote).length) throw lastError
+    return lastQuote
+  }
   const warn = (symbol, error) => state.warnings.push(`${symbol}: ${error.message}`)
 
   try {
@@ -75,7 +92,7 @@ export async function runCspScan(config, symbols, state, Api = IBApi) {
         const details = suppliedContract ? [{ contract: suppliedContract }] : await request((id) => ib.reqContractDetails(id, { symbol, secType: 'STK', exchange: 'SMART', currency: 'USD' }), 'contractDetailsEnd')
         if (details.length !== 1) throw new Error('Geen eenduidig USD-aandelencontract gevonden.')
         const contract = { ...details[0].contract, exchange: 'SMART' }
-        const stock = await quote(contract, '106')
+        const stock = await availableQuote(contract, '106')
         const price = stock.last > 0 ? stock.last : stock.bid > 0 && stock.ask >= stock.bid ? (stock.bid + stock.ask) / 2 : null
         if (!price) throw new Error('Actuele aandelenkoers ontbreekt.')
         if (discovery && (price < 10 || price > 50)) return
@@ -100,7 +117,7 @@ export async function runCspScan(config, symbols, state, Api = IBApi) {
         let missing = 0
         for (let offset = 0; offset < contracts.length; offset += 15) {
           const batch = contracts.slice(offset, offset + 15)
-          const quotes = await Promise.allSettled(batch.map((contract) => quote(contract)))
+          const quotes = await Promise.allSettled(batch.map((contract) => availableQuote(contract)))
           for (let index = 0; index < batch.length; index++) {
             state.contractsChecked++
             const item = quotes[index]
@@ -136,8 +153,14 @@ export async function runCspScan(config, symbols, state, Api = IBApi) {
     const discovered = new Map()
     for (const locationCode of ['STK.US.NASDAQ', 'STK.US.MAJOR']) {
       try {
-        const rows = await request((id) => ib.reqScannerSubscription(id, { instrument: 'STK', locationCode,
-          scanCode: 'HIGH_OPT_IMP_VOLAT', numberOfRows: 50, abovePrice: 10, belowPrice: 50, stockTypeFilter: 'CORP' }), 'scannerDataEnd')
+        const discover = (scanCode) => request((id) => ib.reqScannerSubscription(id, { instrument: 'STK', locationCode,
+          scanCode, numberOfRows: 50, abovePrice: 10, belowPrice: 50, stockTypeFilter: 'CORP' }), 'scannerDataEnd')
+        let rows
+        try { rows = await discover('HIGH_OPT_IMP_VOLAT') }
+        catch {
+          state.warnings.push(`${locationCode}: IV-scanner niet beschikbaar; terugval naar MOST_ACTIVE. CSP-criteria blijven ongewijzigd.`)
+          rows = await discover('MOST_ACTIVE')
+        }
         for (const details of rows) {
           const contract = details.contract
           const nasdaq = locationCode === 'STK.US.NASDAQ'

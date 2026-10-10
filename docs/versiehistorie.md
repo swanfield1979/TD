@@ -1,5 +1,12 @@
 # Versiehistorie
 
+## 0.27.2 – koers- en scannerterugval en zichtbare startfouten
+
+- Quotes proberen bevroren en vertraagd-bevroren data wanneer de reguliere stream geen volledige koers levert.
+- Een uitgeschakelde IV-marktscanner valt terug op actieve aandelen; alle CSP-filters blijven gelden.
+- Startfouten tonen HTTP-status en gerichte uitleg. Opnieuw starten verzendt de startaanvraag opnieuw.
+- Datameldingen geven concrete oorzaken zonder afgewezen tickers te tonen.
+
 ## 0.27.1 – uitsluitend passende aandelen in Scans
 
 - Afgewezen aandelen verdwijnen uit de portfoliosamenvatting, voortgang en datameldingen.

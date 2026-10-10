@@ -1,5 +1,12 @@
 # Validatie
 
+## Versie 0.27.2 — koers- en scannerterugval (lokaal)
+
+- `npm test`: 84 van 84 tests geslaagd; TypeScript- en Vite-productiebuild geslaagd.
+- Nieuwe tests simuleren ontbrekende reguliere quotes met beschikbare bevroren data, een uitgeschakelde IV-scanner met MOST_ACTIVE-terugval, specifieke HTTP-startfouten en foutcategorieën zonder afgewezen tickers.
+- Serverdiagnose: GET status bevestigt verbonden IBKR; GET scans werkt; POST scans wordt via shell én browser geaccepteerd. De eerdere browser-startfout is niet opnieuw opgetreden.
+- De huidige productiescan meldt ontbrekende aandelenkoersen en IBKR-code 162: HIGH_OPT_IMP_VOLAT-scanner uitgeschakeld. Versie 0.27.2 is hiervoor lokaal verbeterd, maar de correctie is nog niet op de productieserver geïnstalleerd of met echte bevroren quotes bevestigd.
+
 ## Versie 0.27.1 — uitsluitend passende scanresultaten (lokaal)
 
 - `npm test`: 81 van 81 tests geslaagd. `npm run build`: TypeScript- en Vite-productiebuild geslaagd.

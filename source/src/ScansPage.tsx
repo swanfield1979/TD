@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { matchingCandidates, sortCandidates, type CspCandidate } from '../shared/csp-scan.mjs'
+import { scanResponse, scanWarningSummary } from '../shared/scan-feedback.mjs'
 
 interface ScanResult {
   state: 'idle' | 'running' | 'complete' | 'partial' | 'error'
@@ -44,13 +45,11 @@ export default function ScansPage() {
     const load = async () => {
       try {
         const response = await fetch('/api/scans', { cache: 'no-store', signal: controller.signal })
-        if (!response.ok) throw new Error(`HTTP ${response.status}`)
-        const data = await response.json() as ScanResult
-        if (!Array.isArray(data.portfolio) || !Array.isArray(data.market)) throw new Error('Ongeldige scanresponse')
+        const data = await scanResponse(response) as ScanResult
         setResult(data); setError(null)
         if (data.state === 'running') timer = setTimeout(() => void load(), 3000)
-      } catch {
-        if (!controller.signal.aborted) setError('Scans niet bereikbaar. Start of controleer de Trading Monitor API en probeer opnieuw.')
+      } catch (error) {
+        if (!controller.signal.aborted) setError(error instanceof Error ? error.message : 'Scans niet bereikbaar. Controleer de server-API.')
       }
     }
     void load()
@@ -61,10 +60,9 @@ export default function ScansPage() {
     setSubmitting(true); setError(null)
     try {
       const response = await fetch('/api/scans', { method: 'POST', headers: { 'X-Requested-With': 'trading-monitor' } })
-      if (!response.ok) throw new Error(`HTTP ${response.status}`)
-      setResult(await response.json() as ScanResult)
+      setResult(await scanResponse(response) as ScanResult)
       setRetry((value) => value + 1)
-    } catch { setError('De scan kon niet starten. Controleer de API, toegestane origin en IBKR-verbinding en probeer opnieuw.') }
+    } catch (error) { setError(error instanceof Error ? error.message : 'De scan kon niet starten. Controleer de server-API.') }
     finally { setSubmitting(false) }
   }
   const running = result.state === 'running'
@@ -79,12 +77,12 @@ export default function ScansPage() {
       <div className="scan-command"><label htmlFor="scan-sort">Sorteer op</label><select id="scan-sort" value={sort} onChange={(event) => setSort(event.target.value as typeof sort)}><option value="annualizedYield">Jaarrendement, hoogste eerst</option><option value="yieldPercentage">Rendement op onderpand</option><option value="premium">Premie per contract</option></select></div>
       <p role="status" aria-live="polite">{running ? 'CSP-criteria worden gecontroleerd…' : result.state === 'idle' ? 'Klaar om te scannen' : result.state === 'error' ? result.message : result.state === 'partial' ? 'Scan afgerond met ontbrekende data; zie meldingen.' : 'Scan afgerond'}{result.startedAt && <> · Gestart {date(result.startedAt)}</>}{result.finishedAt && <> · Afgerond {date(result.finishedAt)}</>}</p>
       {result.startedAt && <p className="monitor-note">{result.symbolsChecked} aandelen en {result.contractsChecked} contracten gecontroleerd.{result.portfolioAsOfDate && <> Portfoliobasis t/m {result.portfolioAsOfDate}.</>} Alleen CSP’s die aan alle criteria voldoen worden getoond.</p>}
-      <p className="monitor-note">De marktverkenning gebruikt maximaal 50 NASDAQ- en 50 Amerikaanse IBKR-scannerresultaten met de hoogste IV; Amerikaanse resultaten worden getoetst aan de S&P 500-ledenlijst. Dit is een shortlist, geen volledige marktscan. Ontbrekende koersdata, Greeks of IVR worden overgeslagen.</p>
+      <p className="monitor-note">De marktverkenning gebruikt maximaal 50 NASDAQ- en 50 Amerikaanse IBKR-scannerresultaten met de hoogste IV, met terugval naar actieve aandelen als de IV-scanner niet beschikbaar is. Amerikaanse resultaten worden getoetst aan de S&P 500-ledenlijst. Dit is een shortlist, geen volledige marktscan. Ontbrekende koersdata, Greeks of IVR worden overgeslagen.</p>
     </section>
-    {error && <section className="state-panel state-panel--error" role="alert"><p>{error}</p><button type="button" onClick={() => setRetry((value) => value + 1)}>Opnieuw proberen</button></section>}
+    {error && <section className="state-panel state-panel--error" role="alert"><p>{error}</p><button type="button" disabled={submitting || running} onClick={() => void start()}>Scan opnieuw starten</button></section>}
     <ScanTable title="CSP’s op je portfolio" rows={portfolioMatches} running={running} sort={sort} />
     <ScanTable title="Interessante NASDAQ / S&P 500-aandelen" rows={marketMatches} running={running} sort={sort} />
     <p className="monitor-note">¹ Eén standaardcontract: 100 aandelen. Premie = biedprijs × 100; onderpand = strike × 100, vóór kosten. ² Lineair geannualiseerd: premie / onderpand × 365 / DTE. POP is jouw delta-benadering. De scan controleert geen beschikbare cash en plaatst geen orders.</p>
-    {result.warnings.length > 0 && <section className="monitor-panel" aria-label="Dekking en marktdata"><p>{result.warnings.length} meldingen over onvolledige dekking of ontbrekende marktdata. Kandidaten zonder volledige toetsbare gegevens zijn overgeslagen.</p></section>}
+    {result.warnings.length > 0 && <section className="monitor-panel" aria-label="Dekking en marktdata"><p>{result.warnings.length} meldingen over onvolledige dekking of ontbrekende marktdata. Kandidaten zonder volledige toetsbare gegevens zijn overgeslagen.</p><ul>{scanWarningSummary(result.warnings).map(({ label, count }) => <li key={label}>{label} ({count})</li>)}</ul></section>}
   </div>
 }
