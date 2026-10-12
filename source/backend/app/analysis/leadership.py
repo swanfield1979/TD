@@ -14,6 +14,21 @@ def ratio(a, b):
     return a / b if b > 0 else None
 
 
+def higher_lows(base, radius, tolerance):
+    """Confirmed pivots only; the supplied base excludes the breakout candle."""
+    lows = [
+        b["low"]
+        for i, b in enumerate(base)
+        if radius <= i < len(base) - radius
+        and all(x["low"] >= b["low"] for x in base[i - radius : i + radius + 1])
+    ]
+    return (
+        all(v >= lows[i - 1] * (1 - tolerance / 100) for i, v in enumerate(lows) if i)
+        if len(lows) >= 2
+        else None
+    )
+
+
 def analyze(symbol, input_bars, config=None):
     c = config or AnalysisConfig()
     bars = [
@@ -111,22 +126,7 @@ def analyze(symbol, input_bars, config=None):
                 if duration >= 2 * k
                 else None
             )
-            r = c.swingRadius
-            lows = [
-                b["low"]
-                for i, b in enumerate(base)
-                if r <= i < duration - r
-                and all(x["low"] >= b["low"] for x in base[i - r : i + r + 1])
-            ]
-            higher = (
-                all(
-                    v >= lows[i - 1] * (1 - c.lowerLowTolerancePct / 100)
-                    for i, v in enumerate(lows)
-                    if i
-                )
-                if len(lows) >= 2
-                else None
-            )
+            higher = higher_lows(base, c.swingRadius, c.lowerLowTolerancePct)
             edge_lows = duration >= 2 * k and min(b["low"] for b in base[-k:]) >= min(
                 b["low"] for b in base[:k]
             ) * (1 - c.lowerLowTolerancePct / 100)
@@ -175,7 +175,12 @@ def analyze(symbol, input_bars, config=None):
             )
             reasons = []
             for condition, reason in [
+                (
+                    duration < c.baseMinSessions,
+                    f"Basis nog te kort: {duration} van minimaal {c.baseMinSessions} sessies.",
+                ),
                 (depth > c.maxDepthPct, "Consolidatie te diep."),
+                (higher is False, "Materieel lagere swingbodem in de consolidatie."),
                 (not orderly, "Hogere bodems nog niet bevestigd."),
                 (not tight, "Range nog niet voldoende vernauwd."),
                 (
@@ -189,6 +194,22 @@ def analyze(symbol, input_bars, config=None):
                 ),
                 (risk, "Actuele koers schendt de risicogrens."),
                 (
+                    last["close"] > high
+                    and (
+                        indicators["rangeExpansion"] is None
+                        or indicators["rangeExpansion"] < c.expansionRatio
+                    ),
+                    f"Range-expansie blijft onder {c.expansionRatio}× ATR20.",
+                ),
+                (
+                    c.requireVolume and indicators["volumeConfirmation"] is not True,
+                    "Verplichte volumebevestiging ontbreekt.",
+                ),
+                (
+                    valid and last["close"] <= high and not ready,
+                    f"Slot ligt meer dan {c.readyDistancePct}% onder het breakoutniveau.",
+                ),
+                (
                     last["close"] > high and not breakout,
                     "Uitbraak zonder alle vereiste bevestigingen.",
                 ),
@@ -199,6 +220,27 @@ def analyze(symbol, input_bars, config=None):
                 dict(
                     status=status,
                     reasons=reasons,
+                    checklist={
+                        "impulse": True,
+                        "duration": c.baseMinSessions <= duration <= c.baseMaxSessions,
+                        "depth": depth <= c.maxDepthPct,
+                        "higherLows": higher,
+                        "orderlyLows": bool(orderly),
+                        "tighteningRange": tight,
+                        "decliningVolatility": volatility_ratio is not None
+                        and volatility_ratio <= c.maxVolatilityRatio,
+                        "movingAverageSupport": surfing,
+                        "riskIntact": not failed,
+                        "closeAboveHigh": last["close"] > high,
+                        "rangeExpansion": indicators["rangeExpansion"] is not None
+                        and indicators["rangeExpansion"] >= c.expansionRatio,
+                        "volume": indicators["volumeConfirmation"],
+                    },
+                    maSupport="MA10/20/50"
+                    if surfing and c.requireMa50
+                    else "MA10/20"
+                    if surfing
+                    else None,
                     move=dict(
                         pct=gain,
                         start=bars[end - length]["date"],

@@ -16,14 +16,19 @@ export default function ScannerBrokerControl({
     [success, setSuccess] = useState('')
   useEffect(() => {
     let active = true
-    const load = () =>
-      scannerRequest<BrokerStatus>('broker/status')
-        .then((data) => {
-          if (active) setStatus(data)
-        })
-        .catch((e) => {
-          if (active) setError(e.message)
-        })
+    let timer: ReturnType<typeof setTimeout>
+    const load = async () => {
+      try {
+        const data = await scannerRequest<BrokerStatus>('broker/status')
+        if (active) {
+          setStatus(data)
+          setError('')
+        }
+      } catch (e) {
+        if (active) setError((e as Error).message)
+      }
+      if (active) timer = setTimeout(load, 5000)
+    }
     void load()
     void scannerRequest<{ broker: BrokerConfig }>('settings')
       .then((s) => {
@@ -32,10 +37,9 @@ export default function ScannerBrokerControl({
       .catch((e) => {
         if (active) setError(e.message)
       })
-    const timer = setInterval(load, 4000)
     return () => {
       active = false
-      clearInterval(timer)
+      clearTimeout(timer)
     }
   }, [])
   async function action(path: string, body?: BrokerConfig) {

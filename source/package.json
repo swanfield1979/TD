@@ -1,7 +1,7 @@
 {
   "name": "trading-monitor",
   "private": true,
-  "version": "0.29.0",
+  "version": "0.30.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -12,7 +12,10 @@
     "start:api": "node server/ibkr-api.mjs",
     "sync:ibkr": "node scripts/sync-ibkr-hourly.mjs",
     "test:frontend": "vitest run",
-    "test:e2e": "node scripts/verify-breakout-browser.mjs"
+    "test:e2e": "node scripts/verify-breakout-browser.mjs",
+    "dev:lan": "node scripts/start-lan.mjs --dev",
+    "serve:lan": "node scripts/start-lan.mjs",
+    "dev:demo": "node scripts/start-lan.mjs --dev --demo"
   },
   "dependencies": {
     "@fluentui/react-icons": "2.0.343",

@@ -2,7 +2,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 test -f package.json
-test "$(node -p "JSON.parse(require('fs').readFileSync('package.json')).version")" = "0.29.0"
+test "$(node -p "JSON.parse(require('fs').readFileSync('package.json')).version")" = "0.30.0"
+systemctl cat trading-monitor-breakout.service >/dev/null 2>&1 || { echo 'Installeer de optionele scanner-service handmatig volgens docs/breakout-python.md, of gebruik npm run serve:lan. Er wordt geen service automatisch geïnstalleerd.' >&2; exit 1; }
 api_unit="$(systemctl show trading-monitor-api.service -p WorkingDirectory --value)"
 test "$(realpath "$api_unit")" = "$(pwd -P)" || { echo 'API WorkingDirectory wijkt af van deze source-map; publiceer de backend eerst naar de werkelijke API-map.' >&2; exit 1; }
 npm ci
@@ -26,9 +27,6 @@ git rev-parse HEAD
 echo 'Vorige repositorycommit voor eventuele code-rollback:'
 git reflog -2 --format='%h %gs'
 sudo rsync -a dist/ /var/www/trading-monitor/
-sudo cp deploy/systemd/trading-monitor-breakout.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable --now trading-monitor-breakout.service
 sudo systemctl restart trading-monitor-breakout.service
 sudo cp deploy/nginx/trading-monitor.conf /etc/nginx/sites-available/trading-monitor
 sudo nginx -t
@@ -38,4 +36,4 @@ sudo systemctl is-active --quiet trading-monitor-api.service
 curl --fail --silent --show-error http://127.0.0.1/ -o /dev/null
 curl --fail --silent --show-error --retry 10 --retry-all-errors --retry-delay 1 http://127.0.0.1/api/breakout
 curl --fail --silent --show-error http://127.0.0.1/api/health
-printf '\nTrading Monitor 0.29.0 geplaatst. Back-up: %s/webroot\nOpen http://192.168.1.22/#breakout en vernieuw met Ctrl+F5.\nScanner standaard paper (4002), los van de bestaande portefeuilleverbinding.\n' "$backup_dir"
+printf '\nTrading Monitor 0.30.0 geplaatst. Back-up: %s/webroot\nOpen http://192.168.1.22/#breakout en vernieuw met Ctrl+F5.\nScanner standaard paper (4002), los van de bestaande portefeuilleverbinding.\n' "$backup_dir"

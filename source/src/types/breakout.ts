@@ -23,6 +23,11 @@ export type BreakoutStock = {
   corporateActionReview?: boolean
   averageDollarVolume?: number | null
   lastError?: string | null
+  lastUpdatedAt?: string | null
+  calculatedAt?: string
+  dataMode?: string
+  maSupport?: string | null
+  checklist?: Record<string, boolean | null>
   asOf: string
   close: number
   sessions: number
@@ -67,6 +72,11 @@ export type BreakoutScan = {
   currentSymbol?: string
   message?: string
   staleSymbols?: string[]
+  dataLabel?: string
+  lastSuccessfulSyncAt?: string | null
+  lastDataUpdateAt?: string | null
+  sufficientSymbols?: number
+  filters?: { minimumPrice: number; minimumAverageDollarVolume: number }
 }
 export type BrokerConfig = {
   application: 'gateway' | 'tws'

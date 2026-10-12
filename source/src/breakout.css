@@ -384,3 +384,4 @@
     padding: 15px;
   }
 }
+.bo-checklist { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 8px; font-size: 12px; }

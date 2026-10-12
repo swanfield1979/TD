@@ -1,4 +1,4 @@
-# Python-scanner 0.29.0
+# Python-scanner 0.30.0
 
 Breakout gebruikt Python 3.12+, FastAPI, Pydantic-settings, SQLAlchemy en SQLite, naast de bestaande Node-portefeuillebackend. Alle broncode en afhankelijkheden staan onder `source/`. Dit is uitsluitend marktdata-analyse: **Read-only — geen orderuitvoering**. De scanner bevat geen orderroutes, orderobjecten of automatische simulatie van transacties.
 
@@ -76,4 +76,6 @@ Muterende requests vereisen een toegestane `Origin` en `X-Requested-With: tradin
 
 ## Validatie
 
-24 pytest-tests, zeven Vitest-tests en 94 bestaande Node-regressietests slagen. De Playwright-smoketest volgt echte React → HTTP → FastAPI → SQLite → Python-analyse, met een expliciet geïnjecteerde testbroker. De test weigert een productiebackend zonder testheader. Desktop en mobiel, CSV-upload/export, configvalidatie, scan, setupdetails, chart en filters zijn gecontroleerd. Fixtures zijn uitsluitend testdata; `app.main` bevat geen productie-demomodus. TypeScript/Vite-build slaagt. Live TWS/Gateway-marktdata en plaatsing op 192.168.1.22 zijn nog niet bevestigd.
+32 pytest-tests, zeven Vitest-tests en 94 bestaande Node-regressietests slagen. Extra endpoints, structured errors, expliciete demo en LAN-startcommando’s: [LAN/API](breakout-lan.md). De Playwright-smoketest volgt echte React → HTTP → FastAPI → SQLite → Python-analyse, met een expliciet geïnjecteerde testbroker. De test weigert een productiebackend zonder testheader. Desktop en mobiel, CSV-upload/export, configvalidatie, scan, setupdetails, chart en filters zijn gecontroleerd. Fixtures zijn uitsluitend testdata; `app.main` bevat geen productie-demomodus. TypeScript/Vite-build slaagt. Live TWS/Gateway-marktdata en plaatsing op 192.168.1.22 zijn nog niet bevestigd.
+
+Bij ontbrekende verwachte VS-sessies wordt het getroffen momentumvenster ongeldig en blijven ontbrekende datums zichtbaar; er worden geen sessies bijgemaakt. De aanvullende API geeft sync/status, stockdetails en bars met exacte UTC-opslagtijden. De optionele systemd-service wordt uitsluitend handmatig geïnstalleerd.

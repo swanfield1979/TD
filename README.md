@@ -2,7 +2,7 @@
 
 Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voortgang op basis van Interactive Brokers Flex-rapporten.
 
-**Versie/status:** 0.29.0. Breakout met FastAPI, SQLite-cache, read-only IBKR, CSV-universum en configureerbare momentum-/stair-step-analyse. Tests, productiebuild en echte lokale HTTP/browserworkflow geslaagd; liveserverinstallatie en echte IBKR-data nog niet bevestigd.
+**Versie/status:** 0.30.0. Breakout met FastAPI, SQLite-cache, read-only IBKR, CSV-universum en configureerbare momentum-/stair-step-analyse. Aanvullende JSON-API, setupchecklist en één LAN-startcommando. Tests, productiebuild en lokale LAN/browserworkflow geslaagd; liveserverinstallatie en echte IBKR-data nog niet bevestigd.
 
 | Map | Inhoud |
 | --- | --- |
@@ -12,7 +12,10 @@ Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voort
 
 ## Starten
 
-Zie [Breakout-serverupdate 0.29.0](docs/breakout-scanner.md#installatie-via-github): publiceer frontend en backend samen en herstart de API. Een nieuwe Flex-import is voor deze uitbreiding niet vereist.
+Ontwikkeling: `npm run dev:lan`; productie: `npm run serve:lan`, vanuit source na dependency-installatie. Zie [LAN-handleiding](docs/breakout-lan.md). Optionele systemd-service wordt handmatig geïnstalleerd.
+
+
+Zie [Breakout-serverupdate 0.30.0](docs/breakout-scanner.md#installatie-via-github): publiceer frontend en backend samen en herstart de API. Een nieuwe Flex-import is voor deze uitbreiding niet vereist.
 
 Zie [`docs/installatie.md`](docs/installatie.md) voor de installatie en [`source/README.md`](source/README.md) voor alle ontwikkelcommando's.
 

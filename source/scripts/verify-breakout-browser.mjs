@@ -19,9 +19,16 @@ try {
   })
   page.on('pageerror', (error) => errors.push(error.message))
   const health = await page.request.get(`${base}/api/health`)
-  assert.equal(health.headers()['x-breakout-test'], 'true', 'Start tests.smoke_server:app; deze test mag uitsluitend de testbackend wijzigen.')
+  assert.equal(
+    health.headers()['x-breakout-test'],
+    'true',
+    'Start tests.smoke_server:app; deze test mag uitsluitend de testbackend wijzigen.',
+  )
   await page.request.post(`${base}/api/broker/disconnect`, {
-    headers: { Origin: new URL(base).origin, 'X-Requested-With': 'trading-monitor' },
+    headers: {
+      Origin: new URL(base).origin,
+      'X-Requested-With': 'trading-monitor',
+    },
   })
   await page.goto(`${base}/#breakout`)
   await page
@@ -45,15 +52,13 @@ try {
   await page.getByRole('button', { name: 'Scan starten' }).waitFor()
   await page.getByRole('button', { name: 'Instellingen', exact: true }).click()
   await page.getByLabel('Universum', { exact: true }).selectOption('cached')
-  await page
-    .getByLabel('Universum-CSV uploaden')
-    .setInputFiles({
-      name: 'test.csv',
-      mimeType: 'text/csv',
-      buffer: Buffer.from(
-        'symbol,exchange,currency,company,sector\nTEST,NASDAQ,USD,Test company,Tech',
-      ),
-    })
+  await page.getByLabel('Universum-CSV uploaden').setInputFiles({
+    name: 'test.csv',
+    mimeType: 'text/csv',
+    buffer: Buffer.from(
+      'symbol,exchange,currency,company,sector\nTEST,NASDAQ,USD,Test company,Tech',
+    ),
+  })
   await page
     .getByRole('status')
     .filter({ hasText: 'aandelen geïmporteerd' })
@@ -68,9 +73,22 @@ try {
     .fill(JSON.stringify(settings.analysis, null, 2))
   await page.getByRole('button', { name: 'Scan starten' }).click()
   await page.getByRole('button', { name: 'TEST', exact: true }).waitFor()
+  assert.ok(
+    (await page.locator('body').innerText()).includes(
+      'DEMO — testdata, geen IBKR-data',
+    ),
+  )
+  const stock = await (await page.request.get(`${base}/api/stocks/TEST`)).json()
+  assert.equal(stock.status, 'breakout')
+  assert.equal(stock.checklist.movingAverageSupport, true)
+  const bars = await (
+    await page.request.get(`${base}/api/stocks/TEST/bars?limit=21`)
+  ).json()
+  assert.equal(bars.bars.length, 21)
   await page.getByRole('button', { name: 'Instellingen', exact: true }).click()
   await page.getByRole('button', { name: 'TEST', exact: true }).click()
   await page.getByRole('region', { name: 'Setupdetails TEST' }).waitFor()
+  await page.getByLabel('Setupchecklist').waitFor()
   assert.ok(
     (
       await page.getByRole('region', { name: 'Setupdetails TEST' }).innerText()
@@ -95,6 +113,8 @@ try {
     .getByRole('heading', { name: 'Geen leiders in deze selectie' })
     .waitFor()
   await page.getByLabel('Ticker zoeken').fill('TEST')
+  await page.getByLabel('Ticker zoeken').fill('Test company')
+  await page.getByRole('button', { name: 'TEST', exact: true }).waitFor()
   const download = page.waitForEvent('download')
   await page.getByRole('button', { name: 'CSV exporteren' }).click()
   assert.match((await download).suggestedFilename(), /^breakout-/)

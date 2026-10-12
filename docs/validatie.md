@@ -214,3 +214,10 @@ De eerste versie wordt gecontroleerd met:
 - Playwright met echte React → HTTP → FastAPI → SQLite → Python-analyse, uitsluitend testbroker in tests.smoke_server. CSV-upload, JSON-validatiefout, scannen, setupdetails/chart, sortering, filters, zoeken, export en 390px-menubediening gecontroleerd. Desktop/mobiel geen pagina-overflow of browserexceptions. Test weigert een productiebackend zonder testheader.
 - Lokale productiemodule heeft geen fictieve datafallback. Live IBKR en serverinstallatie nog niet bevestigd; GitHub-updateprocedure en Python 3.12+-vereiste gedocumenteerd. Eén Starlette TestClient-deprecatiewaarschuwing voor httpx, geen testfalen.
 - [Architectuur, API en databeperkingen](breakout-python.md).
+
+## Breakout 0.30.0 — 12 oktober 2026
+
+- 32 pytest-tests en zeven Vitest-tests geslaagd; 94 bestaande Node-tests behouden. Extra tests voor API-contract, instellingen/pacingpersistente herstart, structured errors, detailroutes/ambiguïteit, alle returnperioden, basisduur, MA-/contractieregels, pivotlows/tolerantie, ontbrekende sessies en read-only env.
+- Playwright: echte CSV/HTTP/SQLite/analyseflow, checklist, detail-/bars-API, bedrijfsnaamzoeken, uitgebreide tabel en responsive grafiek. Productiebuild geslaagd.
+- Productiecommando gestart op 0.0.0.0:8000; frontend, scanner-API en portefeuilleproxy bereikbaar via localhost en eigen 192.168.1.48 LAN-adres, browser gecontroleerd. Ontwikkel/demo-start gecontroleerd met expliciete DEMO-labels. Geen tweede fysiek LAN-apparaat, live IBKR of installatie op 192.168.1.22 bevestigd.
+- Systemd alleen handmatig; updateprocedure vraagt vooraf geïnstalleerde service. Zie [LAN/API-handleiding](breakout-lan.md).

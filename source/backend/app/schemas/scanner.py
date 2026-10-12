@@ -75,9 +75,24 @@ class DailyBar(BaseModel):
 
 
 class SyncRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     config: AnalysisConfig | None = None
     retry_failed: bool = False
     force_refresh: bool = False
     # Backwards-compatible browser request; universe selection is now durable CSV metadata.
     universe: Literal["custom", "sp500"] | None = None
     symbols: str | None = Field(default=None, max_length=60_000)
+
+
+class FilterSettings(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    minimumPrice: float = Field(default=0, ge=0, allow_inf_nan=False)
+    minimumAverageDollarVolume: float = Field(default=0, ge=0, allow_inf_nan=False)
+
+
+class PacingSettings(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    intervalSeconds: float = Field(default=11, ge=0, allow_inf_nan=False)
+    maxRequests: int = Field(default=55, ge=1, le=60)
+    windowSeconds: float = Field(default=600, gt=0, allow_inf_nan=False)
+    concurrency: Literal[1] = 1

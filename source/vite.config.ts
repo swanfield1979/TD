@@ -41,6 +41,8 @@ export default defineConfig({
       '/api/universe': 'http://127.0.0.1:8788',
       '/api/sync': 'http://127.0.0.1:8788',
       '/api/leaders': 'http://127.0.0.1:8788',
+      '/api/stocks': 'http://127.0.0.1:8788',
+      '/api/analysis': 'http://127.0.0.1:8788',
       '/api/health': 'http://127.0.0.1:8788',
       '/api/docs': 'http://127.0.0.1:8788',
       '/api/openapi.json': 'http://127.0.0.1:8788',

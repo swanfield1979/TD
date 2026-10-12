@@ -1,19 +1,36 @@
 import asyncio
+from datetime import date
+from typing import Annotated
 
-from fastapi import APIRouter, File, HTTPException, Query, Request, UploadFile
+from fastapi import APIRouter, File, HTTPException, Path, Query, Request, UploadFile
+from pydantic import BaseModel, ConfigDict
 
 from ..analysis.leadership import select_leaders
 from ..core.settings import BrokerSettings
-from ..schemas.scanner import AnalysisConfig, SyncRequest
+from ..schemas.scanner import (
+    AnalysisConfig,
+    FilterSettings,
+    PacingSettings,
+    SyncRequest,
+)
+from ..broker.pacing import Pacer
 from ..services.universe import parse_universe
 
 router = APIRouter(prefix="/api")
 
 
+class SettingsUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    broker: BrokerSettings | None = None
+    analysis: AnalysisConfig | None = None
+    filters: FilterSettings | None = None
+    pacing: PacingSettings | None = None
+
+
 @router.get("/health", summary="Proces- en databasegezondheid")
 def health(request: Request):
     request.app.state.repo.get("health")
-    return {"status": "ok", "version": "0.29.0", "readOnly": True, "storage": "sqlite"}
+    return {"status": "ok", "version": "0.30.0", "readOnly": True, "storage": "sqlite"}
 
 
 @router.get(
@@ -61,12 +78,49 @@ def settings(request: Request):
         "broker": app.broker.config.model_dump(),
         "analysis": app.scanner.config.model_dump(),
         "readOnly": True,
+        "filters": app.repo.get("filters", FilterSettings().model_dump()),
         "pacing": {
             "intervalSeconds": app.settings.request_interval,
             "maxRequests": app.settings.request_limit,
             "windowSeconds": app.settings.pacing_window,
+            "concurrency": 1,
         },
     }
+
+
+@router.put(
+    "/settings", summary="Analyse, filters, broker en pacing gezamenlijk opslaan"
+)
+async def save_settings(payload: SettingsUpdate, request: Request):
+    app = request.app.state
+    if app.scanner.busy() or app.connect_task and not app.connect_task.done():
+        raise HTTPException(409, "Stop eerst de synchronisatie/verbinding.")
+    if not any(
+        getattr(payload, key) is not None
+        for key in ["broker", "analysis", "filters", "pacing"]
+    ):
+        raise HTTPException(422, "Geef minstens één instellingenobject op.")
+    if payload.broker is not None:
+        await app.broker.disconnect()
+        app.broker.config = payload.broker
+        app.repo.put("broker", payload.broker.model_dump())
+    if payload.analysis is not None:
+        app.scanner.config = payload.analysis
+        app.repo.put("analysis", payload.analysis.model_dump())
+    if payload.filters is not None:
+        app.repo.put("filters", payload.filters.model_dump())
+    if payload.pacing is not None:
+        p = payload.pacing
+        (
+            app.settings.request_interval,
+            app.settings.request_limit,
+            app.settings.pacing_window,
+        ) = p.intervalSeconds, p.maxRequests, p.windowSeconds
+        app.broker.pacer = Pacer(p.intervalSeconds, p.maxRequests, p.windowSeconds)
+        app.repo.put("pacing", p.model_dump())
+    await app.scanner.recalculate()
+    app.repo.put("scan", app.scanner.state)
+    return settings(request)
 
 
 @router.put(
@@ -122,6 +176,9 @@ def universe(request: Request):
 
 
 @router.post("/universe/upload", summary="CSV met symbol/exchange/currency importeren")
+@router.post(
+    "/universe/import", summary="Universum importeren via multipart CSV-bestand"
+)
 async def upload(
     request: Request, file: UploadFile = File(...), replace: bool = Query(False)
 ):
@@ -142,6 +199,10 @@ async def upload(
 
 
 @router.get("/breakout", summary="Scanstatus en resultaten uit lokale cache")
+@router.get(
+    "/sync/status",
+    summary="Pollbare voortgang, fouten en exacte update-/synchronisatietijden",
+)
 def state(request: Request):
     return request.app.state.scanner.public_state()
 
@@ -155,6 +216,9 @@ def state(request: Request):
     "/sync",
     status_code=202,
     summary="Synchronisatie starten; retry_failed/force_refresh optioneel",
+)
+@router.post(
+    "/sync/start", status_code=202, summary="Incrementele synchronisatie starten"
 )
 async def start(payload: SyncRequest, request: Request):
     try:
@@ -175,6 +239,99 @@ async def cancel(request: Request):
     return request.app.state.scanner.public_state()
 
 
+@router.post(
+    "/analysis/recalculate",
+    summary="Analyse opnieuw berekenen uit cache zonder brokerrequests",
+)
+async def recalculate(request: Request):
+    app = request.app.state
+    if app.scanner.busy():
+        raise HTTPException(409, "Stop eerst de synchronisatie.")
+    await app.scanner.recalculate()
+    app.repo.put("scan", app.scanner.state)
+    return app.scanner.public_state()
+
+
+Symbol = Annotated[str, Path(pattern=r"^[A-Za-z0-9][A-Za-z0-9 ._-]{0,29}$")]
+
+
+def find_stock(request, symbol, exchange, currency):
+    matches = [
+        i
+        for i in request.app.state.repo.universe()
+        if i.symbol == symbol.upper()
+        and (exchange is None or i.exchange == exchange)
+        and (currency is None or i.currency == currency)
+    ]
+    if not matches:
+        raise HTTPException(404, "Aandeel niet gevonden in het actieve universum.")
+    if len(matches) > 1:
+        raise HTTPException(
+            409, "Meerdere contracten gevonden; specificeer exchange en currency."
+        )
+    return matches[0]
+
+
+@router.get("/stocks/{symbol}", summary="Setupdiagnostiek en versheid van één aandeel")
+def stock(
+    request: Request,
+    symbol: Symbol,
+    exchange: str | None = None,
+    currency: str | None = None,
+):
+    i = find_stock(request, symbol, exchange, currency)
+    row = next(
+        (
+            r
+            for r in request.app.state.scanner.state["rows"]
+            if r["id"] == f"{i.symbol}:{i.exchange}:{i.currency}"
+        ),
+        None,
+    )
+    if row is None:
+        raise HTTPException(
+            409, "Analyse nog niet beschikbaar; bereken de cache opnieuw."
+        )
+    return row
+
+
+@router.get(
+    "/stocks/{symbol}/bars",
+    summary="Dagelijkse cached OHLCV met handelsdatums en herkomst",
+)
+def stock_bars(
+    request: Request,
+    symbol: Symbol,
+    exchange: str | None = None,
+    currency: str | None = None,
+    start: date | None = None,
+    end: date | None = None,
+    limit: int = Query(500, ge=1, le=5000),
+):
+    if start and end and start > end:
+        raise HTTPException(422, "Startdatum moet vóór of op de einddatum liggen.")
+    i = find_stock(request, symbol, exchange, currency)
+    kind = request.app.state.broker.config.what_to_show
+    bars = [
+        b
+        for b in request.app.state.repo.bars(i.id, kind)
+        if (start is None or b["date"] >= start.isoformat())
+        and (end is None or b["date"] <= end.isoformat())
+    ]
+    return {
+        "symbol": i.symbol,
+        "exchange": i.exchange,
+        "currency": i.currency,
+        "whatToShow": kind,
+        "dataMode": "demo"
+        if getattr(request.app.state.broker, "is_demo", False)
+        else "cached_ibkr",
+        "lastUpdatedAt": i.synced_at,
+        "timezone": "exchange-session-date",
+        "bars": bars[-limit:],
+    }
+
+
 @router.get(
     "/leaders",
     summary="Cross-sectionele leiders met status-/liquiditeits-/metadatafilters",
@@ -184,8 +341,8 @@ def leaders(
     top: int | None = Query(None),
     period: int = Query(0, ge=0, le=2),
     status: str | None = None,
-    min_price: float = Query(0, ge=0),
-    min_dollar_volume: float = Query(0, ge=0),
+    min_price: float = Query(0, ge=0, allow_inf_nan=False),
+    min_dollar_volume: float = Query(0, ge=0, allow_inf_nan=False),
     exchange: str | None = None,
     sector: str | None = None,
 ):

@@ -30,8 +30,9 @@ def incremental_duration(cached, target, force=False):
 
 
 class Scanner:
-    def __init__(self, repository, broker):
+    def __init__(self, repository, broker, settings=None):
         self.repo, self.broker = repository, broker
+        self.settings = settings
         self.config = AnalysisConfig.model_validate(repository.get("analysis", {}))
         self.state = repository.get("scan", self.empty())
         if self.state["state"] == "running":
@@ -68,6 +69,22 @@ class Scanner:
             rows=[] if self.busy() else self.state["rows"],
             broker=self.broker.public_status(),
             safetyLabel="Read-only — geen orderuitvoering",
+            dataMode="demo"
+            if getattr(self.broker, "is_demo", False)
+            else "cached_ibkr",
+            dataLabel="DEMO — testdata, geen IBKR-data"
+            if getattr(self.broker, "is_demo", False)
+            else "Cached IBKR · dagelijkse historie",
+            lastSuccessfulSyncAt=self.repo.get("last_successful_sync"),
+            lastDataUpdateAt=max(
+                (i.synced_at for i in self.repo.universe() if i.synced_at), default=None
+            ),
+            sufficientSymbols=sum(
+                r["status"] != "insufficient_data" for r in self.state["rows"]
+            ),
+            filters=self.repo.get(
+                "filters", {"minimumPrice": 0, "minimumAverageDollarVolume": 0}
+            ),
         )
 
     async def prepare(self, request):
@@ -125,7 +142,11 @@ class Scanner:
             )
             rows = parse_universe(
                 "symbol,exchange,currency\n"
-                + "\n".join(f"{s.strip()},SMART,USD" for s in symbols if s.strip())
+                + "\n".join(
+                    f"{s.strip()},{self.settings.default_exchange if self.settings else 'SMART'},{self.settings.default_currency if self.settings else 'USD'}"
+                    for s in symbols
+                    if s.strip()
+                )
             )
             self.repo.import_universe(rows, replace=True)
         universe = self.repo.universe(request.retry_failed)
@@ -228,6 +249,8 @@ class Scanner:
     async def finalize(self, target):
         await self.recalculate(target)
         self.state["finishedAt"] = datetime.now(UTC).isoformat()
+        if self.state["state"] == "complete":
+            self.repo.put("last_successful_sync", self.state["finishedAt"])
         self.repo.put("scan", self.state)
 
     async def recalculate(self, target=None):
@@ -239,6 +262,34 @@ class Scanner:
             bars = self.repo.bars(item.id, kind)
             # Bound CPU work and keep server responsive while analyzing large universes.
             row = await asyncio.to_thread(analyze, item.symbol, bars, self.config)
+            missing = []
+            if bars and item.currency == "USD":
+                present = {b["date"] for b in bars}
+                day = date.fromisoformat(
+                    bars[max(0, len(bars) - max(self.config.periods) - 1)]["date"]
+                )
+                last = date.fromisoformat(bars[-1]["date"])
+                while day <= last:
+                    if (
+                        day.weekday() < 5
+                        and day.isoformat() not in HOLIDAYS
+                        and day.isoformat() not in present
+                    ):
+                        missing.append(day.isoformat())
+                    day += timedelta(days=1)
+                if missing:
+                    row["status"] = "insufficient_data"
+                    row["reasons"].append(
+                        f"{len(missing)} verwachte VS-sessies ontbreken; geen betrouwbare leidersrang."
+                    )
+                    row["returns"] = [
+                        None
+                        if len(bars) <= p
+                        or any(d >= bars[-p - 1]["date"] for d in missing)
+                        else value
+                        for p, value in zip(self.config.periods, row["returns"])
+                    ]
+            row["missingSessionDates"] = missing
             row.update(
                 id=f"{item.symbol}:{item.exchange}:{item.currency}",
                 exchange=item.exchange,
@@ -248,6 +299,11 @@ class Scanner:
                 lastError=item.last_error,
                 corporateActionReview=item.corporate_action_review,
                 cacheAvailable=bool(bars),
+                lastUpdatedAt=item.synced_at,
+                calculatedAt=datetime.now(UTC).isoformat(),
+                dataMode="demo"
+                if getattr(self.broker, "is_demo", False)
+                else "cached_ibkr",
             )
             if item.currency != "USD":
                 row["averageDailyTurnover"] = row["averageDollarVolume"]

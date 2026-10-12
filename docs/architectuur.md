@@ -44,6 +44,8 @@ De opgeslagen live snapshot bevat optioneel `previousBalance` met datum en saldo
 
 `source/shared/csp-scan.mjs` bevat filters, New York-datum, IVR en sortering. `source/server/csp-scanner.mjs` verzamelt read-only IBKR-marktdata via een aparte socket. `source/server/ibkr-api.mjs` beheert één asynchrone scan in geheugen met GET/POST `/api/scans`. `source/src/ScansPage.tsx` haalt voortgang op en toont twee tabellen. Het donkere thema overschrijft semantische CSS-tokens; de browservoorkeur staat in `tm-theme`. Zie [Scans](scans.md) voor dekking en berekeningen.
 
-## Breakout-scanner (0.29.0)
+## Breakout-scanner (0.30.0)
 
 React/TypeScript gebruikt een afzonderlijke FastAPI-service op localhost:8788, geproxied door Nginx. Pythonmodules scheiden HTTP, analyse, broker, universumservice en SQLAlchemy/SQLite-opslag. CSV-universum en contract-ID's worden bewaard, historie wordt incrementeel aangevuld en failures behouden de cache. ib_async 2.1.0 is gepind, standaard Paper Gateway read-only, TRADES-dagbars. De bestaande Node-portefeuille/CSP-API blijft op 8787. Details, beperkingen en endpoints: [Python-architectuur](breakout-python.md).
+
+De [LAN-launcher en aanvullende API](breakout-lan.md) bieden ook productiehosting vanuit FastAPI op 0.0.0.0:8000 met dezelfde origin voor frontend, scanner en portefeuilleproxy. Ontwikkeling gebruikt een Vite-proxy. Dagcandles zijn zichtbaar Cached; demo is uitsluitend een expliciet tests.smoke_server-target met tijdelijke database.

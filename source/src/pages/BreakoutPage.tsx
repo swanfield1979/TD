@@ -6,6 +6,7 @@ import type {
   BreakoutScan as Scan,
 } from '../types/breakout'
 import StockDetail from '../components/StockDetail'
+import PriceSparkline from '../components/PriceSparkline'
 import { labels, number, percent } from '../utils/breakout-display'
 import ScannerBrokerControl from '../components/ScannerBrokerControl'
 import { scannerRequest } from '../api/breakout'
@@ -49,7 +50,10 @@ export default function BreakoutPage() {
       timer: ReturnType<typeof setTimeout>
     const load = async () => {
       try {
-        const res = await fetch('/api/breakout', { cache: 'no-store' })
+        const res = await fetch('/api/breakout', {
+          cache: 'no-store',
+          signal: AbortSignal.timeout(30000),
+        })
         if (!res.ok)
           throw new Error(`Scanner-API niet bereikbaar (HTTP ${res.status}).`)
         const data: Scan = await res.json()
@@ -60,6 +64,8 @@ export default function BreakoutPage() {
           setConfig(JSON.stringify(data.config, null, 2))
           setUniverse('cached')
           setSymbols(data.symbols)
+          setMinPrice(data.filters?.minimumPrice ?? 0)
+          setMinDollarVolume(data.filters?.minimumAverageDollarVolume ?? 0)
           initialized = true
         }
       } catch (e) {
@@ -307,13 +313,25 @@ export default function BreakoutPage() {
         <span className={running ? 'bo-lime' : ''}>
           {scanLabels[scan?.state ?? 'idle'] ?? scan?.state}
         </span>
-        <span>{scan?.source ?? 'IBKR-historie · geen demokoersen'}</span>
+        <span>{scan?.dataLabel ?? 'Cached IBKR · geen demokoersen'}</span>
+        <span>
+          Universum: {scan?.totalUniverse ?? 0} · voldoende historie:{' '}
+          {scan?.sufficientSymbols ?? 0}
+        </span>
         <span>Peildatum: {scan?.asOf ?? '—'}</span>
-        {scan?.finishedAt && (
+        {scan?.lastDataUpdateAt && (
           <span>
-            Bijgewerkt: {new Date(scan.finishedAt).toLocaleString('nl-NL')}
+            Koersdata opgeslagen:{' '}
+            {new Date(scan.lastDataUpdateAt).toLocaleString('nl-NL')} (
+            {scan.lastDataUpdateAt})
           </span>
         )}
+        <span>
+          Laatste geslaagde sync:{' '}
+          {scan?.lastSuccessfulSyncAt
+            ? new Date(scan.lastSuccessfulSyncAt).toLocaleString('nl-NL')
+            : 'Nog geen'}
+        </span>
         {running && (
           <>
             <progress value={scan?.progress ?? 0} max={scan?.total || 1} />
@@ -572,6 +590,27 @@ export default function BreakoutPage() {
         >
           Filters wissen
         </button>
+        <button
+          disabled={busy || running}
+          onClick={async () => {
+            try {
+              await scannerRequest('settings', {
+                method: 'PUT',
+                body: JSON.stringify({
+                  filters: {
+                    minimumPrice: minPrice,
+                    minimumAverageDollarVolume: minDollarVolume,
+                  },
+                }),
+              })
+              setNotice('Filterstandaarden opgeslagen.')
+            } catch (e) {
+              setError((e as Error).message)
+            }
+          }}
+        >
+          Filterstandaarden bewaren
+        </button>
       </div>
       <p className="bo-muted">
         {rows.length} resultaten · dekking {scan?.rows.length ?? 0}/
@@ -586,6 +625,7 @@ export default function BreakoutPage() {
         <table>
           <thead>
             <tr>
+              <th>Rang</th>
               {[
                 ['symbol', 'Aandeel'],
                 ['close', 'Slotkoers'],
@@ -619,6 +659,9 @@ export default function BreakoutPage() {
               ))}
               <th>Impuls</th>
               <th>Basis</th>
+              <th>MA-steun</th>
+              <th>Afstand breakout</th>
+              <th>Koersverloop</th>
             </tr>
           </thead>
           <tbody>
@@ -627,6 +670,7 @@ export default function BreakoutPage() {
                 key={r.id ?? r.symbol}
                 className={selected === (r.id ?? r.symbol) ? 'selected' : ''}
               >
+                <td>{r.ranks?.[period] ?? '—'}</td>
                 <td>
                   <button
                     className="bo-ticker"
@@ -637,13 +681,13 @@ export default function BreakoutPage() {
                           : (r.id ?? r.symbol),
                       )
                     }
-                    aria-expanded={selected === r.symbol}
+                    aria-expanded={selected === (r.id ?? r.symbol)}
                   >
                     {r.symbol}
                   </button>
+                  <small>{r.company || 'Bedrijfsnaam onbekend'}</small>
                   <small>
-                    Rang {r.ranks?.[period] ?? '—'} · {r.exchange} ·{' '}
-                    {r.currency}
+                    {r.exchange} · {r.currency}
                   </small>
                 </td>
                 <td>
@@ -670,6 +714,13 @@ export default function BreakoutPage() {
                   {r.base
                     ? `${number(r.base.weeks, 1)}w · ${number(r.base.depthPct, 1)}% diep`
                     : '—'}
+                </td>
+                <td>{r.maSupport ?? '—'}</td>
+                <td>
+                  {r.base ? `${number(r.base.distanceToHighPct, 1)}%` : '—'}
+                </td>
+                <td>
+                  <PriceSparkline bars={r.chart} symbol={r.symbol} />
                 </td>
               </tr>
             ))}

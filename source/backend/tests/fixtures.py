@@ -45,6 +45,8 @@ def bars(breakout=True):
 class FakeBroker:
     """Only injected into tests; never selected by production environment settings."""
 
+    is_demo = True
+
     def __init__(self, settings, config):
         self.settings, self.config = settings, config
         self.connected = False

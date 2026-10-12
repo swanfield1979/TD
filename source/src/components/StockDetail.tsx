@@ -15,15 +15,64 @@ export default function StockDetail({ row }: { row: Stock }) {
         <h2>
           {row.symbol}{' '}
           <small>
-            {row.asOf} · ${number(row.close)}
+            {row.asOf} · {row.currency ?? 'USD'} {number(row.close)}
           </small>
         </h2>
         <span className={`bo-status ${row.status}`}>{labels[row.status]}</span>
       </div>
+      <p className="bo-muted">
+        {row.dataMode === 'demo'
+          ? 'DEMO — testdata, geen IBKR-data'
+          : 'Cached IBKR'}{' '}
+        · {row.company || row.symbol} ·{' '}
+        {row.stale ? 'Data verouderd' : 'Afgesloten sessiedata'}
+        <br />
+        Data opgeslagen: {row.lastUpdatedAt ?? 'Nog geen'} · berekend:{' '}
+        {row.calculatedAt ?? '—'}
+      </p>
       <FinancialChart row={row} />
       <p className="bo-muted">
         Candles: OHLC · blauw: MA10 · amber: MA20 · paars: MA50 · lijn:
         consolidatie vóór de laatste candle
+      </p>
+      {row.checklist && (
+        <ul className="bo-checklist" aria-label="Setupchecklist">
+          {Object.entries({
+            impulse: 'Kwalificerende impuls',
+            duration: 'Consolidatieduur',
+            depth: 'Consolidatiediepte',
+            higherLows: 'Hogere swingbodems',
+            orderlyLows: 'Ordelijk koersverloop',
+            tighteningRange: 'Vernauwende range',
+            decliningVolatility: 'Afnemende volatiliteit',
+            movingAverageSupport: 'Steun op stijgende MA’s',
+            riskIntact: 'Risicogrenzen intact',
+            closeAboveHigh: 'Slot boven eerdere high',
+            rangeExpansion: 'Range-expansie',
+            volume: 'Volumeconfirmatie (optioneel tenzij ingesteld)',
+          }).map(([key, label]) => (
+            <li key={key}>
+              <span className={row.checklist?.[key] ? 'bo-lime' : 'bo-muted'}>
+                {row.checklist?.[key] == null
+                  ? '— Niet toetsbaar'
+                  : row.checklist[key]
+                    ? '✓ Voldoet'
+                    : '× Voldoet niet'}
+              </span>{' '}
+              · {label}
+            </li>
+          ))}
+        </ul>
+      )}
+      <p className="bo-muted">
+        {labels[row.status]}:{' '}
+        {row.reasons.length
+          ? row.reasons.join(' ')
+          : row.status === 'breakout'
+            ? 'De basis voldoet aan de criteria; het slot doorbreekt de eerdere high met voldoende range-expansie.'
+            : row.status === 'ready'
+              ? 'De basis voldoet aan de criteria en ligt dicht bij het breakoutniveau.'
+              : 'Bekijk de meetwaarden en checklist.'}
       </p>
       <div className="bo-details">
         <article>

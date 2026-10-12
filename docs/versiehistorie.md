@@ -1,5 +1,14 @@
 # Versiehistorie
 
+## 0.30.0 — volledig API-contract en LAN-start (12 oktober 2026)
+
+- Gezamenlijke instellingen-API, universe/import, sync/start/status, stockdetails/bars en analyseherberekening; Nederlandse structured errors.
+- Cached-dataherkomst en afzonderlijke sync-/opslag-/berekentijden, ontbrekende sessies uitgesloten van momentumrangen.
+- Tabel met bedrijf/rang/MA-steun/breakoutafstand/sparkline; detailchecklist, impulsmarkeringen en consolidatie-overlay.
+- Eén ontwikkel- en productiecommando, gezamenlijke origin, 0.0.0.0-hosting en expliciete demo; systemd uitsluitend handmatig.
+- 32 pytest-, zeven Vitest- en 94 regressietests plus Playwright/LAN-browserworkflow geslaagd. [Handleiding](breakout-lan.md).
+
+
 ## 0.29.0 — Python Breakout en incrementele cache (12 oktober 2026)
 
 - Node-scanner vervangen door afzonderlijke FastAPI-/SQLAlchemy-/SQLite-subapp; bestaande portefeuille/CSP behouden.
