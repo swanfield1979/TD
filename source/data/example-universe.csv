@@ -1,0 +1,6 @@
+symbol,exchange,currency,company,sector
+AAPL,NASDAQ,USD,Apple,Technology
+MSFT,NASDAQ,USD,Microsoft,Technology
+NVDA,NASDAQ,USD,NVIDIA,Semiconductors
+PLTR,NASDAQ,USD,Palantir,Software
+VST,NYSE,USD,Vistra,Utilities

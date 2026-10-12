@@ -2,23 +2,23 @@
 
 Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voortgang op basis van Interactive Brokers Flex-rapporten.
 
-**Versie/status:** 0.28.0. Breakout-scanner met IBKR-daghistorie, top 1/2/5%-momentum, configureerbare stair-step-detectie en opgeslagen scanresultaten. Tests, build en lokale browserworkflow gecontroleerd; installatie op de liveserver en echte marktdata nog niet bevestigd.
+**Versie/status:** 0.29.0. Breakout met FastAPI, SQLite-cache, read-only IBKR, CSV-universum en configureerbare momentum-/stair-step-analyse. Tests, productiebuild en echte lokale HTTP/browserworkflow geslaagd; liveserverinstallatie en echte IBKR-data nog niet bevestigd.
 
 | Map | Inhoud |
 | --- | --- |
-| [`source/`](source/) | React/TypeScript-broncode, importscript en ontwikkelcommando's |
+| [`source/`](source/) | React/TypeScript, Python/FastAPI, importscript en ontwikkelcommando's |
 | [`release/`](release/) | Uit te leveren distributies; momenteel nog leeg |
 | [`docs/`](docs/) | Installatie, gebruik, architectuur en validatie |
 
 ## Starten
 
-Zie [Breakout-serverupdate 0.28.0](docs/breakout-scanner.md#installatie-via-github): publiceer frontend en backend samen en herstart de API. Een nieuwe Flex-import is voor deze uitbreiding niet vereist.
+Zie [Breakout-serverupdate 0.29.0](docs/breakout-scanner.md#installatie-via-github): publiceer frontend en backend samen en herstart de API. Een nieuwe Flex-import is voor deze uitbreiding niet vereist.
 
 Zie [`docs/installatie.md`](docs/installatie.md) voor de installatie en [`source/README.md`](source/README.md) voor alle ontwikkelcommando's.
 
 ## Functies
 
-- [Breakout](docs/breakout-scanner.md): marktleiders over 1M/3M/6M, toppercentages, setupdetails, koersgrafieken en CSV-export. Volledig universum of S&P 500 via IBKR.
+- [Breakout](docs/breakout-scanner.md): marktleiders over 1M/3M/6M, toppercentages, setupdetails, koersgrafieken en CSV-export. CSV-universum, incrementele SQLite-cache en read-only Paper/TWS/Gateway-koppeling.
 
 
 - Donkere modus als standaard, met onthouden donker/licht-keuze, responsieve navigatie en IBKR-status.

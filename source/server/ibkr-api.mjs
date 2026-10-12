@@ -6,7 +6,6 @@ import { collectSnapshot } from './gateway-client.mjs'
 import { withPreviousBalance } from './ibkr-domain.mjs'
 import { mergeExecutions } from '../shared/gateway-trades.mjs'
 import { runCspScan } from './csp-scanner.mjs'
-import { createLeadershipService } from './leadership-service.mjs'
 
 let scanState = { state: 'idle', portfolio: [], market: [], warnings: [], progress: '', symbolsChecked: 0, contractsChecked: 0 }
 
@@ -41,17 +40,6 @@ const config = {
 }
 
 if (!/^[a-zA-Z0-9_.@-]+$/.test(config.serviceUnit)) throw new Error('Ongeldige systemd-unitnaam.')
-
-const leadership = createLeadershipService(config, { path: resolve(process.env.IBKR_BREAKOUT_PATH || resolve(dirname(config.snapshotPath), 'breakout-scan.json')) })
-
-async function readJsonBody(request) {
-  let body=''
-  for await (const chunk of request) {
-    body+=chunk
-    if(Buffer.byteLength(body)>65536) throw new Error('Aanvraag te groot (maximaal 64 KiB).')
-  }
-  return body ? JSON.parse(body) : {}
-}
 
 const runtime = {
   state: 'offline',
@@ -178,19 +166,6 @@ function isAllowedPost(request) {
 
 const server = createServer(async (request, response) => {
   try {
-    if (request.method === 'GET' && request.url === '/api/breakout') {
-      await leadership.ready
-      const state=leadership.getState()
-      // Publish ranks after completion; polling progress must not repeatedly transfer every chart.
-      return sendJson(response, 200, { ...state, rows: state.state==='running' ? [] : state.rows })
-    }
-    if (request.method === 'POST' && ['/api/breakout', '/api/breakout/cancel'].includes(request.url)) {
-      if (!isAllowedPost(request)) return sendJson(response, 403, { message: 'Ongeldige aanvraag.' })
-      try {
-        const result=request.url.endsWith('/cancel') ? leadership.cancel() : await leadership.start(await readJsonBody(request))
-        return sendJson(response, 202, result)
-      } catch(error) { return sendJson(response, 400, { message: error.message }) }
-    }
     if (request.method === 'GET' && request.url === '/api/scans') return sendJson(response, 200, scanState)
     if (request.method === 'POST' && request.url === '/api/scans') {
       if (!isAllowedPost(request)) return sendJson(response, 403, { message: 'Ongeldige aanvraag.' })

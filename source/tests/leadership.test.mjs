@@ -1,23 +1,11 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { EventEmitter } from 'node:events'
-import { mkdtemp, readFile, rm } from 'node:fs/promises'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
 import {
   analyzeStock,
   rankStocks,
   selectLeaders,
   validateConfig,
 } from '../shared/leadership.mjs'
-import {
-  createLeadershipService,
-  parseSymbols,
-} from '../server/leadership-service.mjs'
-import {
-  completedBars,
-  connectHistory,
-} from '../server/leadership-provider.mjs'
 
 function fixture(breakout = true) {
   const bars = []
@@ -154,140 +142,4 @@ test('configuration and input validation', () => {
       { date: '2026-01-01', open: 10, high: 9, low: 8, close: 10 },
     ]),
   )
-  assert.deepEqual(parseSymbols('nvda,APP\nNVDA'), ['NVDA', 'APP'])
-  assert.throws(() => parseSymbols('BAD<script>'))
-})
-test('today and future bars excluded in New York timezone', () => {
-  assert.deepEqual(
-    completedBars(
-      [{ date: '2026-10-09' }, { date: '2026-10-12' }, { date: '2026-10-13' }],
-      new Date('2026-10-12T22:00:00Z'),
-    ),
-    [{ date: '2026-10-09' }],
-  )
-})
-test('provider receives adjusted RTH bars, completion and cleans up', async () => {
-  let api
-  class FakeApi extends EventEmitter {
-    constructor() {
-      super()
-      api = this
-      this.cancelled = []
-    }
-    connect(id) {
-      this.clientId = id
-      queueMicrotask(() => this.emit('connected'))
-    }
-    reqHistoricalData(id, contract, end, duration, size, type, rth) {
-      assert.equal(type, 'ADJUSTED_LAST')
-      assert.equal(size, '1 day')
-      assert.equal(rth, 1)
-      queueMicrotask(() => {
-        this.emit('historicalData', id, '20250102', 10, 11, 9, 10.5, 500)
-        this.emit('historicalData', id, 'finished', 0, 0, 0, 0, 0)
-      })
-    }
-    cancelHistoricalData(id) {
-      this.cancelled.push(id)
-    }
-    disconnect() {
-      this.closed = true
-    }
-  }
-  const provider = await connectHistory(
-    { gatewayHost: 'localhost', gatewayPort: 4001, clientId: 77 },
-    FakeApi,
-  )
-  const bars = await provider.history('TEST')
-  assert.equal(bars[0].volume, 500)
-  assert.equal(bars[0].date, '2025-01-02')
-  assert.equal(api.clientId, 107)
-  assert.equal(api.cancelled.length, 1)
-  provider.close()
-  assert.ok(api.closed)
-})
-test('service scans, ranks, reports partial coverage, persists and reloads', async () => {
-  const dir = await mkdtemp(join(tmpdir(), 'leader-test-')),
-    path = join(dir, 'scan.json')
-  let closed = false
-  try {
-    const service = createLeadershipService(
-      {},
-      {
-        path,
-        pacingMs: 0,
-        provider: async () => ({
-          history: async (symbol) => {
-            if (symbol === 'BAD') throw new Error('Geen marktdatarechten')
-            return fixture()
-          },
-          close() {
-            closed = true
-          },
-        }),
-      },
-    )
-    await service.start({ universe: 'custom', symbols: 'TEST,BAD' })
-    await service.wait()
-    const state = service.getState()
-    assert.equal(state.state, 'partial')
-    assert.equal(state.progress, 2)
-    assert.equal(state.rows.length, 1)
-    assert.ok(closed)
-    assert.match(state.warnings[0], /BAD/)
-    assert.equal(
-      JSON.parse(await readFile(path, 'utf8')).rows[0].status,
-      'breakout',
-    )
-    const reloaded = createLeadershipService({}, { path })
-    await reloaded.ready
-    assert.equal(reloaded.getState().rows[0].symbol, 'TEST')
-  } finally {
-    await rm(dir, { recursive: true, force: true })
-  }
-})
-test('service does not silently mix stale observation dates', async () => {
-  const service = createLeadershipService(
-    {},
-    {
-      pacingMs: 0,
-      provider: async () => ({
-        history: async (symbol) =>
-          symbol === 'OLD' ? fixture().slice(0, -1) : fixture(),
-        close() {},
-      }),
-    },
-  )
-  await service.start({ universe: 'custom', symbols: 'NEW,OLD' })
-  await service.wait()
-  assert.equal(service.getState().rows.length, 1)
-  assert.deepEqual(service.getState().staleSymbols, ['OLD'])
-})
-test('cancellation stops scan and duplicate start does not open another connection', async () => {
-  let providers = 0,
-    release
-  const service = createLeadershipService(
-    {},
-    {
-      pacingMs: 0,
-      provider: async () => {
-        providers++
-        return {
-          history: async () => {
-            await new Promise((r) => (release = r))
-            return fixture()
-          },
-          close() {},
-        }
-      },
-    },
-  )
-  await service.start({ universe: 'custom', symbols: 'FIRST,SECOND' })
-  await service.start({ universe: 'custom', symbols: 'THIRD' })
-  assert.equal(providers, 1)
-  service.cancel()
-  release()
-  await service.wait()
-  assert.equal(service.getState().state, 'cancelled')
-  assert.equal(service.getState().progress, 1)
 })

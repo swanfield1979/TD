@@ -1,13 +1,13 @@
 # Breakout-scanner
 
-Trading Monitor 0.28.0 voegt de pagina **Breakout** toe: `http://192.168.1.22/#breakout` (ook `/breakout`). De bestaande portefeuillefuncties blijven aanwezig. De visuele richting volgt het bestaande prototype op `192.168.1.214:8000/leader-scan.html`: donkere achtergrond, lime-accent, Nederlandse tekst en een sorteerbare leiderschapstabel. Productiecode is verdeeld over React, een Node-API, een IBKR-provider en een afzonderlijke detectie-engine.
+Trading Monitor 0.29.0 voegt de pagina **Breakout** toe: `http://192.168.1.22/#breakout` (ook `/breakout`). De bestaande portefeuillefuncties blijven aanwezig. De visuele richting volgt het bestaande prototype op `192.168.1.214:8000/leader-scan.html`: donkere achtergrond, lime-accent, Nederlandse tekst en een sorteerbare leiderschapstabel. Productiecode is verdeeld over React, een Python/FastAPI-API, een read-only IBKR-provider, SQLite-opslag en een afzonderlijke detectie-engine.
 
 ## Gebruik
 
-1. Verbind de bestaande IBKR-koppeling; bevestig zo nodig IB Key.
-2. Kies bij **Instellingen** S&P 500 of een eigen universum van USD-aandelentickers. Een eigen universum wordt als eigen selectie gerangschikt, niet als de gehele markt.
+1. Configureer en verbind de afzonderlijke scannerverbinding (standaard Paper Gateway 4002). De bestaande portefeuilleverbinding is hiervan onafhankelijk.
+2. Importeer bij **Instellingen** een universum-CSV met symbol/exchange/currency, of kies S&P 500 of eigen USD-tickers. De downloadbare voorbeeld-CSV is geen volledig marktuniversum. Een eigen universum wordt als eigen selectie gerangschikt, niet als de gehele markt.
 3. Pas desgewenst de JSON-configuratie aan en klik **Scan starten**. De criteria worden op de server gevalideerd. Er zijn geen orders of automatische transacties.
-4. Volg de voortgang. Een S&P 500-scan omvat alle leden en duurt minimaal circa tien minuten, langer bij trage antwoorden/time-outs. **Scan stoppen** voltooit hoogstens de lopende historieaanvraag (maximaal 30 seconden).
+4. Volg de voortgang en fouten per symbool. Een eerste S&P 500-sync kan uren duren; volgende syncs vragen alleen ontbrekende bars op. **Fouten opnieuw** herhaalt mislukte instrumenten; **Volledige hercontrole** herlaadt drie jaar voor corporate-actioncontrole. **Scan stoppen** annuleert actieve aanvragen en behoudt de cache.
 5. Kies 1M/3M/6M en Top 1%, 2% of 5%. Topselectie gebeurt vóór het setupfilter. Zoek of sorteer vervolgens de tabel. **Volledig universum** toont ook zwakkere aandelen, mislukte structuren en onvoldoende historie.
 6. Klik een ticker voor de echte koersgrafiek, consolidatierange, voortschrijdende gemiddelden en alle setupmetingen. **CSV exporteren** exporteert de getoonde selectie inclusief diagnostiek.
 
@@ -21,7 +21,7 @@ Een scan gebruikt één gemeenschappelijke peildatum: de nieuwste datum die door
 
 ## Detectie en configuratie
 
-Alle standaardcriteria staan in `source/shared/leadership.mjs`, `DEFAULT_CONFIG`. JSON-wijzigingen worden met de scan opgeslagen in `breakout-scan.json`, naast de bestaande private live-snapshot (aanpasbaar met `IBKR_BREAKOUT_PATH`). Percentages zijn **procentpunten**, ratio's zijn dimensieloos, tijden zijn handelssessies. Dit zijn instelbare selectieheuristieken, geen statistisch bewezen handelsvoordeel.
+Alle standaardcriteria staan in `source/backend/app/schemas/scanner.py`, `AnalysisConfig`. JSON-wijzigingen worden gevalideerd en in SQLite opgeslagen. Percentages zijn **procentpunten**, ratio's zijn dimensieloos, tijden zijn handelssessies. Dit zijn instelbare selectieheuristieken, geen statistisch bewezen handelsvoordeel.
 
 | Sleutel | Standaard | Betekenis |
 | --- | --- | --- |
@@ -57,28 +57,20 @@ Hogere bodems worden getoetst aan bevestigde pivots in de basis, uitsluitend met
 | forming | Basis in vorming | Geen complete bevestiging of nog geen kwalificerende impuls; redenen zichtbaar |
 | ready | Consolidatie gereed | Geldige basis, slot onder high en dichtbij breakoutniveau |
 | breakout | Breakout actief | Geldige basis, slot boven voorafgaande high en voldoende range-expansie; volume indien vereist |
-| failed | Structuur mislukt | Te diepe basis, materieel lagere swinglows, koers onder basislow of te ver onder MA20 |
-| insufficient_data | Onvoldoende historie | Minder dan het benodigde momentum-/MA-/impulsvenster |
+| failed | Setup mislukt | Te diepe basis, materieel lagere swinglows, koers onder basislow of te ver onder MA20 |
+| insufficient_data | Onvoldoende data | Minder dan het benodigde momentum-/MA-/impulsvenster |
 
 Bij meerdere mogelijke bases krijgt de sterkste geldige status voorrang, daarna de langste basis en de grootste impuls. Alle datums, duur, high/low, diepte, MA10/20/50, hellingen, ATR20, contracties, MA-afstanden en hogere-lowsresultaten blijven beschikbaar via API en detailpaneel.
 
 ## Architectuur en API
 
-- `src/BreakoutPage.tsx` en `src/breakout.css`: React-interface, filtering, sortering, detailgrafiek en CSV.
-- `shared/leadership.mjs`: onafhankelijke configureerbare analysekern zonder I/O.
-- `server/leadership-provider.mjs`: afzonderlijke read-only IBKR-socket, client-ID `IBKR_CLIENT_ID + 30`; houd dit ID vrij. Gecorrigeerde `ADJUSTED_LAST`, reguliere sessies, 1D-bars, drie jaar historie.
-- `server/leadership-service.mjs`: asynchrone volledige universumscan, voortgang, foutisolatie en private opslag. Sequentiële aanvragen met 1,1 seconde tussenpauze; subscriptions worden afgemeld en socket gesloten. Geen koersfeedfallback en geen fictieve productiegegevens. Geen overlap tussen twee Breakout-scans.
-- `GET /api/breakout`: configuratie, status, voortgang, resultaten, dekking en waarschuwingen.
-- `POST /api/breakout`: `{ "universe": "sp500" | "custom", "symbols": "NVDA,APP", "config": {...} }`.
-- `POST /api/breakout/cancel`: lopende scan stoppen.
+De scanner is verdeeld over backend/app/api, broker, core, db, models, schemas, services en analysis; de frontend over src/pages, components, api, types en utils. SQLite bewaart universe, contract-ID's, dagelijkse OHLCV, instellingen en fouten. Default TRADES, optioneel ADJUSTED_LAST, aparte caches. Split-/dividendbehandeling, dataintegriteit, vertraging, pacing, retries en alle JSON-endpoints staan in [Python-architectuur en API](breakout-python.md). Swagger: /api/docs.
 
-POST vereist een toegestane Origin en `X-Requested-With: trading-monitor`, dezelfde beveiliging als bestaande API-routes. De backend blijft localhost achter Nginx. Requestbody maximaal 64 KiB; maximaal 5000 eigen tickers. Historie vereist passende IBKR-marktdatarechten. IBKR kan verzoeken vertragen of weigeren; fouten worden gemeld, niet verborgen. Er is geen realtime prijs-/volumeclaim.
-
-Bronnen: [IBKR historische bars en ADJUSTED_LAST](https://interactivebrokers.github.io/tws-api/historical_bars.html), [IBKR historiebeperkingen](https://interactivebrokers.github.io/tws-api/historical_limitations.html). De gebruikte `@stoqey/ib` 1.6.10-adapter beëindigt historie met de `finished`-callback.
+De pure JavaScript-analyse in shared/leadership.mjs blijft als eerder geteste referentie beschikbaar; productie gebruikt de Python-analyse. De oude Node-scannerprovider/service zijn verwijderd. De portefeuille/CSP blijft via de bestaande Node-API werken.
 
 ## Installatie via GitHub
 
-De update wordt via de bestaande GitHub-repository verspreid. Voer op de Linux-webserver in PuTTY uit:
+Voer op de bestaande Linux-webserver uit:
 
 ```bash
 cd /home/gerard/TD
@@ -87,10 +79,12 @@ cd source
 bash deploy/update-breakout.sh
 ```
 
-Het script controleert tests en productiebuild, maakt een webrootback-up, publiceert de build en herstart de bestaande API. De bestaande servercheckout is de API-installatiebron; het script controleert dit vóór publiceren. Geen nieuwe Flex-import nodig. Voor rollback van API-code moet de checkout naar de eerdere commit worden teruggezet; de scriptuitvoer vermeldt die commit. De back-up bevat privégegevens en blijft op de server.
+Vereist Node.js 22.12+, 24 of 26+ (geen Node 25) en Python 3.12+ met venv/pip. Installeer op Ubuntu/Debian waar beschikbaar eerst `sudo apt install python3.12 python3.12-venv`; bij een andere Python-installatie: `BREAKOUT_PYTHON_BIN=/pad/naar/python bash deploy/update-breakout.sh`.
+
+Het script voert Node-/Vitest-/pytest-tests en de productiebuild uit, maakt een webroot- en Nginx-back-up, installeert gepinde Python-dependencies, start de afzonderlijke systemd-scanner op 8788 en routeert de scanner-API via Nginx. De bestaande API blijft op 8787. De checkout moet de bestaande API-installatiemap zijn; dit wordt vóór publicatie gecontroleerd. Geen nieuwe Flex-import vereist. Instellingen: `/etc/trading-monitor/breakout.env` (optioneel; voorbeeld in source/deploy/trading-monitor). Standaard is Paper Gateway op 4002 met client-ID 109. Open `http://192.168.1.22/#breakout`, vernieuw met Ctrl+F5, configureer de werkelijke TWS/Gateway-poort en verbind de scanner. Een live portefeuilleverbinding op 4001 maakt de aparte paperscanner niet automatisch bereikbaar.
+
+Controle: `systemctl status trading-monitor-breakout.service`, `journalctl -u trading-monitor-breakout.service -n 60 --no-pager` en `curl --fail http://127.0.0.1/api/health`. Controleer daarna CSV-import, syncvoortgang en peildatum met echte IBKR-data. Back-ups bevatten mogelijk privédata en blijven op de server. Voor rollback: eerdere Git-commit herstellen, oude webroot/Nginx-back-up terugzetten en relevante services herstarten; behoud de SQLite-database. Live installatie is vanuit deze werkomgeving niet bevestigd.
 
 ## Lokale validatie
 
-Vanuit `source/`: `npm test` en `npm run build`. Voor lokale frontend: `npm run dev`; API in tweede terminal: stel `IBKR_ALLOWED_ORIGINS=http://127.0.0.1:5173`, een schrijfbaar `IBKR_SNAPSHOT_PATH` en de juiste Gateway-host/poort in, daarna `npm run start:api`.
-
-De tests toetsen setups, failed/ready/forming, sessie-indexering, echte toppercentages, ontbrekend volume, peildatumselectie, uitsluiting van vandaag, geen kandidaatbar in breakoutniveau/ATR, IBKR-callbacks, privéopslag, annuleren, configuratievalidatie en de echte HTTP-API. Tests met vaste OHLC-fixtures zijn testdata en worden nooit automatisch als productiedata getoond. Live marktdata en installatie op `192.168.1.22` moeten na de serverupdate worden gecontroleerd.
+Vanuit source: `npm test`, `npm run test:frontend`, `npm run build`. Vanuit de subapp source/backend: `.venv/bin/python -m pytest -q`. Start zowel Vite als de Python-API; zie [echte ontwikkelcommando's](../source/backend/README.md). Playwright-smoke: `npm run test:e2e` met expliciete tests.smoke_server-backend; fixtures worden nooit automatisch als productiekoersen getoond. [Validatie en beperkingen](breakout-python.md#validatie).

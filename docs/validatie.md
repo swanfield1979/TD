@@ -206,3 +206,11 @@ De eerste versie wordt gecontroleerd met:
 - Browsercontrole met echte lokale API voor laden/validatie; geïsoleerde OHLC-testfixtures voor resultaten, details, sortering, filters, zoeken en CSV. Desktop 1440 px en mobiel 390 px gecontroleerd, inclusief menubediening en geen pagina-overloop. Geen browserexceptions.
 - Tests en TypeScript/Vite-productiebuild geslaagd. Reproduceerbare browsercontrole: `node scripts/verify-breakout-browser.mjs` vanuit source (Playwright en Edge vereist).
 - Geen live marktdata of installatie op 192.168.1.22 bevestigd. Verspreiding via GitHub; serverupdate met `bash deploy/update-breakout.sh`. Zie [handleiding](breakout-scanner.md).
+
+## Breakout 0.29.0 — 12 oktober 2026
+
+- 24 pytest-tests geslaagd: analyse, cache/contractopslag, incrementele updates, per-symbol failure/retry, corporate-actioncontrole, annulering/shutdown, paper/read-only, reconnect, pacing, bounded backoff en echte FastAPI-routes.
+- Zeven Vitest-tests en 94 bijgehouden Node-regressietests geslaagd; TypeScript/Vite-build geslaagd en npm audit meldt nul kwetsbaarheden.
+- Playwright met echte React → HTTP → FastAPI → SQLite → Python-analyse, uitsluitend testbroker in tests.smoke_server. CSV-upload, JSON-validatiefout, scannen, setupdetails/chart, sortering, filters, zoeken, export en 390px-menubediening gecontroleerd. Desktop/mobiel geen pagina-overflow of browserexceptions. Test weigert een productiebackend zonder testheader.
+- Lokale productiemodule heeft geen fictieve datafallback. Live IBKR en serverinstallatie nog niet bevestigd; GitHub-updateprocedure en Python 3.12+-vereiste gedocumenteerd. Eén Starlette TestClient-deprecatiewaarschuwing voor httpx, geen testfalen.
+- [Architectuur, API en databeperkingen](breakout-python.md).

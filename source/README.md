@@ -51,6 +51,16 @@ De resultaatberekening staat in `scripts/realized-results.mjs`. Voer na wijzigin
 
 Stortingen/opnames: plaats optioneel `Storting_YYYY.xml` in `data/private/`. Gebruik per jaar één cumulatief Cash Report vanaf 1 januari (voor het eerste rekeningjaar mag de werkelijke startdatum). Zie [Inleg en rendement](../docs/inleg.md) voor exportvelden en berekeningen.
 
-## Breakout-scanner 0.28.0
+## Breakout-scanner 0.29.0
 
-Open `/#breakout` of `/breakout`. Start vanuit deze map `npm run start:api` en `npm run dev` in twee terminals. Voor lokaal scannen: `IBKR_ALLOWED_ORIGINS=http://127.0.0.1:5173`, schrijfbaar `IBKR_SNAPSHOT_PATH` en de juiste Gateway-host/poort. Tests: `npm test`; productie: `npm run build`. Optionele browsercontrole: `node scripts/verify-breakout-browser.mjs` met Playwright en Edge (eventueel `PLAYWRIGHT_PACKAGE` naar een beschikbare package.json). Serverupdate vanuit deze map: `bash deploy/update-breakout.sh`, na git pull. Zie [handleiding](../docs/breakout-scanner.md).
+Vanuit deze source-map: `npm ci`, `npm run dev` en voor de bestaande portefeuille `npm run start:api` in een tweede terminal. Start de nieuwe Python-subapp in een derde terminal:
+
+```bash
+python3.12 -m venv backend/.venv
+backend/.venv/bin/python -m pip install -r backend/requirements-lock.txt
+backend/.venv/bin/python -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8788
+```
+
+Windows: vervang het venv-pad door `backend/.venv/Scripts/python.exe`. Open `http://127.0.0.1:5173/#breakout`. Standaard Paper Gateway 4002, read-only; configureer TWS/Gateway in de pagina. De lokale database staat in data/private. Node: 22.12+, 24 of 26+; Python: 3.12+.
+
+Controles vanuit source: `npm test`, `npm run test:frontend`, `npm run build`. Backendtests: subapp backend, `cd backend` en `.venv/bin/python -m pytest -q`. Playwright: `npm run test:e2e` met de expliciete testbackend, zie [backendcommando's](backend/README.md). GitHub-serverupdate: `bash deploy/update-breakout.sh`. Zie [handleiding](../docs/breakout-scanner.md) en [architectuur/API](../docs/breakout-python.md).

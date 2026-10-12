@@ -1,5 +1,5 @@
 import { contributionReturn, contributionsSince } from '../shared/contribution-return.mjs'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import {
   ArrowSwapRegular,
   ChartMultipleRegular,
@@ -19,7 +19,7 @@ import GoalsPage from './GoalsPage'
 import TradesPage from './TradesPage'
 import StatsPage from './StatsPage'
 import ScansPage from './ScansPage'
-import BreakoutPage from './BreakoutPage'
+const BreakoutPage = lazy(() => import('./pages/BreakoutPage'))
 import TradingActivityCards from './TradingActivityCards'
 import IbkrConnectionControl from './IbkrConnectionControl'
 import { mergeLiveSnapshot, resolvePortfolio } from './ibkr'
@@ -350,7 +350,7 @@ function App() {
         </header>
 
         {currentPage === 'scans' && <ScansPage />}
-        {currentPage === 'breakout' && <BreakoutPage />}
+        {currentPage === 'breakout' && <Suspense fallback={<p role="status">Breakout laden…</p>}><BreakoutPage /></Suspense>}
         {isLoading && currentPage !== 'scans' && currentPage !== 'breakout' && <LoadingDashboard />}
 
         {!isLoading && error && currentPage !== 'scans' && currentPage !== 'breakout' && (

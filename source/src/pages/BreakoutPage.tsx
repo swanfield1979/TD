@@ -1,68 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
-import './breakout.css'
+import '../breakout.css'
 
-type Status = 'forming' | 'ready' | 'breakout' | 'failed' | 'insufficient_data'
-type Bar = {
-  date: string
-  open: number
-  high: number
-  low: number
-  close: number
-  volume: number | null
-}
-type Stock = {
-  symbol: string
-  asOf: string
-  close: number
-  sessions: number
-  returns: (number | null)[]
-  ranks: (number | null)[]
-  score: number | null
-  status: Status
-  reasons: string[]
-  chart: Bar[]
-  move: { pct: number; start: string; end: string; sessions: number } | null
-  base: {
-    start: string
-    end: string
-    sessions: number
-    weeks: number
-    high: number
-    low: number
-    depthPct: number
-    rangeRatio: number | null
-    volatilityRatio: number | null
-    higherLows: boolean | null
-    orderlyLows: boolean
-    tighteningRange: boolean
-    distanceToHighPct: number
-  } | null
-  indicators: Record<string, number | boolean | null> | null
-}
-type Scan = {
-  state: string
-  rows: Stock[]
-  warnings: string[]
-  progress: number
-  total: number
-  config: Record<string, unknown>
-  universe: string
-  symbols: string
-  source?: string
-  startedAt?: string
-  finishedAt?: string
-  asOf?: string
-  currentSymbol?: string
-  message?: string
-  staleSymbols?: string[]
-}
-const labels: Record<Status, string> = {
-  forming: 'Basis in vorming',
-  ready: 'Consolidatie gereed',
-  breakout: 'Breakout actief',
-  failed: 'Structuur mislukt',
-  insufficient_data: 'Onvoldoende historie',
-}
+import type {
+  BreakoutStock as Stock,
+  BreakoutScan as Scan,
+} from '../types/breakout'
+import StockDetail from '../components/StockDetail'
+import { labels, number, percent } from '../utils/breakout-display'
+import ScannerBrokerControl from '../components/ScannerBrokerControl'
+import { scannerRequest } from '../api/breakout'
+import { filterLeaders } from '../utils/leader-selection'
+
 const scanLabels: Record<string, string> = {
   idle: 'Nog niet gescand',
   running: 'Scan loopt',
@@ -72,239 +20,11 @@ const scanLabels: Record<string, string> = {
   cancelled: 'Scan gestopt',
   interrupted: 'Scan onderbroken',
 }
-const number = (v: number | null | undefined, digits = 2) =>
-  v == null
-    ? '—'
-    : v.toLocaleString('nl-NL', {
-        maximumFractionDigits: digits,
-        minimumFractionDigits: digits,
-      })
-const percent = (v: number | null | undefined) =>
-  v == null ? '—' : `${v >= 0 ? '+' : ''}${number(v, 1)}%`
-
-function PriceChart({ row }: { row: Stock }) {
-  const bars = row.chart,
-    width = 900,
-    height = 260,
-    min = Math.min(...bars.map((b) => b.low)),
-    max = Math.max(...bars.map((b) => b.high)),
-    range = max - min || 1
-  const x = (i: number) => 30 + (i / (bars.length - 1 || 1)) * 840,
-    y = (v: number) => 230 - ((v - min) / range) * 205
-  const line = bars.map((b, i) => `${x(i)},${y(b.close)}`).join(' ')
-  const start = row.base
-    ? bars.findIndex((b) => b.date === row.base!.start)
-    : -1
-  const end = row.base ? bars.findIndex((b) => b.date === row.base!.end) : -1
-  return (
-    <svg
-      className="bo-chart"
-      viewBox={`0 0 ${width} ${height}`}
-      role="img"
-      aria-label={`${row.symbol}: afgesloten dagkoersen en consolidatierange`}
-    >
-      {[0, 1, 2, 3].map((i) => (
-        <g key={i}>
-          <line
-            x1="30"
-            x2="870"
-            y1={25 + i * 68}
-            y2={25 + i * 68}
-            stroke="#2c342b"
-          />
-          <text x="875" y={30 + i * 68}>
-            {number(max - (i * range) / 3, 1)}
-          </text>
-        </g>
-      ))}
-      {row.base && start >= 0 && end >= 0 && (
-        <g>
-          <rect
-            x={x(start)}
-            y={y(row.base.high)}
-            width={x(end) - x(start)}
-            height={Math.max(1, y(row.base.low) - y(row.base.high))}
-            fill="#c7f36b12"
-            stroke="#c7f36b66"
-          />
-          <line
-            x1={x(start)}
-            x2="870"
-            y1={y(row.base.high)}
-            y2={y(row.base.high)}
-            stroke="#c7f36b"
-            strokeDasharray="5 4"
-          />
-        </g>
-      )}
-      {[10, 20, 50].map((period, p) => (
-        <polyline
-          key={period}
-          points={bars
-            .flatMap((_, i) =>
-              i + 1 < period
-                ? []
-                : [
-                    `${x(i)},${y(bars.slice(i - period + 1, i + 1).reduce((sum, b) => sum + b.close, 0) / period)}`,
-                  ],
-            )
-            .join(' ')}
-          fill="none"
-          stroke={['#74a7ff', '#e8bd65', '#ba95db'][p]}
-          strokeWidth="1.3"
-        />
-      ))}
-      <polyline points={line} fill="none" stroke="#c7f36b" strokeWidth="2" />
-      <text x="30" y="254">
-        {bars[0]?.date}
-      </text>
-      <text x="775" y="254">
-        {bars.at(-1)?.date}
-      </text>
-    </svg>
-  )
-}
-
-function StockDetail({ row }: { row: Stock }) {
-  const i = row.indicators,
-    b = row.base,
-    m = row.move
-  return (
-    <section
-      className="bo-panel bo-detail"
-      aria-label={`Setupdetails ${row.symbol}`}
-    >
-      <div className="bo-heading">
-        <h2>
-          {row.symbol}{' '}
-          <small>
-            {row.asOf} · ${number(row.close)}
-          </small>
-        </h2>
-        <span className={`bo-status ${row.status}`}>{labels[row.status]}</span>
-      </div>
-      <PriceChart row={row} />
-      <p className="bo-muted">
-        Lime: slotkoers · blauw: MA10 · amber: MA20 · paars: MA50 · kader:
-        consolidatie vóór de laatste candle
-      </p>
-      <div className="bo-details">
-        <article>
-          <h3>01 · Voorafgaande impuls</h3>
-          {m ? (
-            <>
-              <strong>{percent(m.pct)}</strong>
-              <p>
-                {m.start} → {m.end}
-                <br />
-                {m.sessions} handelssessies
-              </p>
-            </>
-          ) : (
-            <p>Geen kwalificerende impuls.</p>
-          )}
-        </article>
-        <article>
-          <h3>02 · Consolidatie</h3>
-          {b ? (
-            <dl>
-              {Object.entries({
-                'Start / einde': `${b.start} / ${b.end}`,
-                Duur: `${b.sessions} sessies · ${number(b.weeks, 1)} weken`,
-                'High / low': `${number(b.high)} / ${number(b.low)}`,
-                Diepte: `${number(b.depthPct, 1)}%`,
-                Rangecontractie: `${number(b.rangeRatio)}×`,
-                Volatiliteitsratio: `${number(b.volatilityRatio)}×`,
-                'Hogere swingbodems':
-                  b.higherLows === null
-                    ? 'Niet toetsbaar (te weinig pivots)'
-                    : b.higherLows
-                      ? 'Ja'
-                      : 'Nee',
-                'Bodems ordelijk': b.orderlyLows ? 'Ja' : 'Nee',
-                'Range vernauwt': b.tighteningRange ? 'Ja' : 'Nee',
-              }).map(([k, v]) => (
-                <div key={k}>
-                  <dt>{k}</dt>
-                  <dd>{v}</dd>
-                </div>
-              ))}
-            </dl>
-          ) : (
-            <p>Geen consolidatie gevonden.</p>
-          )}
-        </article>
-        <article>
-          <h3>03 · Range-expansie</h3>
-          {i && (
-            <dl>
-              {Object.entries({
-                'ATR20 vóór laatste bar': number(i.atr20 as number),
-                'Laatste true range': number(i.trueRange as number),
-                Expansie: `${number(i.rangeExpansion as number)}×`,
-                'Volume bevestigd':
-                  i.volumeConfirmation === null
-                    ? 'Volume ontbreekt'
-                    : i.volumeConfirmation
-                      ? 'Ja'
-                      : 'Nee',
-                'Afstand tot high': b
-                  ? `${number(b.distanceToHighPct, 1)}%`
-                  : '—',
-              }).map(([k, v]) => (
-                <div key={k}>
-                  <dt>{k}</dt>
-                  <dd>{v}</dd>
-                </div>
-              ))}
-            </dl>
-          )}
-        </article>
-      </div>
-      {i && (
-        <div className="bo-table-wrap">
-          <table>
-            <caption>
-              Voortschrijdende gemiddelden · helling gemeten vóór de laatste
-              candle
-            </caption>
-            <thead>
-              <tr>
-                <th>Gemiddelde</th>
-                <th>Waarde</th>
-                <th>Helling</th>
-                <th>Koersafstand</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[10, 20, 50].map((p) => (
-                <tr key={p}>
-                  <td>MA{p}</td>
-                  <td>{number(i[`ma${p}`] as number)}</td>
-                  <td>{percent(i[`slope${p}`] as number)}</td>
-                  <td>{percent(i[`distance${p}`] as number)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-      {!!row.reasons.length && (
-        <ul className="bo-muted">
-          {row.reasons.map((reason) => (
-            <li key={reason}>{reason}</li>
-          ))}
-        </ul>
-      )}
-    </section>
-  )
-}
-
 export default function BreakoutPage() {
   const [scan, setScan] = useState<Scan | null>(null),
     [error, setError] = useState(''),
     [busy, setBusy] = useState(false)
-  const [top, setTop] = useState(2),
+  const [top, setTop] = useState<number | null>(2),
     [period, setPeriod] = useState(0),
     [status, setStatus] = useState('all'),
     [search, setSearch] = useState(''),
@@ -312,10 +32,17 @@ export default function BreakoutPage() {
   const [sort, setSort] = useState('return0'),
     [descending, setDescending] = useState(true),
     [selected, setSelected] = useState('')
-  const [universe, setUniverse] = useState('sp500'),
+  const [universe, setUniverse] = useState('cached'),
     [symbols, setSymbols] = useState(''),
     [config, setConfig] = useState(''),
     [settings, setSettings] = useState(false)
+  const [minPrice, setMinPrice] = useState(0),
+    [minDollarVolume, setMinDollarVolume] = useState(0),
+    [exchange, setExchange] = useState(''),
+    [sector, setSector] = useState(''),
+    [notice, setNotice] = useState(''),
+    [replaceUniverse, setReplaceUniverse] = useState(false)
+  const [connectionError, setConnectionError] = useState('')
   useEffect(() => {
     let active = true,
       initialized = false,
@@ -328,15 +55,15 @@ export default function BreakoutPage() {
         const data: Scan = await res.json()
         if (!active) return
         setScan(data)
-        setError('')
+        setConnectionError('')
         if (!initialized) {
           setConfig(JSON.stringify(data.config, null, 2))
-          setUniverse(data.universe)
+          setUniverse('cached')
           setSymbols(data.symbols)
           initialized = true
         }
       } catch (e) {
-        if (active) setError((e as Error).message)
+        if (active) setConnectionError((e as Error).message)
       }
       if (active) timer = setTimeout(load, 5000)
     }
@@ -347,67 +74,95 @@ export default function BreakoutPage() {
     }
   }, [])
   const rows = useMemo(() => {
-    const all = scan?.rows ?? [],
-      eligible = all
-        .filter((r) => r.returns[period] !== null)
-        .sort(
-          (a, b) =>
-            b.returns[period]! - a.returns[period]! ||
-            a.symbol.localeCompare(b.symbol),
-        )
-    const leaders = showAll
-      ? all
-      : eligible.slice(0, Math.ceil((eligible.length * top) / 100))
-    return leaders
-      .filter(
-        (r) =>
-          (status === 'all' || r.status === status) &&
-          r.symbol.includes(search.toUpperCase()),
-      )
-      .sort((a, b) => {
-        const value = (r: Stock): number | string =>
-          sort.startsWith('return')
-            ? (r.returns[Number(sort.slice(6))] ?? -Infinity)
-            : sort === 'score'
-              ? (r.score ?? -Infinity)
-              : sort === 'close'
-                ? r.close
-                : sort === 'status'
-                  ? labels[r.status]
-                  : r.symbol
-        const av = value(a),
-          bv = value(b),
-          diff =
-            typeof av === 'string'
-              ? av.localeCompare(String(bv))
-              : av - Number(bv)
-        return (descending ? -1 : 1) * diff || a.symbol.localeCompare(b.symbol)
-      })
-  }, [scan, period, top, showAll, status, search, sort, descending])
-  const detail = scan?.rows.find((r) => r.symbol === selected)
+    return filterLeaders(scan?.rows ?? [], {
+      period,
+      top,
+      showAll,
+      status,
+      search,
+      minPrice,
+      minDollarVolume,
+      exchange,
+      sector,
+    }).sort((a, b) => {
+      const value = (r: Stock): number | string =>
+        sort.startsWith('return')
+          ? (r.returns[Number(sort.slice(6))] ?? -Infinity)
+          : sort === 'score'
+            ? (r.score ?? -Infinity)
+            : sort === 'close'
+              ? r.close
+              : sort === 'status'
+                ? labels[r.status]
+                : r.symbol
+      const av = value(a),
+        bv = value(b),
+        diff =
+          typeof av === 'string'
+            ? av.localeCompare(String(bv))
+            : av - Number(bv)
+      return (descending ? -1 : 1) * diff || a.symbol.localeCompare(b.symbol)
+    })
+  }, [
+    scan,
+    period,
+    top,
+    showAll,
+    status,
+    search,
+    sort,
+    descending,
+    minPrice,
+    minDollarVolume,
+    exchange,
+    sector,
+  ])
+  const detail = scan?.rows.find((r) => (r.id ?? r.symbol) === selected)
   const periods = (scan?.config.periods as number[] | undefined) ?? [
     21, 63, 126,
   ]
   const running = scan?.state === 'running'
-  async function submit(cancel = false) {
+  async function submit(cancel = false, retry = false, force = false) {
     setBusy(true)
     setError('')
+    setNotice('')
     try {
       const body = cancel
         ? {}
-        : { config: JSON.parse(config), universe, symbols }
-      const res = await fetch(`/api/breakout${cancel ? '/cancel' : ''}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Requested-With': 'trading-monitor',
-        },
-        body: JSON.stringify(body),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.message)
+        : {
+            config: JSON.parse(config),
+            retry_failed: retry,
+            force_refresh: force,
+            ...(!retry && universe !== 'cached' ? { universe, symbols } : {}),
+          }
+      const data = await scannerRequest<Scan>(
+        cancel ? 'breakout/cancel' : 'breakout',
+        { method: 'POST', body: JSON.stringify(body) },
+      )
       setScan(data)
       setSelected('')
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setBusy(false)
+    }
+  }
+  async function uploadUniverse(file: File) {
+    setBusy(true)
+    setError('')
+    setNotice('')
+    try {
+      const body = new FormData()
+      body.append('file', file)
+      const result = await scannerRequest<{ imported: number; total: number }>(
+        `universe/upload?replace=${replaceUniverse}`,
+        { method: 'POST', body },
+      )
+      setUniverse('cached')
+      setNotice(
+        `${result.imported} aandelen geïmporteerd; ${result.total} in het actieve universum.`,
+      )
+      setScan(await scannerRequest<Scan>('breakout'))
     } catch (e) {
       setError((e as Error).message)
     } finally {
@@ -417,6 +172,10 @@ export default function BreakoutPage() {
   function exportCsv() {
     const headers = [
       'symbol',
+      'exchange',
+      'currency',
+      'company',
+      'averageDollarVolume',
       'asOf',
       'close',
       'momentum1',
@@ -453,6 +212,10 @@ export default function BreakoutPage() {
     ]
     const lines = rows.map((r) => [
       r.symbol,
+      r.exchange,
+      r.currency,
+      r.company,
+      r.averageDollarVolume,
       r.asOf,
       r.close,
       ...r.returns,
@@ -528,6 +291,13 @@ export default function BreakoutPage() {
           </button>
         </div>
       </div>
+      <ScannerBrokerControl disabled={running} />
+      {connectionError && (
+        <p className="bo-error" role="alert">
+          {connectionError}
+        </p>
+      )}
+      {notice && <p role="status">{notice}</p>}
       {error && (
         <p className="bo-error" role="alert">
           {error}
@@ -560,7 +330,8 @@ export default function BreakoutPage() {
           <h3>Universum en detectiecriteria</h3>
           <p className="bo-muted">
             Alle tickers worden gescand. Toppercentages gelden binnen dit
-            universum. Een S&P 500-scan kan tientallen minuten duren.
+            universum. Een eerste S&P 500-synchronisatie kan uren duren; daarna
+            worden alleen ontbrekende candles opgehaald.
           </p>
           <label>
             Universum
@@ -570,6 +341,7 @@ export default function BreakoutPage() {
               value={universe}
               onChange={(e) => setUniverse(e.target.value)}
             >
+              <option value="cached">Opgeslagen CSV-universum</option>
               <option value="sp500">S&P 500 · actuele ledenlijst</option>
               <option value="custom">Eigen USD-aandelenuniversum</option>
             </select>
@@ -586,6 +358,49 @@ export default function BreakoutPage() {
               />
             </label>
           )}
+          <label>
+            Universum-CSV uploaden
+            <input
+              type="file"
+              aria-label="Universum-CSV uploaden"
+              accept=".csv,text/csv"
+              disabled={busy || running}
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (file) void uploadUniverse(file)
+                e.target.value = ''
+              }}
+            />
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              checked={replaceUniverse}
+              onChange={(e) => setReplaceUniverse(e.target.checked)}
+            />{' '}
+            Huidig universum vervangen (historie blijft bewaard)
+          </label>
+          <p className="bo-muted">
+            CSV: symbol, exchange, currency; company en sector optioneel.{' '}
+            <a href="/data/example-universe.csv" download>
+              Download klein voorbeelduniversum
+            </a>{' '}
+            · geen compleet marktuniversum.
+          </p>
+          <div className="bo-actions">
+            <button
+              disabled={busy || running}
+              onClick={() => void submit(false, true)}
+            >
+              Mislukte aandelen opnieuw proberen
+            </button>
+            <button
+              disabled={busy || running}
+              onClick={() => void submit(false, false, true)}
+            >
+              Volledige historie hercontroleren
+            </button>
+          </div>
           <label>
             Configuratie (JSON)
             <textarea
@@ -613,7 +428,8 @@ export default function BreakoutPage() {
       <section className="bo-periods" aria-label="Momentumvensters">
         {periods.map((sessions, p) => {
           const count = (scan?.rows ?? []).filter(
-            (r) => r.returns[p] !== null,
+            (r) =>
+              r.returns[p] !== null && !r.stale && !r.corporateActionReview,
           ).length
           return (
             <button
@@ -630,9 +446,10 @@ export default function BreakoutPage() {
                 {['1 maand', '3 maanden', '6 maanden'][p]}
                 {sessions !== [21, 63, 126][p] ? ' · aangepast' : ''}
               </span>
-              <strong>Top {top}%</strong>
+              <strong>{top === null ? 'Alle leiders' : `Top ${top}%`}</strong>
               <small>
-                {sessions} sessies · {Math.ceil((count * top) / 100)} van{' '}
+                {sessions} sessies ·{' '}
+                {top === null ? count : Math.ceil((count * top) / 100)} van{' '}
                 {count} meetbare aandelen
               </small>
             </button>
@@ -641,14 +458,14 @@ export default function BreakoutPage() {
       </section>
       <div className="bo-toolbar">
         <div className="bo-segment" aria-label="Sterkste aandelen">
-          {[1, 2, 5].map((v) => (
+          {[1, 2, 5, null].map((v) => (
             <button
-              key={v}
+              key={v ?? 'all'}
               aria-pressed={v === top}
               className={v === top ? 'active' : ''}
               onClick={() => setTop(v)}
             >
-              Top {v}%
+              {v === null ? 'Alle leiders' : `Top ${v}%`}
             </button>
           ))}
         </div>
@@ -685,9 +502,80 @@ export default function BreakoutPage() {
           CSV exporteren
         </button>
       </div>
+      <div className="bo-toolbar">
+        <label>
+          Minimumprijs
+          <input
+            aria-label="Minimumprijs"
+            type="number"
+            min="0"
+            value={minPrice}
+            onChange={(e) => setMinPrice(Math.max(0, Number(e.target.value)))}
+          />
+        </label>
+        <label>
+          Gem. dollarvolume
+          <input
+            aria-label="Minimum gemiddeld dollarvolume"
+            type="number"
+            min="0"
+            step="100000"
+            value={minDollarVolume}
+            onChange={(e) =>
+              setMinDollarVolume(Math.max(0, Number(e.target.value)))
+            }
+          />
+        </label>
+        <label>
+          Beurs
+          <select
+            aria-label="Beursfilter"
+            value={exchange}
+            onChange={(e) => setExchange(e.target.value)}
+          >
+            <option value="">Alle beurzen</option>
+            {[
+              ...new Set(scan?.rows.map((r) => r.exchange).filter(Boolean)),
+            ].map((v) => (
+              <option key={v} value={v}>
+                {v}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Sector
+          <select
+            aria-label="Sectorfilter"
+            value={sector}
+            onChange={(e) => setSector(e.target.value)}
+          >
+            <option value="">Alle sectoren</option>
+            {[...new Set(scan?.rows.map((r) => r.sector).filter(Boolean))].map(
+              (v) => (
+                <option key={v} value={v}>
+                  {v}
+                </option>
+              ),
+            )}
+          </select>
+        </label>
+        <button
+          onClick={() => {
+            setStatus('all')
+            setSearch('')
+            setMinPrice(0)
+            setMinDollarVolume(0)
+            setExchange('')
+            setSector('')
+          }}
+        >
+          Filters wissen
+        </button>
+      </div>
       <p className="bo-muted">
         {rows.length} resultaten · dekking {scan?.rows.length ?? 0}/
-        {scan?.total ?? 0}.{' '}
+        {scan?.totalUniverse ?? scan?.total ?? 0}.{' '}
         {running
           ? 'Ranglijst beschikbaar na afronden.'
           : 'Selectie vóór statusfilter; rendement gerangschikt per gekozen periode.'}
@@ -736,22 +624,31 @@ export default function BreakoutPage() {
           <tbody>
             {rows.map((r) => (
               <tr
-                key={r.symbol}
-                className={selected === r.symbol ? 'selected' : ''}
+                key={r.id ?? r.symbol}
+                className={selected === (r.id ?? r.symbol) ? 'selected' : ''}
               >
                 <td>
                   <button
                     className="bo-ticker"
                     onClick={() =>
-                      setSelected(selected === r.symbol ? '' : r.symbol)
+                      setSelected(
+                        selected === (r.id ?? r.symbol)
+                          ? ''
+                          : (r.id ?? r.symbol),
+                      )
                     }
                     aria-expanded={selected === r.symbol}
                   >
                     {r.symbol}
                   </button>
-                  <small>Rang {r.ranks?.[period] ?? '—'}</small>
+                  <small>
+                    Rang {r.ranks?.[period] ?? '—'} · {r.exchange} ·{' '}
+                    {r.currency}
+                  </small>
                 </td>
-                <td>${number(r.close)}</td>
+                <td>
+                  {r.currency ?? 'USD'} {number(r.close)}
+                </td>
                 {r.returns.map((v, p) => (
                   <td
                     key={p}
@@ -786,7 +683,7 @@ export default function BreakoutPage() {
             <p>
               {scan?.rows.length
                 ? 'Verruim het toppercentage, wijzig het filter of toon het volledige universum.'
-                : 'Verbind IBKR via de koppeling in het menu en start een scan.'}
+                : 'Verbind de scanner hierboven, importeer een universum en start een scan.'}
             </p>
           </div>
         )}

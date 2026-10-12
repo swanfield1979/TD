@@ -2,6 +2,6 @@
 
 Er is nog geen kant-en-klaar distributiepakket beschikbaar. De productiebuild wordt vanuit [`../source/`](../source/) gemaakt en kan met de meegeleverde Nginx-, systemd- en IBKR-configuraties op de interne webserver worden geïnstalleerd. Zie de [installatiehandleiding](../docs/installatie.md).
 
-## Trading Monitor 0.28.0
+## Trading Monitor 0.29.0
 
-Breakout wordt via de [GitHub-broncode](https://github.com/swanfield1979/TD) verspreid. Er is geen afzonderlijk installatiepakket voor de webapp. Bouw vanuit source en gebruik `bash deploy/update-breakout.sh` op de bestaande server; zie [installatie](../docs/breakout-scanner.md#installatie-via-github). Lokale tests/build en browsercontrole geslaagd; live installatie en marktdata nog niet bevestigd. Tijdelijke builduitvoer blijft in source/dist.
+Verspreiding via de [GitHub-broncode](https://github.com/swanfield1979/TD). Er is geen afzonderlijk installatiepakket voor de webapp. Gebruik de [serverupdate](../docs/breakout-scanner.md#installatie-via-github) vanuit source. Python 3.12+ en Node 22.12+/24/26+ vereist. Tests, build en lokale HTTP/browserworkflow slagen; live installatie en IBKR-marktdata nog niet bevestigd. Tijdelijke build blijft in source/dist.

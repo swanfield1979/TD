@@ -259,7 +259,7 @@ Gebruik een verbonden Gateway en passende marktdatarechten voor IV, IV-historie 
 
 Lokaal: start `npm run dev` en in een tweede terminal vanuit `source/` de API met `npm run start:api`. Configureer `IBKR_ALLOWED_ORIGINS` met `http://127.0.0.1:5173` en stel `IBKR_SNAPSHOT_PATH` in op je lokale snapshotbestand. Zie [CSP-scans](scans.md).
 
-## Serverupdate 0.28.0 — Breakout
+## Serverupdate 0.29.0 — Breakout
 
 Voer op de bestaande Linux-webserver uit:
 
@@ -270,4 +270,8 @@ cd source
 bash deploy/update-breakout.sh
 ```
 
-Het script controleert API-installatiemap, tests en build, bewaart een webrootback-up, publiceert frontend en herstart de API vanuit dezelfde checkout. Geen nieuwe Flex-import nodig. Open daarna `http://192.168.1.22/#breakout`, vernieuw met Ctrl+F5 en start een scan met verbonden Gateway. Houd client-ID `IBKR_CLIENT_ID + 30` vrij. Zie [Breakout-scanner](breakout-scanner.md) voor configuratie, datavereisten en validatiegrenzen.
+Vereist Node.js 22.12+, 24 of 26+ (geen Node 25) en Python 3.12+ met venv/pip. Installeer op Ubuntu/Debian waar beschikbaar eerst `sudo apt install python3.12 python3.12-venv`; bij een andere Python-installatie: `BREAKOUT_PYTHON_BIN=/pad/naar/python bash deploy/update-breakout.sh`.
+
+Het script voert Node-/Vitest-/pytest-tests en de productiebuild uit, maakt een webroot- en Nginx-back-up, installeert gepinde Python-dependencies, start de afzonderlijke systemd-scanner op 8788 en routeert de scanner-API via Nginx. De bestaande API blijft op 8787. De checkout moet de bestaande API-installatiemap zijn; dit wordt vóór publicatie gecontroleerd. Geen nieuwe Flex-import vereist. Instellingen: `/etc/trading-monitor/breakout.env` (optioneel; voorbeeld in source/deploy/trading-monitor). Standaard is Paper Gateway op 4002 met client-ID 109. Open `http://192.168.1.22/#breakout`, vernieuw met Ctrl+F5, configureer de werkelijke TWS/Gateway-poort en verbind de scanner. Een live portefeuilleverbinding op 4001 maakt de aparte paperscanner niet automatisch bereikbaar.
+
+Controle: `systemctl status trading-monitor-breakout.service`, `journalctl -u trading-monitor-breakout.service -n 60 --no-pager` en `curl --fail http://127.0.0.1/api/health`. Controleer daarna CSV-import, syncvoortgang en peildatum met echte IBKR-data. Back-ups bevatten mogelijk privédata en blijven op de server. Voor rollback: eerdere Git-commit herstellen, oude webroot/Nginx-back-up terugzetten en relevante services herstarten; behoud de SQLite-database. Live installatie is vanuit deze werkomgeving niet bevestigd.

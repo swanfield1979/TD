@@ -1,5 +1,15 @@
 # Versiehistorie
 
+## 0.29.0 — Python Breakout en incrementele cache (12 oktober 2026)
+
+- Node-scanner vervangen door afzonderlijke FastAPI-/SQLAlchemy-/SQLite-subapp; bestaande portefeuille/CSP behouden.
+- Gepinde ib_async 2.1.0, Paper standaard, TWS/Gateway-instellingen, reconnect, pacing, bounded retries, annulering en geschoonde subscriptiefouten.
+- CSV-universum, cached conIds, incrementele dagbars, per-symbol fouten en retry, corporate-actionhercontrole met behoud van cache bij fouten.
+- React-code opgesplitst; financiële candlestickgrafiek, prijs-/liquiditeits-/metadatafilters en expliciete read-only tekst. Labels Setup mislukt en Onvoldoende data.
+- Gedocumenteerde JSON/OpenAPI, Pydantic-config en systemd/Nginx GitHub-update. 24 pytest-, zeven Vitest- en 94 Node-tests plus Playwright-smoke geslaagd. Live plaatsing en IBKR-data nog niet bevestigd.
+- [Handleiding](breakout-scanner.md), [architectuur/API](breakout-python.md).
+
+
 ## 0.28.0 — Breakout-scanner (12 oktober 2026)
 
 - Nederlandse Breakout-pagina in donkere lime-stijl, naast de bestaande portefeuillepagina’s.

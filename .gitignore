@@ -13,3 +13,10 @@ source/public/data/*.json
 .DS_Store
 Thumbs.db
 *.log
+source/backend/.venv/
+source/backend/**/__pycache__/
+source/backend/.pytest_cache/
+source/backend/*.egg-info/
+source/backend/.ruff_cache/
+source/.ruff_cache/
+source/data/*.sqlite*

@@ -1,0 +1,26 @@
+[Unit]
+Description=Trading Monitor read-only Python Breakout API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=gerard
+Group=gerard
+WorkingDirectory=/home/gerard/TD/source/backend
+Environment=BREAKOUT_DATABASE_PATH=/var/lib/trading-monitor/breakout.sqlite
+Environment=BREAKOUT_ALLOWED_ORIGINS=http://192.168.1.22
+EnvironmentFile=-/etc/trading-monitor/breakout.env
+ExecStart=/home/gerard/TD/source/backend/.venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8788
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+StateDirectory=trading-monitor
+UMask=0077
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/var/lib/trading-monitor
+PrivateTmp=true
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
