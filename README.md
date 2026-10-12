@@ -19,6 +19,26 @@ Zie [Breakout-serverupdate 0.30.0](docs/breakout-scanner.md#installatie-via-gith
 
 Zie [`docs/installatie.md`](docs/installatie.md) voor de installatie en [`source/README.md`](source/README.md) voor alle ontwikkelcommando's.
 
+## Breakout: installatie en onderzoek
+
+De scanner zoekt leiders op cross-sectionele 21/63/126-sessierendementen en beoordeelt impuls, consolidatie en range-expansie. React/TypeScript en Lightweight Charts tonen een sorteerbare tabel en candlestickdetails; FastAPI, SQLAlchemy/SQLite en een read-only IBKR-adapter verzorgen API, analyse en incrementele cache. Dit is een educatief onderzoeksinstrument, geen financieel advies.
+
+Installeer Node 22.12+/24/26+ en Python 3.12+ en voer vanuit source uit:
+
+```bash
+npm ci
+python3.12 -m venv backend/.venv
+backend/.venv/bin/python -m pip install -r backend/requirements-lock.txt
+cp .env.example .env
+npm run serve:lan
+```
+
+Productie opent op http://localhost:8000/#breakout; de launcher print het LAN-IP. Ontwikkeling: `npm run dev:lan`. Expliciete testdemo: `npm run dev:demo`. Zonder broker blijft bestaande historie zichtbaar als Cached met exact timestamp. Er worden geen orders uitgevoerd.
+
+Installeer en configureer TWS of IB Gateway handmatig voor paper en read-only API volgens [IBKR.md](docs/IBKR.md); daar staan ook subscriptions, reconnect, pacing en veelvoorkomende verbindingsfouten. Importeer CSV met symbol, exchange, currency en optioneel company_name/sector. De [voorbeeldlijst](source/data/example-universe.csv) is geen volledig marktuniversum. De scanner cachet contract-ID's en bars en vraagt bij volgende syncs alleen ontbrekende dagen met beperkte overlap op. Mislukte requests behouden bestaande data.
+
+[SETUP_LOGIC.md](docs/SETUP_LOGIC.md) verklaart ieder criterium en corporate-actionbeleid. [DEPLOYMENT.md](docs/DEPLOYMENT.md) bevat Linux/Windows-installatie, tests, LAN-hosting en de GitHub-serverupdate. Tests vanuit source: `backend/.venv/bin/python -m pytest backend/tests -q`, `npm run test:frontend`, `npm test`; na starten van dev:demo voert `npm run test:e2e` de browserworkflow uit. De productiebuild gebruikt `npm run build`.
+
 ## Functies
 
 - [Breakout](docs/breakout-scanner.md): marktleiders over 1M/3M/6M, toppercentages, setupdetails, koersgrafieken en CSV-export. CSV-universum, incrementele SQLite-cache en read-only Paper/TWS/Gateway-koppeling.

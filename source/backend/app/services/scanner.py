@@ -5,6 +5,7 @@ from zoneinfo import ZoneInfo
 import httpx
 
 from ..analysis.leadership import analyze, rank
+from ..broker.interface import MarketDataBroker
 from ..core.calendar import HOLIDAYS
 from ..schemas.scanner import AnalysisConfig, DailyBar
 from .universe import parse_universe
@@ -30,7 +31,7 @@ def incremental_duration(cached, target, force=False):
 
 
 class Scanner:
-    def __init__(self, repository, broker, settings=None):
+    def __init__(self, repository, broker: MarketDataBroker, settings=None):
         self.repo, self.broker = repository, broker
         self.settings = settings
         self.config = AnalysisConfig.model_validate(repository.get("analysis", {}))

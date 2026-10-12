@@ -97,4 +97,4 @@ Deze optionele service bindt alleen aan localhost:8788 achter de bestaande Nginx
 
 ## Gecontroleerde status
 
-32 pytest-tests, zeven Vitest-tests, 94 bestaande Node-regressietests en de Playwright-smoketest slagen. Productiebuild en echte FastAPI/SQLite-workflow gecontroleerd. Het productiecommando is gestart op 0.0.0.0:8000; HTTP en browser op het lokale LAN-adres werken met de echte `app.main`, correcte Cached-labels en zonder demo. Live IBKR-data, toegang vanaf een tweede fysiek apparaat en plaatsing op 192.168.1.22 zijn nog niet bevestigd.
+43 pytest-tests, 13 Vitest-tests, 94 bestaande Node-regressietests en de Playwright-smoketest slagen. Productiebuild en echte FastAPI/SQLite-workflow gecontroleerd. Het productiecommando is gestart op 0.0.0.0:8000; HTTP en browser op het lokale LAN-adres werken met de echte `app.main`, correcte Cached-labels en zonder demo. Live IBKR-data, toegang vanaf een tweede fysiek apparaat en plaatsing op 192.168.1.22 zijn nog niet bevestigd. Zie ook [volledige installatie](DEPLOYMENT.md), [IBKR-configuratie](IBKR.md) en [setupberekeningen](SETUP_LOGIC.md).

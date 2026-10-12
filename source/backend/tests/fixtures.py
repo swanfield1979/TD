@@ -1,18 +1,20 @@
-from datetime import timedelta
+from datetime import date, timedelta
 
+from app.core.calendar import HOLIDAYS
 from app.services.scanner import latest_completed_day
 
 
-def bars(breakout=True):
+def bars(breakout=True, end=date(2026, 10, 9)):
+    """Fixed prices and dates; demo may explicitly shift the session anchor."""
     values = (
         [45 + i * 0.025 for i in range(140)]
         + [48.5 + i * 3.5 for i in range(1, 11)]
         + [82 + i * 0.1 for i in range(24)]
         + [90 if breakout else 84.5]
     )
-    dates, day = [], latest_completed_day()
+    dates, day = [], end
     while len(dates) < len(values):
-        if day.weekday() < 5:
+        if day.weekday() < 5 and day.isoformat() not in HOLIDAYS:
             dates.append(day.isoformat())
         day -= timedelta(days=1)
     dates.reverse()
@@ -40,6 +42,29 @@ def bars(breakout=True):
             )
         )
     return output
+
+
+def setup_fixture(kind):
+    """Six independent, deterministic synthetic OHLCV scenarios. No market feed."""
+    data = bars(kind != "ready")
+    if kind == "forming":
+        for i in range(140, 150):
+            value = 49 if i < 145 else 48.5 + (i - 144) * 7
+            data[i].update(open=value - 0.1, high=value + 1, low=value - 1, close=value)
+        return data[:156]
+    if kind == "failed":
+        for b in data[150:-1]:
+            b["low"] = 35
+        data[-1].update(open=60, high=61, low=59, close=60)
+    elif kind == "no_move":
+        for i, b in enumerate(data):
+            value = 45 + i * 0.025
+            b.update(open=value - 0.1, high=value + 0.5, low=value - 0.5, close=value)
+    elif kind == "insufficient":
+        return data[-50:]
+    elif kind not in {"ready", "breakout"}:
+        raise ValueError("Onbekende fixture.")
+    return data
 
 
 class FakeBroker:
@@ -92,4 +117,4 @@ class FakeBroker:
         if contract["symbol"] in self.fail_symbols:
             raise BrokerError("Marktdatasubscriptie ontbreekt.", False)
         await self.connect()
-        return bars()
+        return bars(end=latest_completed_day())

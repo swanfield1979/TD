@@ -1,5 +1,13 @@
 # Validatie
 
+## 12 oktober 2026 — aanvullende scanneracceptatie 0.30.0
+
+- 43 pytest-tests geslaagd, waaronder zes deterministische setupfixtures, dubbele bars, CSV, filters, disconnected/cached-herstart, health en verbod op orderfuncties in de scanner. Eén deprecation warning uit Starlette/httpx; geen testfouten.
+- 13 Vitest-tests geslaagd, inclusief alle vijf Nederlandse statuslabels; 94 Git-gevolgde Node-regressietests geslaagd.
+- TypeScript/Vite-productiebuild geslaagd. Playwright-smoketest geslaagd op desktop en 390px mobiel met echte FastAPI/SQLite, testbroker, CSV-import, synchronisatie, filtering, sortering en details/chart.
+- Productie gestart met npm run serve:lan op 0.0.0.0:8000. Health en scannerpagina opnieuw gecontroleerd via localhost en 192.168.1.48. Geen productie-demodata of automatische brokerfallback.
+- Documentatie SETUP_LOGIC.md, IBKR.md en DEPLOYMENT.md toegevoegd; brokerinterface expliciet gemaakt. Echte IBKR-verbinding, tweede fysiek LAN-apparaat en installatie op 192.168.1.22 blijven onbevestigd.
+
 ## Versie 0.27.2 — koers- en scannerterugval (lokaal)
 
 - `npm test`: 84 van 84 tests geslaagd; TypeScript- en Vite-productiebuild geslaagd.

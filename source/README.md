@@ -66,3 +66,7 @@ npm run dev:lan
 Windows: `py -3.12` en `backend/.venv/Scripts/python.exe`; kopieer .env.example met Copy-Item. Productie: één commando `npm run serve:lan`, inclusief build, gezamenlijke origin en LAN-URL op 0.0.0.0:8000. Optionele demo: `npm run dev:demo`, expliciet gemarkeerde testdata en tijdelijke database. Open de geprinte LAN-URL /#breakout; stel eerst TWS/Gateway in. Geen automatische service-installatie.
 
 Controles: `npm test`, `npm run test:frontend`, `npm run build`; subapp backend: `cd backend` en `.venv/bin/python -m pytest -q`. Playwright: `npm run test:e2e` tegen de expliciete testbackend of dev:demo, met Playwright/Edge beschikbaar. [LAN/start/API](../docs/breakout-lan.md), [backendcommando's](backend/README.md) en [detectieconfig](../docs/breakout-scanner.md).
+
+## Scanneracceptatie en handleidingen
+
+43 backendtests en 13 frontendtests geslaagd; deterministische fixtures vereisen geen IBKR. Volledige installatie-, test- en LAN-commando's staan in [DEPLOYMENT.md](../docs/DEPLOYMENT.md); [IBKR.md](../docs/IBKR.md) beschrijft paper/API-instellingen en [SETUP_LOGIC.md](../docs/SETUP_LOGIC.md) alle criteria. Zie [validatie](../docs/validatie.md) voor de daadwerkelijke browser- en productiecontrole.
