@@ -21,7 +21,7 @@ class Settings(BaseSettings):
         env_prefix="BREAKOUT_", env_file=".env", extra="ignore"
     )
     database_path: Path = (
-        Path(__file__).resolve().parents[4] / "data" / "private" / "breakout.sqlite"
+        Path(__file__).resolve().parents[3] / "data" / "private" / "breakout.sqlite"
     )
     allowed_origins: str = "http://192.168.1.22,http://127.0.0.1:5173"
     broker_host: str = "127.0.0.1"

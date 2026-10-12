@@ -1,5 +1,6 @@
 import asyncio
 from datetime import timedelta
+from pathlib import Path
 
 from fastapi.testclient import TestClient
 
@@ -17,6 +18,9 @@ CSV = "symbol,exchange,currency,company,sector\nTEST,NASDAQ,USD,Test company,Tec
 
 
 def test_api_security_csv_and_settings(tmp_path):
+    assert Settings.model_fields["database_path"].default == (
+        Path(__file__).resolve().parents[2] / "data" / "private" / "breakout.sqlite"
+    )
     app = create_app(Settings(database_path=tmp_path / "scan.sqlite"), FakeBroker)
     with TestClient(app) as client:
         assert client.get("/api/health").json()["readOnly"]
