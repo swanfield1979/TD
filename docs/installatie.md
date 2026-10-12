@@ -258,3 +258,16 @@ Deze stappen veronderstellen dat de checkout ook de installatiebron van de API i
 Gebruik een verbonden Gateway en passende marktdatarechten voor IV, IV-historie en optie-Greeks. Houd client-ID `IBKR_CLIENT_ID + 20` vrij. De bestaande Nginx-route `/api/` ondersteunt de scanroutes; de scan loopt asynchroon en vereist geen langere proxytijdslimiet.
 
 Lokaal: start `npm run dev` en in een tweede terminal vanuit `source/` de API met `npm run start:api`. Configureer `IBKR_ALLOWED_ORIGINS` met `http://127.0.0.1:5173` en stel `IBKR_SNAPSHOT_PATH` in op je lokale snapshotbestand. Zie [CSP-scans](scans.md).
+
+## Serverupdate 0.28.0 — Breakout
+
+Voer op de bestaande Linux-webserver uit:
+
+```bash
+cd /home/gerard/TD
+git pull --ff-only origin main
+cd source
+bash deploy/update-breakout.sh
+```
+
+Het script controleert API-installatiemap, tests en build, bewaart een webrootback-up, publiceert frontend en herstart de API vanuit dezelfde checkout. Geen nieuwe Flex-import nodig. Open daarna `http://192.168.1.22/#breakout`, vernieuw met Ctrl+F5 en start een scan met verbonden Gateway. Houd client-ID `IBKR_CLIENT_ID + 30` vrij. Zie [Breakout-scanner](breakout-scanner.md) voor configuratie, datavereisten en validatiegrenzen.

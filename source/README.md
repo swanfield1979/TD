@@ -50,3 +50,7 @@ De read-only IBKR-backend kan lokaal worden gestart met `npm run start:api`. Voo
 De resultaatberekening staat in `scripts/realized-results.mjs`. Voer na wijzigingen aan de importer `npm test`, `npm run import:flex` en daarna `npm run build` uit, zodat de productiebuild de opnieuw berekende lokale data bevat. Zie de [berekeningsregels](../docs/gebruik.md).
 
 Stortingen/opnames: plaats optioneel `Storting_YYYY.xml` in `data/private/`. Gebruik per jaar één cumulatief Cash Report vanaf 1 januari (voor het eerste rekeningjaar mag de werkelijke startdatum). Zie [Inleg en rendement](../docs/inleg.md) voor exportvelden en berekeningen.
+
+## Breakout-scanner 0.28.0
+
+Open `/#breakout` of `/breakout`. Start vanuit deze map `npm run start:api` en `npm run dev` in twee terminals. Voor lokaal scannen: `IBKR_ALLOWED_ORIGINS=http://127.0.0.1:5173`, schrijfbaar `IBKR_SNAPSHOT_PATH` en de juiste Gateway-host/poort. Tests: `npm test`; productie: `npm run build`. Optionele browsercontrole: `node scripts/verify-breakout-browser.mjs` met Playwright en Edge (eventueel `PLAYWRIGHT_PACKAGE` naar een beschikbare package.json). Serverupdate vanuit deze map: `bash deploy/update-breakout.sh`, na git pull. Zie [handleiding](../docs/breakout-scanner.md).

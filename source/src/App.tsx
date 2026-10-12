@@ -19,14 +19,16 @@ import GoalsPage from './GoalsPage'
 import TradesPage from './TradesPage'
 import StatsPage from './StatsPage'
 import ScansPage from './ScansPage'
+import BreakoutPage from './BreakoutPage'
 import TradingActivityCards from './TradingActivityCards'
 import IbkrConnectionControl from './IbkrConnectionControl'
 import { mergeLiveSnapshot, resolvePortfolio } from './ibkr'
 
 const DATA_URL = '/data/portfolio-summary.json'
-type Page = 'dashboard' | 'stocks' | 'options' | 'goals' | 'stats' | 'trades' | 'scans'
+type Page = 'dashboard' | 'stocks' | 'options' | 'goals' | 'stats' | 'trades' | 'scans' | 'breakout'
 
 const pageFromHash = (): Page => {
+  if (window.location.hash === '#breakout' || (!window.location.hash && window.location.pathname === '/breakout')) return 'breakout'
   if (window.location.hash === '#scans') return 'scans'
   if (window.location.hash === '#stocks') return 'stocks'
   if (window.location.hash === '#options') return 'options'
@@ -44,6 +46,7 @@ const pageTitles: Record<Page, string> = {
   stats: 'Stats',
   trades: 'Trades',
   scans: 'Scans',
+  breakout: 'Breakout',
 }
 
 const currencyFormatter = (currency: string, showSign = false) =>
@@ -295,6 +298,9 @@ function App() {
           <a className={`nav-item${currentPage === 'scans' ? ' nav-item--active' : ''}`} href="#scans" aria-current={currentPage === 'scans' ? 'page' : undefined}>
             <TargetArrowRegular aria-hidden="true" /><span>Scans</span>
           </a>
+          <a className={`nav-item${currentPage === 'breakout' ? ' nav-item--active' : ''}`} href="#breakout" aria-current={currentPage === 'breakout' ? 'page' : undefined}>
+            <DataTrendingRegular aria-hidden="true" /><span>Breakout</span>
+          </a>
           <a
             className={`nav-item${currentPage === 'goals' ? ' nav-item--active' : ''}`}
             href="#goals"
@@ -332,7 +338,7 @@ function App() {
             <h1>{pageTitles[currentPage]}</h1>
             {currentPage === 'dashboard' && <p className="page-subtitle">Je portefeuille in één oogopslag</p>}
           </div>
-          {summary && currentPage !== 'scans' && (
+          {summary && currentPage !== 'scans' && currentPage !== 'breakout' && (
             <div className="data-freshness" title={showLiveFreshness ? `IBKR-snapshot opgehaald op ${summary.sourceUpdatedAt}; historische Flex-basis t/m ${importedSummary?.balance.toDate}` : `Bronbestand gegenereerd op ${importedSummary?.sourceUpdatedAt}`}>
               <span className="data-freshness__pulse" aria-hidden="true" />
               <span>
@@ -344,9 +350,10 @@ function App() {
         </header>
 
         {currentPage === 'scans' && <ScansPage />}
-        {isLoading && currentPage !== 'scans' && <LoadingDashboard />}
+        {currentPage === 'breakout' && <BreakoutPage />}
+        {isLoading && currentPage !== 'scans' && currentPage !== 'breakout' && <LoadingDashboard />}
 
-        {!isLoading && error && currentPage !== 'scans' && (
+        {!isLoading && error && currentPage !== 'scans' && currentPage !== 'breakout' && (
           <section className="state-panel state-panel--error" role="alert">
             <div>
               <h2>Dashboarddata ontbreekt</h2>

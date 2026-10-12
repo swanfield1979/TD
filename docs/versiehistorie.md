@@ -1,5 +1,14 @@
 # Versiehistorie
 
+## 0.28.0 — Breakout-scanner (12 oktober 2026)
+
+- Nederlandse Breakout-pagina in donkere lime-stijl, naast de bestaande portefeuillepagina’s.
+- Werkelijke momentumranglijsten per 21/63/126 sessies en top 1/2/5% binnen het gekozen universum.
+- Configureerbare rolling impuls, ordelijke consolidatie en breakout zonder kandidaatbar in eerdere high/ATR.
+- Read-only IBKR ADJUSTED_LAST-daghistorie, private scanopslag, voortgang, annuleren en expliciete datadekking.
+- Detailgrafiek, setupdiagnostiek, toegankelijke sortering, filters en CSV. Tests, build en lokale browserworkflow gecontroleerd. Live installatie en IBKR-marktdata nog niet bevestigd.
+- [Handleiding en serverupdate](breakout-scanner.md).
+
 ## 0.27.2 – koers- en scannerterugval en zichtbare startfouten
 
 - Quotes proberen bevroren en vertraagd-bevroren data wanneer de reguliere stream geen volledige koers levert.

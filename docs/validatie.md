@@ -199,3 +199,10 @@ De eerste versie wordt gecontroleerd met:
 - Alle twaalf lokale XML-bronnen opnieuw geïmporteerd; jaartotalen gecontroleerd tegen de aangeleverde Cash Reports. Productie-JSON is gelijk aan de geïmporteerde samenvatting.
 - TypeScript/Vite-build geslaagd. Dashboard en Goals gecontroleerd in de browser; geen horizontale pagina-overloop op desktop, tablet en mobiel (1720, 1024, 768 en 360 pixels voor Goals). Geen browserfouten tijdens de controle.
 - Stortingsbestanden zijn uitgesloten van Git. De huidige winst is expliciet voorlopig omdat saldo- en inlegpeildatum één dag verschillen.
+
+## Breakout-scanner 0.28.0 — 12 oktober 2026
+
+- Detectiekern en echte HTTP-API getest, inclusief origin-/configvalidatie en foutmelding bij onbereikbare Gateway.
+- Browsercontrole met echte lokale API voor laden/validatie; geïsoleerde OHLC-testfixtures voor resultaten, details, sortering, filters, zoeken en CSV. Desktop 1440 px en mobiel 390 px gecontroleerd, inclusief menubediening en geen pagina-overloop. Geen browserexceptions.
+- Tests en TypeScript/Vite-productiebuild geslaagd. Reproduceerbare browsercontrole: `node scripts/verify-breakout-browser.mjs` vanuit source (Playwright en Edge vereist).
+- Geen live marktdata of installatie op 192.168.1.22 bevestigd. Verspreiding via GitHub; serverupdate met `bash deploy/update-breakout.sh`. Zie [handleiding](breakout-scanner.md).

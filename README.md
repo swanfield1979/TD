@@ -2,7 +2,7 @@
 
 Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voortgang op basis van Interactive Brokers Flex-rapporten.
 
-**Versie/status:** 0.27.2. Donkere modus en CSP-scans voor portfolio en een NASDAQ/S&P 500-shortlist; uitsluitend passende aandelen zijn zichtbaar, met terugval voor ontbrekende koersstreams en uitgeschakelde IV-scanners. Tests en productiebuild lokaal gecontroleerd; live IBKR-marktdata en installatie op de liveserver zijn nog niet bevestigd.
+**Versie/status:** 0.28.0. Breakout-scanner met IBKR-daghistorie, top 1/2/5%-momentum, configureerbare stair-step-detectie en opgeslagen scanresultaten. Tests, build en lokale browserworkflow gecontroleerd; installatie op de liveserver en echte marktdata nog niet bevestigd.
 
 | Map | Inhoud |
 | --- | --- |
@@ -12,11 +12,14 @@ Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voort
 
 ## Starten
 
-Zie [serverupdate 0.27.0](docs/installatie.md#serverupdate-versie-0270): publiceer frontend en backend samen en herstart de API. Een nieuwe Flex-import is voor deze uitbreiding niet vereist.
+Zie [Breakout-serverupdate 0.28.0](docs/breakout-scanner.md#installatie-via-github): publiceer frontend en backend samen en herstart de API. Een nieuwe Flex-import is voor deze uitbreiding niet vereist.
 
 Zie [`docs/installatie.md`](docs/installatie.md) voor de installatie en [`source/README.md`](source/README.md) voor alle ontwikkelcommando's.
 
 ## Functies
+
+- [Breakout](docs/breakout-scanner.md): marktleiders over 1M/3M/6M, toppercentages, setupdetails, koersgrafieken en CSV-export. Volledig universum of S&P 500 via IBKR.
+
 
 - Donkere modus als standaard, met onthouden donker/licht-keuze, responsieve navigatie en IBKR-status.
 - Scans: CSP’s op bestaande onderliggende portfoliowaarden eerst, daarnaast een NASDAQ/S&P 500-shortlist van $ 10–$ 50; sorteren op jaarrendement, rendement of premie. Zie [CSP-scans](docs/scans.md) voor criteria, datavereisten en dekking.
