@@ -1,4 +1,4 @@
-# IV Scan en Leaps — Trading Monitor 0.31.3
+# IV Scan en Leaps — Trading Monitor 0.31.4
 
 Breakout vervalt als menupagina. `#iv` opent **IV Scan** en `#leaps` opent **Leaps**. Bestaande `#breakout`-links en het pad `/breakout` openen IV Scan. Historische breakoutbroncode, cache en zelfstandige TradingView-bestanden blijven bewaard; de oude scanner wordt vanuit het menu niet meer gestart.
 
@@ -20,7 +20,7 @@ Sinds 0.31.2 gebruikt IV Scan **geen IBKR-marktscannertype** meer. De app haalt 
 
 Klik **Scan starten** voor 25 aandelen. IBKR levert alleen koersen en IV-historie, met de bestaande wachtrij. Daarna ga je met **Volgende 25 scannen** verder. De pagina toont de dekking van deze ronde en behoudt eerder gevonden matches met hun quote-ophaaltijd. Ontbrekende actuele IV leidt direct tot overslaan, zonder nutteloze historiedownload. Geen koersgrens in IV Scan. De resultaten zijn geen volledige marktscan zolang er aandelen overblijven.
 
-De ronde, cursor en matches staan per Gateway in het Node-procesgeheugen. Stoppen hervat bij het nog niet afgeronde aandeel; na een nieuwe New York-beursdatum, API-herstart of volledige ronde begint de volgende scan een nieuwe ronde. Bij één onbereikbare aandelenlijst wordt uitsluitend de andere bron gebruikt, met waarschuwing; als beide bronnen ontbreken, volgt een fout. In de lokale broncontrole waren 3.726 unieke aandelen beschikbaar; dit aantal kan veranderen. Een tickerlijst bevat geen actuele IV, marktdatarechten blijven nodig.
+De ronde, cursor en matches worden op schijf bewaard, gekoppeld aan de Gateway. Stoppen of een API-herstart hervat bij het nog niet afgeronde aandeel, zolang de beursdatum gelijk blijft. Na een nieuwe New York-beursdatum of volledige ronde begint de volgende scan een nieuwe ronde; de laatste resultaten blijven na herstart zichtbaar totdat je opnieuw scant. Bij één onbereikbare aandelenlijst wordt uitsluitend de andere bron gebruikt, met waarschuwing; als beide bronnen ontbreken, volgt een fout. In de lokale broncontrole waren 3.726 unieke aandelen beschikbaar; dit aantal kan veranderen. Een tickerlijst bevat geen actuele IV, marktdatarechten blijven nodig.
 
 Voor ieder aandeel berekent de API IV-rank met actuele IBKR-aandelen-IV (generic tick 106 / tick 24) en dagelijkse OPTION_IMPLIED_VOLATILITY over een jaar. Minimaal 200 bruikbare waarnemingen, minimaal 330 dagen dekking en een laatste waarneming van maximaal zeven kalenderdagen oud zijn vereist. Alleen **IV-rank > 40** wordt getoond. IV-rank 40 zelf voldoet niet. Zonder voldoende gegevens wordt een aandeel overgeslagen en gemeld.
 
@@ -32,7 +32,7 @@ De resultaten tonen koers, IV-rank, IV-percentile, IV, universum, quote-ophaalti
 
 Voeg tickers toe die je bij toewijzing wilt bezitten. Meerdere tickers mogen met komma's, spaties of puntkomma's worden ingevoerd. De shortlist is leeg bij eerste gebruik, bevat maximaal 50 unieke tickers en kan worden gewijzigd met **Toevoegen** en **Verwijderen**. Klik daarna **Scan starten**. De scan gebruikt een kopie van de opgeslagen shortlist; de getoonde gescande tickers maken eventuele oudere resultaten herkenbaar.
 
-De shortlist staat standaard naast `IBKR_SNAPSHOT_PATH` in `leaps-shortlist.json`: bij de bestaande systemd-installatie onder `/var/lib/trading-monitor/`, bij de LAN-launcher onder `source/data/private/`. Optioneel overschrijven met `LEAPS_SHORTLIST_PATH`; gebruik een privémap buiten de webroot. Opslaan gebeurt via een tijdelijk bestand en rename. Updates verwijderen dit bestand niet. Een onleesbaar bestaand bestand geeft een fout en wordt niet stilzwijgend overschreven. Scanresultaten en voortgang staan in het geheugen; na API-herstart blijven de shortlist en overige privédata bestaan, maar moet je opnieuw scannen.
+De shortlist staat standaard naast `IBKR_SNAPSHOT_PATH` in `leaps-shortlist.json`: bij de bestaande systemd-installatie onder `/var/lib/trading-monitor/`, bij de LAN-launcher onder `source/data/private/`. Optioneel overschrijven met `LEAPS_SHORTLIST_PATH`; gebruik een privémap buiten de webroot. Opslaan gebeurt via een tijdelijk bestand en rename. Updates verwijderen dit bestand niet. Een onleesbaar bestaand bestand geeft een fout en wordt niet stilzwijgend overschreven. Scanresultaten en IV-voortgang worden sinds 0.31.4 afzonderlijk in scan-results.json bewaard; na API-herstart worden ze automatisch teruggezet.
 
 ### Criteria
 
@@ -61,6 +61,14 @@ Premie = `biedprijs × 100`; volledig cashonderpand = `strike × 100`; lineair j
 Break-even bij expiratie = `strike − biedprijs`; koersbuffer = `(1 − break-even / koers) × 100%`. De 50%-exitprijs is de helft van de **getoonde biedpremie per aandeel**. Deze referentie is geen vastgelegde transactieprijs. Na uitvoering gebruik je de werkelijk ontvangen premie om je terugkoopdoel te bepalen.
 
 De strategie neemt ongeveer 50% winst, accepteert toewijzing zolang je het bedrijf wilt bezitten en sluit handmatig met verlies wanneer die overtuiging wezenlijk vervalt. Er zijn geen automatische exits of orders. De tool beoordeelt bedrijfskwaliteit, beschikbare cash, portefeuillelimieten en covered-callkeuzes na toewijzing niet.
+
+## Laatste scan bewaren (0.31.4)
+
+IV Scan, Leaps en de bestaande CSP-scan bewaren hun laatste resultaat naast `IBKR_SNAPSHOT_PATH` in `scan-results.json`. Optioneel overschrijven met `SCAN_RESULTS_PATH`; houd dit bestand in de privédatamap buiten de webroot. Opslaan gebeurt via een tijdelijk bestand en atomische rename, met een gedeelde schrijfwachtrij. De serverupdate verwijdert dit bestand niet.
+
+IV Scan schrijft na ieder afgerond aandeel een samenhangend resultaat/cursor-checkpoint; Leaps schrijft tijdens de optieverwerking en alle scans schrijven bij afronden, fouten of stoppen. Een lopende scan wordt na herstart **onderbroken**, niet automatisch hervat. Bij dezelfde New York-beursdatum vervolgt IV Scan met **Volgende 25 scannen** bij het nog niet afgeronde aandeel. Voor Leaps start je een nieuwe scan. Oudere quotes behouden hun oorspronkelijke ophaaltijd; herladen maakt ze niet actueel.
+
+Wanneer een nieuwe IV-/Leaps-scan faalt of wordt gestopt zonder nieuwe resultaten, blijven de vorige resultaten herkenbaar zichtbaar. Schrijffouten worden gemeld; bestaande opslag wordt bij een lees-/validatiefout niet stilzwijgend overschreven. Het bestand wordt gecontroleerd op formaat en bijbehorende Gateway. Een eerder verloren resultaat uit versies zonder schijfopslag kan niet worden teruggehaald; de nieuwe opslag werkt vanaf de eerstvolgende scan. De IV-historiecache en het geheugen van disabled scanners blijven in het procesgeheugen en zijn na herstart leeg.
 
 ## API
 

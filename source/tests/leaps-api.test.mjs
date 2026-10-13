@@ -1,3 +1,4 @@
+import { createScanStore } from '../server/scan-store.mjs'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { spawn } from 'node:child_process'
@@ -29,7 +30,18 @@ test('API persists manual shortlist across restart, validates edits and starts s
     assert.equal(saved.status,200);assert.deepEqual((await saved.json()).symbols,['HOOD','NVDA'])
     assert.deepEqual(JSON.parse(await readFile(join(directory,'leaps-shortlist.json'),'utf8')),['HOOD','NVDA'])
     assert.equal((await fetch(`${origin}/api/leaps/shortlist`,{method:'PUT',headers,body:JSON.stringify({symbols:['../../invalid']})})).status,400)
-    await stop();await start()
+    await stop()
+    const quotedAt='2026-10-13T12:00:00Z'
+    const row={symbol:'HOOD',underlyingPrice:110,ivr:60,quotedAt}
+    await createScanStore(join(directory,'scan-results.json'),'127.0.0.1:1').save({
+      iv:{state:'running',rows:[row],warnings:[],universeChecked:25,remainingSymbols:5},
+      leaps:{state:'complete',rows:[row],warnings:[],finishedAt:quotedAt},
+    },{date:'2026-10-13',cursor:25,entries:Array.from({length:30},(_,i)=>({symbol:`SP${i}`})),matches:new Map([['HOOD',row]]),warnings:[]})
+    await start()
+    const restoredIv=await (await fetch(`${origin}/api/iv-scan`)).json()
+    assert.equal(restoredIv.state,'interrupted');assert.equal(restoredIv.rows[0].symbol,'HOOD');assert.equal(restoredIv.universeChecked,25)
+    const restoredLeaps=await (await fetch(`${origin}/api/leaps`)).json()
+    assert.equal(restoredLeaps.rows[0].quotedAt,quotedAt);assert.equal(restoredLeaps.restoredFromDisk,true)
     assert.deepEqual((await (await fetch(`${origin}/api/leaps/shortlist`)).json()).symbols,['HOOD','NVDA'])
     const scan=await fetch(`${origin}/api/leaps`,{method:'POST',headers});assert.equal(scan.status,202)
     assert.deepEqual((await scan.json()).symbols,['HOOD','NVDA'])
@@ -37,6 +49,10 @@ test('API persists manual shortlist across restart, validates edits and starts s
     assert.equal((await fetch(`${origin}/api/scans`,{method:'POST',headers})).status,409)
     assert.equal((await fetch(`${origin}/api/leaps/stop`,{method:'POST',headers})).status,202)
     await pause(30)
-    assert.equal((await (await fetch(`${origin}/api/leaps`)).json()).state,'cancelled')
+    const stopped=await (await fetch(`${origin}/api/leaps`)).json()
+    assert.equal(stopped.state,'cancelled');assert.equal(stopped.rows[0].symbol,'HOOD');assert.equal(stopped.showingPreviousResults,true)
+    await stop();await start()
+    const again=await (await fetch(`${origin}/api/leaps`)).json()
+    assert.equal(again.rows[0].symbol,'HOOD');assert.equal(again.state,'cancelled')
   }finally{if(child?.exitCode===null)await stop();await rm(directory,{recursive:true,force:true})}
 })

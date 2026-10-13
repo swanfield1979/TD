@@ -76,6 +76,11 @@ failure=false;runningFixture=true
 await page.getByRole('button',{name:'Scan starten',exact:true}).click()
 await page.getByRole('button',{name:'Scan stoppen',exact:true}).click()
 await page.getByText('Scan gestopt; reeds gevonden resultaten blijven zichtbaar.').waitFor()
+results.iv={...results.iv,state:'interrupted',restoredFromDisk:true,savedAt:'2026-10-13T12:00:00Z',message:'Scan onderbroken door serverherstart; opgeslagen resultaten zijn teruggezet.'}
+await page.goto(`${process.env.RESEARCH_URL||'http://127.0.0.1:5199'}/#iv`)
+await page.getByText('Laatste scan teruggezet uit serveropslag',{exact:false}).waitFor()
+await page.getByRole('button',{name:'Volgende 25 scannen',exact:true}).waitFor()
+assert.equal(await page.locator('tbody tr').count(),1)
 assert.deepEqual(errors,[])
 console.log('IV Scan / Leaps browserworkflow geslaagd: navigatie, toevoegen, verwijderen, bewaren, vergelijking, filters, fouten en 360/768/1024/1440px. Marktdata is een expliciete testfixture.')
 await browser.close()

@@ -1,5 +1,13 @@
 # Versiehistorie
 
+## 0.31.4 — laatste scans en IV-voortgang bewaren (13 oktober 2026)
+
+- Resultaten van IV Scan, Leaps en CSP in privébestand scan-results.json, atomisch geschreven.
+- IV-universum, matches en cursor na ieder afgerond aandeel opslaan; herstart hervat dezelfde beursdatum zonder opnieuw bij nul te beginnen.
+- Lopende scans na herstart als onderbroken tonen; quote-ophaaltijden blijven behouden.
+- Eerdere IV-/Leaps-resultaten behouden als een nieuwe scan faalt of zonder resultaten wordt gestopt.
+- Opslagfouten zichtbaar; onleesbaar bestand niet overschrijven. [Handleiding](iv-leaps.md#laatste-scan-bewaren-0314).
+
 ## 0.31.3 — Leaps-calculatorvelden (13 oktober 2026)
 
 - Decrease to break even als negatieve koersafstand tot break-even bij expiratie.

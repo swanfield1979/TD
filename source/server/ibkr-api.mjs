@@ -7,6 +7,8 @@ import { withPreviousBalance } from './ibkr-domain.mjs'
 import { mergeExecutions } from '../shared/gateway-trades.mjs'
 import { runCspScan } from './csp-scanner.mjs'
 import { normalizeShortlist } from '../shared/leaps-scan.mjs'
+import { createScanStore } from './scan-store.mjs'
+import { scanGuard } from './scan-guard.mjs'
 
 const scanControllers = {}
 let scanState = { state: 'idle', portfolio: [], market: [], warnings: [], progress: '', symbolsChecked: 0, contractsChecked: 0 }
@@ -25,8 +27,9 @@ async function startScan() {
     const symbols = [...new Set(positions.filter((position) => (position.quantity ?? position.position) !== 0)
       .map((position) => position.symbol).filter((symbol) => typeof symbol === 'string' && /^[A-Z0-9. -]{1,20}$/.test(symbol)))]
     scanState.portfolioSymbols = symbols
-    await runCspScan({ ...config, scanSignal: scanControllers.csp.signal }, symbols, scanState)
+    await runCspScan({ ...config, scanSignal: scanControllers.csp.signal, onScanCheckpoint: saveScanResults }, symbols, scanState)
   } catch (error) { scanState.state = 'error'; scanState.message = error.message }
+  finally { await saveScanResults() }
 }
 
 const config = {
@@ -159,6 +162,36 @@ const optionScans = {
   iv: { state: 'idle', rows: [], warnings: [], symbolsChecked: 0, contractsChecked: 0 },
   leaps: { state: 'idle', rows: [], warnings: [], assessments: [], symbolsChecked: 0, contractsChecked: 0 },
 }
+const scanResultsPath = resolve(process.env.SCAN_RESULTS_PATH || dirname(config.snapshotPath) + '/scan-results.json')
+const scanStore = createScanStore(scanResultsPath, `${config.gatewayHost}:${config.gatewayPort}`)
+let scanStorageError = null
+try {
+  const stored = await scanStore.load()
+  if (stored) {
+    for (const mode of ['iv', 'leaps']) if (stored.scans[mode]) optionScans[mode] = stored.scans[mode]
+    if (stored.scans.csp) scanState = stored.scans.csp
+    if (stored.round) scanGuard(config).ivRound = stored.round
+  }
+} catch { scanStorageError = 'Opgeslagen scans konden niet worden gelezen. Controleer scan-results.json; dit bestand wordt niet overschreven.' }
+async function saveScanResults() {
+  if (scanStorageError) return
+  try {
+    await scanStore.save({ ...optionScans, csp: scanState }, scanGuard(config).ivRound)
+    for (const state of [scanState, ...Object.values(optionScans)]) delete state.storageError
+  } catch {
+    for (const state of [scanState, ...Object.values(optionScans)]) state.storageError = 'Scan kon niet worden opgeslagen; controleer de schrijfbevoegdheid van de privédatamap.'
+  }
+}
+async function runOptionScan(mode, symbols, state, previous) {
+  try {
+    await runCspScan({ ...config, scanSignal: scanControllers[mode].signal, onScanCheckpoint: saveScanResults }, symbols, state, undefined, mode)
+    if (state.rows.length === 0 && ['error', 'cancelled'].includes(state.state) && previous.rows.length) {
+      state.rows = previous.rows
+      state.showingPreviousResults = true
+      state.previousFinishedAt = previous.previousFinishedAt || previous.finishedAt || previous.savedAt
+    }
+  } finally { await saveScanResults() }
+}
 let shortlistSaving = false
 async function readJsonBody(request) {
   let body = ''
@@ -215,9 +248,10 @@ const server = createServer(async (request, response) => {
     }
     const mode = request.url === '/api/iv-scan' ? 'iv' : request.url === '/api/leaps' ? 'leaps' : null
     if (mode) {
-      if (request.method === 'GET') return sendJson(response, 200, optionScans[mode])
+      if (request.method === 'GET') return sendJson(response, 200, { ...optionScans[mode], storageError: scanStorageError || optionScans[mode].storageError })
       if (request.method === 'POST') {
         if (!isAllowedPost(request)) return sendJson(response, 403, { message: 'Ongeldige aanvraag.' })
+        if (scanStorageError) return sendJson(response, 409, { message: scanStorageError })
         if (optionScans[mode].state === 'running') return sendJson(response, 202, optionScans[mode])
         if (scanState.state === 'running' || Object.values(optionScans).some(scan => scan.state === 'running'))
           return sendJson(response, 409, { message: 'Er loopt al een optiescan. Wacht tot deze klaar is.' })
@@ -225,14 +259,16 @@ const server = createServer(async (request, response) => {
         const symbols = mode === 'leaps' ? [...shortlist] : []
         const state = { state: 'running', rows: [], puts: [], portfolio: [], market: [], assessments: [], warnings: [], symbols,
           symbolsChecked: 0, contractsChecked: 0, startedAt: new Date().toISOString(), progress: 'Verbinding met IBKR maken' }
+        const previous = optionScans[mode]
         optionScans[mode] = state
         scanControllers[mode] = new AbortController()
-        void runCspScan({ ...config, scanSignal: scanControllers[mode].signal }, symbols, state, undefined, mode)
+        void runOptionScan(mode, symbols, state, previous)
         return sendJson(response, 202, state)
       }
     }
-    if (request.method === 'GET' && request.url === '/api/scans') return sendJson(response, 200, scanState)
+    if (request.method === 'GET' && request.url === '/api/scans') return sendJson(response, 200, { ...scanState, storageError: scanStorageError || scanState.storageError })
     if (request.method === 'POST' && request.url === '/api/scans') {
+      if (scanStorageError) return sendJson(response, 409, { message: scanStorageError })
       if (!isAllowedPost(request)) return sendJson(response, 403, { message: 'Ongeldige aanvraag.' })
       if (Object.values(optionScans).some(scan => scan.state === 'running')) return sendJson(response, 409, { message: 'Er loopt al een IV- of Leaps-scan.' })
       if (scanState.state !== 'running') {

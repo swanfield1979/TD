@@ -1,10 +1,14 @@
+import { createScanStore } from '../server/scan-store.mjs'
+import { mkdtemp, rm } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { EventEmitter } from 'node:events'
 import { EventName } from '@stoqey/ib'
 import { parseNasdaq, parseSp500, combineUniverse, loadIvUniverse, SP500_URL, NASDAQ_URL } from '../server/iv-universe.mjs'
 import { runCspScan } from '../server/csp-scanner.mjs'
-import { resetScanGuards } from '../server/scan-guard.mjs'
+import { resetScanGuards, scanGuard } from '../server/scan-guard.mjs'
 import { scanDate } from '../shared/csp-scan.mjs'
 const header='Symbol|Security Name|Test Issue|ETF'
 test('public lists exclude funds, tests, warrants and units; index members come first and are deduplicated',()=>{
@@ -23,7 +27,10 @@ test('one missing list is disclosed; unavailable or truncated feeds never become
   t.mock.method(globalThis,'fetch',async()=>({ok:true,text:async()=>'<html>error</html>'}))
   await assert.rejects(loadIvUniverse(),/Geen aandelenlijst beschikbaar/)
 })
-test('IV Scan checks list batches without any IBKR scanner call, resumes and retains earlier matches',async()=>{
+test('IV Scan persists batches and resumes the exact cursor after restarting the Gateway guard',async t=>{
+  const directory=await mkdtemp(join(tmpdir(),'tm-iv-round-'))
+  t.after(()=>rm(directory,{recursive:true,force:true}))
+  const store=createScanStore(join(directory,'scans.json'),'127.0.0.1:4001')
   resetScanGuards()
   const today=scanDate(), checked=[], active=new Set()
   let downloads=0
@@ -41,12 +48,18 @@ test('IV Scan checks list batches without any IBKR scanner call, resumes and ret
   const entries=Array.from({length:56},(_,i)=>({symbol:`SP${i}`,universe:'S&P 500'}))
   let loads=0
   const config={clientId:77,scanQuoteWaitMs:1,scanPacer:{acquire:async()=>{}},ivUniverseLoader:async()=>{loads++;return{entries,warnings:[],updatedAt:new Date().toISOString()}}}
-  const state=()=>({rows:[],portfolio:[],market:[],warnings:[],symbolsChecked:0,contractsChecked:0})
-  const first=state();await runCspScan(config,[],first,Fake,'iv')
+  const state=()=>({state:'running',rows:[],portfolio:[],market:[],warnings:[],symbolsChecked:0,contractsChecked:0})
+  const first=state();
+  config.onScanCheckpoint=()=>store.save({iv:first},scanGuard(config).ivRound)
+  await runCspScan(config,[],first,Fake,'iv')
   assert.equal(first.symbolsChecked,25);assert.equal(first.universeChecked,25);assert.equal(first.remainingSymbols,31);assert.equal(first.rows.length,25)
-  const second=state();await runCspScan(config,[],second,Fake,'iv')
+  const restored=await store.load();assert.equal(restored.scans.iv.state,'interrupted');assert.equal(restored.round.cursor,25)
+  resetScanGuards();scanGuard(config).ivRound=restored.round
+  const second=state();config.onScanCheckpoint=()=>store.save({iv:second},scanGuard(config).ivRound)
+  await runCspScan(config,[],second,Fake,'iv')
   assert.equal(second.symbolsChecked,25);assert.equal(second.universeChecked,50);assert.equal(second.rows.length,50)
-  const third=state();await runCspScan(config,[],third,Fake,'iv')
+  const third=state();config.onScanCheckpoint=()=>store.save({iv:third},scanGuard(config).ivRound)
+  await runCspScan(config,[],third,Fake,'iv')
   assert.equal(third.symbolsChecked,6);assert.equal(third.remainingSymbols,0);assert.equal(third.rows.length,55);assert.equal(third.state,'partial');assert.match(third.warnings[0],/Actuele IV ontbreekt/)
   assert.equal(new Set(checked).size,56);assert.equal(loads,1);assert.equal(downloads,55);assert.equal(active.size,0)
 })

@@ -195,6 +195,7 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
           if (mode === 'leaps') {
             state.rows = compareLeaps(state.puts)
             state.progress = `Leaps · ${symbol} · ${Math.min(offset + batch.length, contracts.length)} / ${contracts.length} contracten`
+            await config.onScanCheckpoint?.()
           }
           ensureActive()
         }
@@ -211,6 +212,7 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
       }
       const round = guard.ivRound
       state.rows = [...round.matches.values()].sort((a,b) => b.ivr - a.ivr)
+      state.roundDate = round.date
       state.universeCount = round.entries.length
       state.universeChecked = round.cursor
       state.universeUpdatedAt = round.updatedAt
@@ -218,13 +220,16 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
       state.batchSize = 25
       state.warnings.push(...round.warnings)
       const end = Math.min(round.cursor + state.batchSize, round.entries.length)
-      for (; round.cursor < end; round.cursor++) {
+      while (round.cursor < end) {
         ensureActive()
         const entry = round.entries[round.cursor]
         state.progress = `IV Scan · ${entry.symbol} · ${round.cursor + 1} / ${round.entries.length}`
         await scanSymbol(entry.symbol, true, undefined, entry.universe)
         for (const row of state.rows) round.matches.set(row.symbol, row)
-        state.universeChecked = round.cursor + 1
+        round.cursor++
+        state.universeChecked = round.cursor
+        state.remainingSymbols = round.entries.length - round.cursor
+        await config.onScanCheckpoint?.()
       }
       state.remainingSymbols = round.entries.length - round.cursor
       state.state = state.warnings.length ? 'partial' : 'complete'

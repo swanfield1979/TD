@@ -1,5 +1,13 @@
 # Validatie
 
+## Trading Monitor 0.31.4 — scanopslag en hervatten (13 oktober 2026)
+
+- 124 lokale Node-tests geslaagd, waarvan 114 voor de te publiceren code en tien bestaande lokale referentietests. 13 frontendtests, productiebuild en browserworkflow geslaagd.
+- Storetests controleren herladen via een nieuwe store, lopend naar onderbroken, exacte IV-cursor, quote-ophaaltijden, opeenvolgende atomische writes en onleesbare/verkeerde-Gatewaybestanden.
+- API-integratietest herstart het echte Node-proces en controleert de teruggezette IV-/Leaps-resultaten. Eerdere resultaten blijven bewaard na een nieuwe scan zonder opbrengst en na een tweede herstart.
+- Brokerfixture schrijft echte IV-checkpoints en hervat met een nieuwe Gateway guard zonder al gecontroleerde aandelen opnieuw te verwerken.
+- Browserfixture controleert teruggezette resultaten, opslagmelding en Volgende 25 scannen. Geen live brokerdata of serverupdate uitgevoerd.
+
 ## Trading Monitor 0.31.3 — calculatorvelden (13 oktober 2026)
 
 - 121 lokale Node-tests geslaagd, waarvan 111 voor de te publiceren code en tien bestaande lokale referentietests. 13 frontendtests, productiebuild en browserworkflow geslaagd.

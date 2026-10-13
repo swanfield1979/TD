@@ -3,7 +3,8 @@ import { matchingCandidates, sortCandidates, type CspCandidate } from '../shared
 import { scanResponse, scanWarningSummary } from '../shared/scan-feedback.mjs'
 
 interface ScanResult {
-  state: 'idle' | 'running' | 'complete' | 'partial' | 'error' | 'cancelled'
+  restoredFromDisk?: boolean; savedAt?: string; storageError?: string;
+  state: 'idle' | 'running' | 'complete' | 'partial' | 'error' | 'cancelled' | 'interrupted'
   portfolio: CspCandidate[]; market: CspCandidate[]; warnings: string[]; progress: string
   symbolsChecked: number; contractsChecked: number; message?: string; startedAt?: string; finishedAt?: string
   portfolioSymbols?: string[]; marketSymbols?: number; portfolioAsOfDate?: string
@@ -75,10 +76,12 @@ export default function ScansPage() {
       <ul className="scan-criteria" aria-label="CSP-criteria"><li>35–50 dagen</li><li>|Delta| 0,16–0,22</li><li>IVR &gt; 30</li><li>Put OTM: strike &lt; koers</li><li>POP &gt; 80%</li></ul>
       <p className="monitor-note">POP = (1 − |delta|) × 100%. Daardoor is de effectieve delta 0,16 tot onder 0,20. IVR gebruikt de actuele IV en het bereik van de afgelopen 12 maanden.</p>
       <div className="scan-command"><label htmlFor="scan-sort">Sorteer op</label><select id="scan-sort" value={sort} onChange={(event) => setSort(event.target.value as typeof sort)}><option value="annualizedYield">Jaarrendement, hoogste eerst</option><option value="yieldPercentage">Rendement op onderpand</option><option value="premium">Premie per contract</option></select></div>
-      <p role="status" aria-live="polite">{running ? result.progress || 'CSP-criteria worden gecontroleerd…' : result.state === 'idle' ? 'Klaar om te scannen' : result.state === 'cancelled' ? 'Scan gestopt; reeds gevonden resultaten blijven zichtbaar.' : result.state === 'error' ? result.message : result.state === 'partial' ? result.message || 'Scan afgerond met ontbrekende data; zie meldingen.' : 'Scan afgerond'}{result.startedAt && <> · Gestart {date(result.startedAt)}</>}{result.finishedAt && <> · Afgerond {date(result.finishedAt)}</>}</p>
+      <p role="status" aria-live="polite">{running ? result.progress || 'CSP-criteria worden gecontroleerd…' : result.state === 'idle' ? 'Klaar om te scannen' : result.state === 'interrupted' ? result.message || 'Scan onderbroken; opgeslagen resultaten blijven zichtbaar.' : result.state === 'cancelled' ? 'Scan gestopt; reeds gevonden resultaten blijven zichtbaar.' : result.state === 'error' ? result.message : result.state === 'partial' ? result.message || 'Scan afgerond met ontbrekende data; zie meldingen.' : 'Scan afgerond'}{result.startedAt && <> · Gestart {date(result.startedAt)}</>}{result.finishedAt && <> · Afgerond {date(result.finishedAt)}</>}</p>
       {result.startedAt && <p className="monitor-note">{result.symbolsChecked} aandelen en {result.contractsChecked} contracten gecontroleerd.{result.portfolioAsOfDate && <> Portfoliobasis t/m {result.portfolioAsOfDate}.</>} Alleen CSP’s die aan alle criteria voldoen worden getoond.</p>}
       <p className="monitor-note">De marktverkenning gebruikt maximaal 50 NASDAQ- en 50 Amerikaanse IBKR-scannerresultaten met de hoogste IV, met terugval naar actieve aandelen als de IV-scanner niet beschikbaar is. Amerikaanse resultaten worden getoetst aan de S&P 500-ledenlijst. Dit is een shortlist, geen volledige marktscan. Ontbrekende koersdata, Greeks of IVR worden overgeslagen.</p>
     </section>
+    {result.restoredFromDisk && <p className="monitor-note">Laatste scan teruggezet uit serveropslag{result.savedAt && <> · {date(result.savedAt)}</>}. Quote-ophaaltijden blijven zichtbaar.</p>}
+    {result.storageError && <p role="alert">{result.storageError}</p>}
     {error && <section className="state-panel state-panel--error" role="alert"><p>{error}</p><button type="button" disabled={submitting || running} onClick={() => void start()}>Scan opnieuw starten</button></section>}
     <ScanTable title="CSP’s op je portfolio" rows={portfolioMatches} running={running} sort={sort} />
     <ScanTable title="Interessante NASDAQ / S&P 500-aandelen" rows={marketMatches} running={running} sort={sort} />
