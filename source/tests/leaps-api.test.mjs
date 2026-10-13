@@ -54,5 +54,11 @@ test('API persists manual shortlist across restart, validates edits and starts s
     await stop();await start()
     const again=await (await fetch(`${origin}/api/leaps`)).json()
     assert.equal(again.rows[0].symbol,'HOOD');assert.equal(again.state,'cancelled')
+    const automatic=await (await fetch(`${origin}/api/iv-scan`,{method:'POST',headers})).json()
+    assert.equal(automatic.automatic,true)
+    assert.equal((await fetch(`${origin}/api/leaps`,{method:'POST',headers})).status,409)
+    await fetch(`${origin}/api/iv-scan/stop`,{method:'POST',headers})
+    await pause(30)
+    assert.equal((await (await fetch(`${origin}/api/iv-scan`)).json()).state,'cancelled')
   }finally{if(child?.exitCode===null)await stop();await rm(directory,{recursive:true,force:true})}
 })

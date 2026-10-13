@@ -1,5 +1,13 @@
 # Validatie
 
+## Trading Monitor 0.31.6 — automatische IV-blokken (13 oktober 2026)
+
+- 128 lokale Node-tests geslaagd, waarvan 118 voor de te publiceren code. 13 frontendtests, productiebuild en browserworkflow geslaagd.
+- Reekstests controleren 25/25/rest, exact 20.000 ms wachttijd per tussenpauze, stoppen tijdens wachten, behoud van resultaten en einde zonder nieuwe ronde.
+- Broker-/opslagfouten stoppen vervolgaanvragen; de actieve lijst blijft over middernacht dezelfde cursor volgen.
+- API-integratietest controleert automatisch starten en exclusieve optiescan. Opslagtest herstelt een wachtende scan als onderbroken, zonder oude afteller.
+- Browserfixture controleert pauzeaftelling, Scan stoppen en Scan hervatten; geen browsergestuurde vervolg-POST nodig. Echte IBKR-data en liveserverinstallatie blijven ongeverifieerd.
+
 ## Trading Monitor 0.31.5 — sorteren en prijsfilters (13 oktober 2026)
 
 - 124 lokale Node-tests, 13 frontendtests en productiebuild geslaagd; 114 Node-tests betreffen de te publiceren code.

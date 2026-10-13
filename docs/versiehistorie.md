@@ -1,5 +1,12 @@
 # Versiehistorie
 
+## 0.31.6 — IV Scan automatisch vervolgen (13 oktober 2026)
+
+- Serverreeks: 25 aandelen, 20 seconden pauze, volgend blok tot de lijst is afgerond.
+- Afteller en Scan stoppen tijdens pauzes; browser mag gesloten worden.
+- Bestaande IBKR-pacing, resultaten en cursoropslag blijven behouden; geen tweede optiescan tijdens de pauze.
+- Geen automatische herhaling na volledige ronde, brokerfout of opslagfout; een actieve ronde blijft dezelfde lijst vervolgen over middernacht. Na serverherstart handmatig hervatten.
+
 ## 0.31.5 — IV-rank sorteren en prijsfilters (13 oktober 2026)
 
 - IV Scan sorteren op IV-rank in beide richtingen; standaard hoogste eerst, gelijke rangen alfabetisch.

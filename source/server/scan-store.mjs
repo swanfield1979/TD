@@ -23,6 +23,8 @@ export function restoreScans(text, gateway) {
     state.restoredFromDisk = true
     if (state.state === 'running') {
       state.state = 'interrupted'
+      state.phase = 'interrupted'
+      delete state.nextBatchAt
       state.progress = 'Scan onderbroken door serverherstart; opgeslagen resultaten zijn teruggezet.'
       state.message = state.progress
     }

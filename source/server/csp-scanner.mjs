@@ -206,7 +206,7 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
 
     if (mode === 'iv' && !config.ivUseBrokerScanner) {
       state.progress = 'Aandelenlijst laden · zonder IBKR-marktscanner'
-      if (!guard.ivRound || guard.ivRound.date !== today || guard.ivRound.cursor >= guard.ivRound.entries.length) {
+      if (!guard.ivRound || (guard.ivRound.date !== today && !config.ivContinueRound) || guard.ivRound.cursor >= guard.ivRound.entries.length) {
         const universe = await (config.ivUniverseLoader ?? loadIvUniverse)(signal)
         guard.ivRound = { ...universe, date: today, cursor: 0, matches: new Map() }
       }

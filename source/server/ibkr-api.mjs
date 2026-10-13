@@ -9,6 +9,7 @@ import { runCspScan } from './csp-scanner.mjs'
 import { normalizeShortlist } from '../shared/leaps-scan.mjs'
 import { createScanStore } from './scan-store.mjs'
 import { scanGuard } from './scan-guard.mjs'
+import { runIvSequence } from './iv-sequence.mjs'
 
 const scanControllers = {}
 let scanState = { state: 'idle', portfolio: [], market: [], warnings: [], progress: '', symbolsChecked: 0, contractsChecked: 0 }
@@ -184,7 +185,10 @@ async function saveScanResults() {
 }
 async function runOptionScan(mode, symbols, state, previous) {
   try {
-    await runCspScan({ ...config, scanSignal: scanControllers[mode].signal, onScanCheckpoint: saveScanResults }, symbols, state, undefined, mode)
+    const signal = scanControllers[mode].signal
+    const runBatch = () => runCspScan({ ...config, scanSignal: signal, ivContinueRound: mode === 'iv' && state.batchesCompleted > 0, onScanCheckpoint: saveScanResults }, symbols, state, undefined, mode)
+    if (mode === 'iv') await runIvSequence(state, { signal, runBatch, checkpoint: saveScanResults })
+    else await runBatch()
     if (state.rows.length === 0 && ['error', 'cancelled'].includes(state.state) && previous.rows.length) {
       state.rows = previous.rows
       state.showingPreviousResults = true

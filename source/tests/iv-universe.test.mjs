@@ -58,6 +58,7 @@ test('IV Scan persists batches and resumes the exact cursor after restarting the
   const second=state();config.onScanCheckpoint=()=>store.save({iv:second},scanGuard(config).ivRound)
   await runCspScan(config,[],second,Fake,'iv')
   assert.equal(second.symbolsChecked,25);assert.equal(second.universeChecked,50);assert.equal(second.rows.length,50)
+  scanGuard(config).ivRound.date='2025-01-01';config.ivContinueRound=true
   const third=state();config.onScanCheckpoint=()=>store.save({iv:third},scanGuard(config).ivRound)
   await runCspScan(config,[],third,Fake,'iv')
   assert.equal(third.symbolsChecked,6);assert.equal(third.remainingSymbols,0);assert.equal(third.rows.length,55);assert.equal(third.state,'partial');assert.match(third.warnings[0],/Actuele IV ontbreekt/)

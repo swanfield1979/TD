@@ -13,6 +13,7 @@ interface IvRow {
   quotedAt: string; marketDataType: number; universe?: string;
 }
 interface Result {
+  automatic?: boolean; phase?: string; nextBatchAt?: string; batchesCompleted?: number;
   state: string; rows: (IvRow & Partial<LeapCandidate>)[]; warnings: string[]; progress?: string;
   symbolsChecked: number; contractsChecked: number; startedAt?: string; finishedAt?: string;
   restoredFromDisk?: boolean; savedAt?: string; storageError?: string; showingPreviousResults?: boolean; previousFinishedAt?: string; roundDate?: string; universeCount?: number; universeChecked?: number; remainingSymbols?: number; discoverySource?: string; historyCacheHits?: number; message?: string; symbols?: string[]; assessments?: { symbol: string; matches: number; message: string }[];
@@ -59,6 +60,14 @@ export default function OptionResearchPage({ mode }: { mode: 'iv' | 'leaps' }) {
   }, [mode, ivFilters])
   const endpoint = mode === 'iv' ? '/api/iv-scan' : '/api/leaps'
   const running = result.state === 'running'
+  const [clockNow, setClockNow] = useState(Date.now)
+  useEffect(() => {
+    if (!running || result.phase !== 'waiting') return
+    setClockNow(Date.now())
+    const timer = setInterval(() => setClockNow(Date.now()), 1000)
+    return () => clearInterval(timer)
+  }, [running, result.phase, result.nextBatchAt])
+  const waitSeconds = result.nextBatchAt ? Math.max(0, Math.ceil((Date.parse(result.nextBatchAt) - clockNow) / 1000)) : 0
   const currentRound = !result.roundDate || result.roundDate === new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())
 
   useEffect(() => {
@@ -135,14 +144,14 @@ export default function OptionResearchPage({ mode }: { mode: 'iv' | 'leaps' }) {
     <section className="monitor-panel">
       <div className="monitor-panel__header"><div><h2>{mode === 'iv' ? 'Aandelen met IV-rank boven 40' : 'Langlopende puts op jouw shortlist'}</h2>
         <p className="monitor-note">{mode === 'iv' ? 'Verken NASDAQ en S&P 500 en voeg gewenste aandelen handmatig toe aan Leaps.' : 'Alleen aandelen die jij wilt bezitten. Vergelijk korte en lange puts op dezelfde kapitaalbasis.'}</p></div>
-        <button className="scan-button" type="button" disabled={running || starting || saving || (mode === 'leaps' && (!shortlistLoaded || !symbols.length))} onClick={() => void start()}>{running || starting ? 'Scan bezig…' : mode === 'iv' && currentRound && (result.remainingSymbols ?? 0) > 0 ? 'Volgende 25 scannen' : 'Scan starten'}</button>
+        <button className="scan-button" type="button" disabled={running || starting || saving || (mode === 'leaps' && (!shortlistLoaded || !symbols.length))} onClick={() => void start()}>{running || starting ? 'Scan bezig…' : mode === 'iv' && currentRound && (result.remainingSymbols ?? 0) > 0 ? 'Scan hervatten' : 'Scan starten'}</button>
         {running && <button type="button" disabled={starting} onClick={() => void stop()}>Scan stoppen</button>}
       </div>
       <ul className="scan-criteria"><li>IV-rank &gt; 40</li>{mode === 'leaps' && <><li>IV-percentile &gt; 50 · liefst 60+</li><li>|Delta| 0,10–0,15</li><li>30–50 versus 300–700 DTE</li><li>Hoger jaarrendement</li></>}</ul>
-      <p className="monitor-note">{mode === 'iv' ? 'De S&P 500-ledenlijst en Nasdaq-aandelenlijst leveren de tickers, zonder IBKR-marktscanner. Eerst S&P 500, daarna overige Nasdaq-aandelen; telkens alfabetisch. Per klik worden 25 aandelen gecontroleerd, zonder koersgrens.' : 'Vergelijking met de beste kortlopende put binnen maximaal 0,02 verschil in absolute delta. Beide puts moeten aan de IV- en deltacriteria voldoen. Zonder vergelijkbare korte put wordt geen match toegekend.'}</p>
+      <p className="monitor-note">{mode === 'iv' ? 'De S&P 500-ledenlijst en Nasdaq-aandelenlijst leveren de tickers, zonder IBKR-marktscanner. Eerst S&P 500, daarna overige Nasdaq-aandelen; telkens alfabetisch. De scan loopt automatisch door: 25 aandelen, 20 seconden pauze, daarna het volgende blok. Zonder koersgrens.' : 'Vergelijking met de beste kortlopende put binnen maximaal 0,02 verschil in absolute delta. Beide puts moeten aan de IV- en deltacriteria voldoen. Zonder vergelijkbare korte put wordt geen match toegekend.'}</p>
       <p className="monitor-note">Rustige scan: één quote tegelijk, minimaal 0,5 seconde tussen aanvragen en minimaal 11 seconden tussen historische downloads. Geldige IV-historie wordt voor deze beursdatum hergebruikt; optiequotes blijven nieuw opgevraagd.{!!result.historyCacheHits && <> {result.historyCacheHits} historiedownloads uit de cache.</>}</p>
       <p className="monitor-note">IV-rank = positie tussen de laagste en hoogste IV in de afgelopen 12 maanden. IV-percentile = percentage historische dagen met lagere IV. Minimaal 200 waarnemingen met voldoende jaar- en recente dekking vereist.</p>
-      <p role="status" aria-live="polite">{running ? result.progress || 'Scan loopt…' : result.state === 'idle' ? 'Klaar om te scannen' : result.state === 'interrupted' ? result.message || 'Scan onderbroken; opgeslagen resultaten blijven zichtbaar.' : result.state === 'cancelled' ? 'Scan gestopt; reeds gevonden resultaten blijven zichtbaar.' : result.state === 'error' ? result.message : result.state === 'partial' ? result.message || 'Scan afgerond met ontbrekende data; zie meldingen.' : result.message || 'Scan afgerond'}{result.finishedAt && <> · {new Date(result.finishedAt).toLocaleString('nl-NL')}</>}</p>
+      <p role="status" aria-live="polite">{running ? result.phase === 'waiting' ? `Pauze tussen blokken · volgend blok start over ${waitSeconds} seconden. Je kunt de scan stoppen.` : result.progress || 'Scan loopt…' : result.state === 'idle' ? 'Klaar om te scannen' : result.state === 'interrupted' ? result.message || 'Scan onderbroken; opgeslagen resultaten blijven zichtbaar.' : result.state === 'cancelled' ? 'Scan gestopt; reeds gevonden resultaten blijven zichtbaar.' : result.state === 'error' ? result.message : result.state === 'partial' ? result.message || 'Scan afgerond met ontbrekende data; zie meldingen.' : result.message || 'Scan afgerond'}{result.finishedAt && <> · {new Date(result.finishedAt).toLocaleString('nl-NL')}</>}</p>
       {mode === 'iv' && result.universeCount !== undefined && <p className="monitor-note">Dekking deze scanronde: {result.universeChecked ?? 0} / {result.universeCount} aandelen. Resultaten uit eerdere blokken blijven zichtbaar met hun ophaaltijd. Voortgang blijft na een API-herstart bewaard. Een nieuwe beursdatum begint een nieuwe ronde.</p>}
       {result.startedAt && <p className="monitor-note">{result.symbolsChecked} aandelen en {result.contractsChecked} optiecontracten gecontroleerd.{mode === 'leaps' && result.symbols && <> Gescand: {result.symbols.join(', ')}.</>}</p>}
     </section>

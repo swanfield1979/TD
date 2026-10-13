@@ -27,6 +27,7 @@ await page.route('**/api/**',async route=>{
       else results[mode]={state:'partial',...(mode==='iv'?{universeCount:75,universeChecked:25,remainingSymbols:50,message:'25 / 75 aandelen gecontroleerd. Klik Volgende 25 scannen om verder te gaan.'}:{}),rows:mode==='iv'?ivQuotes:[candidate,noMatch],warnings:['NVDA: IV-historie ontbreekt; overgeslagen.'],symbolsChecked:2,contractsChecked:6,finishedAt:new Date().toISOString(),assessments:[{symbol:'HOOD',matches:1,message:'Passende Leaps gevonden'}]}
     }
     if(status===200)body=results[mode]
+  } else if(path==='/api/iv-scan/stop'){ results.iv={...results.iv,state:'cancelled',phase:'cancelled',nextBatchAt:undefined};body=results.iv
   } else if(path==='/api/leaps/stop'){ results.leaps={...results.leaps,state:'cancelled'};body=results.leaps
   } else if(path==='/api/ibkr/status')body={state:'offline',message:'Testverbinding',isBusy:false}
   else status=404
@@ -36,7 +37,7 @@ await page.goto(`${process.env.RESEARCH_URL||'http://127.0.0.1:5199'}/#breakout`
 await page.getByRole('heading',{name:'IV Scan',exact:true}).waitFor()
 assert.equal(await page.getByRole('link',{name:'Breakout',exact:true}).count(),0)
 await page.getByRole('button',{name:'Scan starten',exact:true}).click()
-await page.getByRole('button',{name:'Volgende 25 scannen',exact:true}).waitFor()
+await page.getByRole('button',{name:'Scan hervatten',exact:true}).waitFor()
 await page.getByText('Dekking deze scanronde:',{exact:false}).waitFor()
 const rowSymbols=()=>page.locator('tbody th').evaluateAll(nodes=>nodes.map(node=>node.firstChild.textContent))
 assert.deepEqual(await rowSymbols(),['LOW','HOOD','HIGH'])
@@ -113,8 +114,14 @@ await page.getByText('Scan gestopt; reeds gevonden resultaten blijven zichtbaar.
 results.iv={...results.iv,state:'interrupted',restoredFromDisk:true,savedAt:'2026-10-13T12:00:00Z',message:'Scan onderbroken door serverherstart; opgeslagen resultaten zijn teruggezet.'}
 await page.goto(`${process.env.RESEARCH_URL||'http://127.0.0.1:5199'}/#iv`)
 await page.getByText('Laatste scan teruggezet uit serveropslag',{exact:false}).waitFor()
-await page.getByRole('button',{name:'Volgende 25 scannen',exact:true}).waitFor()
+await page.getByRole('button',{name:'Scan hervatten',exact:true}).waitFor()
 assert.equal(await page.locator('tbody tr').count(),3)
+results.iv={...results.iv,state:'running',automatic:true,phase:'waiting',nextBatchAt:new Date(Date.now()+20000).toISOString()}
+await page.reload()
+await page.getByText('Pauze tussen blokken',{exact:false}).waitFor()
+await page.getByRole('button',{name:'Scan stoppen',exact:true}).click()
+await page.getByText('Scan gestopt; reeds gevonden resultaten blijven zichtbaar.').waitFor()
+assert.equal(ivScanPosts,1)
 assert.deepEqual(errors,[])
 console.log('IV Scan / Leaps browserworkflow geslaagd: navigatie, toevoegen, verwijderen, bewaren, vergelijking, filters, fouten en 360/768/1024/1440px. Marktdata is een expliciete testfixture.')
 await browser.close()
