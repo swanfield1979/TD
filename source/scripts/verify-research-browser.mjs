@@ -5,8 +5,9 @@ const browser = await chromium.launch({ channel: process.env.PLAYWRIGHT_CHANNEL 
 const page = await browser.newPage({viewport:{width:1440,height:1000}})
 const errors=[]
 page.on('pageerror', error=>errors.push(error.message))
-let symbols=[], failure=false, runningFixture=false
+let symbols=[], failure=false, runningFixture=false, ivScanPosts=0
 const quote={symbol:'HOOD',underlyingPrice:110,ivr:55,ivPercentile:65,iv:60,marketDataType:3,quotedAt:new Date().toISOString(),universe:'NASDAQ'}
+const ivQuotes=[quote,{...quote,symbol:'LOW',underlyingPrice:25,ivr:80},{...quote,symbol:'HIGH',underlyingPrice:250,ivr:45}]
 const reference={expiry:'20261120',dte:40,strike:85,absoluteDelta:.12,annualizedYield:5}
 const candidate={...quote,id:'HOOD:long',expiry:'20280121',dte:465,strike:40,absoluteDelta:.12,bid:8,ask:8.5,premium:800,collateral:4000,breakEven:32,buffer:70.91,decreaseToBreakEven:-70.9090909091,returnIfExpired:25,returnAnnualized:19.623655914,annualizedYield:15.7,reference,qualifies:true,yieldAdvantage:10.7,exitPrice:4}
 const noMatch={...candidate,id:'HOOD:no-match',strike:50,qualifies:false,reference:null,yieldAdvantage:null}
@@ -20,9 +21,10 @@ await page.route('**/api/**',async route=>{
   } else if(path==='/api/iv-scan'||path==='/api/leaps'){
     const mode=path==='/api/iv-scan'?'iv':'leaps'
     if(request.method()==='POST'){
+      if(mode==='iv')ivScanPosts++
       if(failure){status=503;body={message:'Marktdata niet bereikbaar; probeer opnieuw.'}}
       else if(runningFixture) results[mode]={state:'running',rows:[],warnings:[],symbolsChecked:0,contractsChecked:0,progress:'Rustig scannen'}
-      else results[mode]={state:'partial',...(mode==='iv'?{universeCount:75,universeChecked:25,remainingSymbols:50,message:'25 / 75 aandelen gecontroleerd. Klik Volgende 25 scannen om verder te gaan.'}:{}),rows:mode==='iv'?[quote]:[candidate,noMatch],warnings:['NVDA: IV-historie ontbreekt; overgeslagen.'],symbolsChecked:2,contractsChecked:6,finishedAt:new Date().toISOString(),assessments:[{symbol:'HOOD',matches:1,message:'Passende Leaps gevonden'}]}
+      else results[mode]={state:'partial',...(mode==='iv'?{universeCount:75,universeChecked:25,remainingSymbols:50,message:'25 / 75 aandelen gecontroleerd. Klik Volgende 25 scannen om verder te gaan.'}:{}),rows:mode==='iv'?ivQuotes:[candidate,noMatch],warnings:['NVDA: IV-historie ontbreekt; overgeslagen.'],symbolsChecked:2,contractsChecked:6,finishedAt:new Date().toISOString(),assessments:[{symbol:'HOOD',matches:1,message:'Passende Leaps gevonden'}]}
     }
     if(status===200)body=results[mode]
   } else if(path==='/api/leaps/stop'){ results.leaps={...results.leaps,state:'cancelled'};body=results.leaps
@@ -36,7 +38,39 @@ assert.equal(await page.getByRole('link',{name:'Breakout',exact:true}).count(),0
 await page.getByRole('button',{name:'Scan starten',exact:true}).click()
 await page.getByRole('button',{name:'Volgende 25 scannen',exact:true}).waitFor()
 await page.getByText('Dekking deze scanronde:',{exact:false}).waitFor()
-await page.getByRole('button',{name:'Toevoegen aan Leaps'}).click()
+const rowSymbols=()=>page.locator('tbody th').evaluateAll(nodes=>nodes.map(node=>node.firstChild.textContent))
+assert.deepEqual(await rowSymbols(),['LOW','HOOD','HIGH'])
+await page.getByRole('button',{name:/IV-rank sorteren/}).click()
+assert.deepEqual(await rowSymbols(),['HIGH','HOOD','LOW'])
+assert.equal(await page.getByRole('columnheader',{name:'IV-rank',exact:true}).getAttribute('aria-sort'),'ascending')
+await page.getByLabel('Minimumkoers',{exact:true}).fill('25')
+await page.getByLabel('Maximumkoers',{exact:true}).fill('110')
+assert.deepEqual(await rowSymbols(),['HOOD','LOW'])
+await page.getByLabel('Prijsrange',{exact:true}).selectOption('25-50')
+assert.deepEqual(await rowSymbols(),['LOW'])
+await page.reload()
+await page.getByRole('columnheader',{name:'IV-rank',exact:true}).waitFor()
+assert.equal(await page.getByLabel('Prijsrange',{exact:true}).inputValue(),'25-50')
+assert.equal(await page.getByRole('columnheader',{name:'IV-rank',exact:true}).getAttribute('aria-sort'),'ascending')
+await page.getByLabel('Minimumkoers',{exact:true}).fill('200')
+await page.getByLabel('Maximumkoers',{exact:true}).fill('100')
+await page.getByText('De minimumkoers mag niet hoger zijn dan de maximumkoers.').waitFor()
+await page.getByRole('button',{name:'Filters wissen',exact:true}).click()
+await page.getByLabel('Prijsrange',{exact:true}).selectOption('10-25')
+assert.deepEqual(await rowSymbols(),['LOW'])
+await page.getByLabel('Maximumkoers',{exact:true}).fill('20')
+assert.equal(await page.locator('tbody tr').count(),0)
+await page.getByText('Geen resultaten binnen deze filters.',{exact:false}).waitFor()
+await page.getByRole('button',{name:'Filters wissen',exact:true}).click()
+assert.deepEqual(await rowSymbols(),['HIGH','HOOD','LOW'])
+assert.equal(ivScanPosts,1)
+await mkdir('data/private/research-validation',{recursive:true})
+await page.screenshot({path:'data/private/research-validation/iv-filters-desktop.png',fullPage:true})
+for(const width of [360,768,1024,1440]){
+  await page.setViewportSize({width,height:1000})
+  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),`No IV filter overflow at ${width}`)
+}
+await page.locator('tbody tr').filter({has:page.getByRole('rowheader',{name:/HOOD/})}).getByRole('button',{name:'Toevoegen aan Leaps'}).click()
 assert.deepEqual(symbols,['HOOD'])
 await page.getByRole('link',{name:'Leaps',exact:true}).click()
 await page.getByRole('heading',{name:'Mijn shortlist'}).waitFor()
@@ -80,7 +114,7 @@ results.iv={...results.iv,state:'interrupted',restoredFromDisk:true,savedAt:'202
 await page.goto(`${process.env.RESEARCH_URL||'http://127.0.0.1:5199'}/#iv`)
 await page.getByText('Laatste scan teruggezet uit serveropslag',{exact:false}).waitFor()
 await page.getByRole('button',{name:'Volgende 25 scannen',exact:true}).waitFor()
-assert.equal(await page.locator('tbody tr').count(),1)
+assert.equal(await page.locator('tbody tr').count(),3)
 assert.deepEqual(errors,[])
 console.log('IV Scan / Leaps browserworkflow geslaagd: navigatie, toevoegen, verwijderen, bewaren, vergelijking, filters, fouten en 360/768/1024/1440px. Marktdata is een expliciete testfixture.')
 await browser.close()

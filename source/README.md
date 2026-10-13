@@ -1,6 +1,6 @@
 # Ontwikkeling
 
-Actuele versie: **0.31.4**. IV Scan vervangt Breakout in het menu; Leaps bewaart de handmatige shortlist op de server. Zie [gebruik en serverupdate](../docs/iv-leaps.md). Vanuit deze map: `npm ci`, `npm test`, `npm run test:frontend`, `npm run build`; lokaal `npm run dev:lan` of `npm run serve:lan`. Browsercontrole met expliciete testfixtures: `npm run test:research` na starten van Vite op poort 5199 (`npm run dev -- --port 5199`); installeer hiervoor tijdelijk Playwright zoals beschreven in de handleiding.
+Actuele versie: **0.31.5**. IV Scan vervangt Breakout in het menu; Leaps bewaart de handmatige shortlist op de server. Zie [gebruik en serverupdate](../docs/iv-leaps.md). Vanuit deze map: `npm ci`, `npm test`, `npm run test:frontend`, `npm run build`; lokaal `npm run dev:lan` of `npm run serve:lan`. Browsercontrole met expliciete testfixtures: `npm run test:research` na starten van Vite op poort 5199 (`npm run dev -- --port 5199`); installeer hiervoor tijdelijk Playwright zoals beschreven in de handleiding.
 
 De webapp staat volledig in deze map. Voer alle ontwikkel- en bouwcommando's vanuit `source/` uit.
 

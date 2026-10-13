@@ -1,5 +1,12 @@
 # Validatie
 
+## Trading Monitor 0.31.5 — sorteren en prijsfilters (13 oktober 2026)
+
+- 124 lokale Node-tests, 13 frontendtests en productiebuild geslaagd; 114 Node-tests betreffen de te publiceren code.
+- Browserfixture controleert IV-rank hoog/laag, inclusieve minimum-/maximumgrenzen, presets, ongeldige range, gefilterd lege resultaten en Filters wissen.
+- Sortering en prijsrange blijven na herladen behouden. De fixture bevestigt dat sorteren en filteren geen extra scan-POST versturen.
+- Visuele desktopcontrole en overflowcontrole op 360/768/1024/1440 pixels geslaagd. Leaps- en scanopslagworkflow blijven slagen.
+
 ## Trading Monitor 0.31.4 — scanopslag en hervatten (13 oktober 2026)
 
 - 124 lokale Node-tests geslaagd, waarvan 114 voor de te publiceren code en tien bestaande lokale referentietests. 13 frontendtests, productiebuild en browserworkflow geslaagd.

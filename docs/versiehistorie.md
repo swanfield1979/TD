@@ -1,5 +1,12 @@
 # Versiehistorie
 
+## 0.31.5 — IV-rank sorteren en prijsfilters (13 oktober 2026)
+
+- IV Scan sorteren op IV-rank in beide richtingen; standaard hoogste eerst, gelijke rangen alfabetisch.
+- Prijsranges en vrij minimum/maximum in USD met inclusieve grenzen, validatie en Filters wissen.
+- Sortering en prijsfilter per browser onthouden; uitsluitend lokale filtering van beschikbare scanresultaten.
+- Browsercontrole op volgorde, grenzen, ongeldige range, gefilterd lege lijst, reset, herladen en mobiele breedtes.
+
 ## 0.31.4 — laatste scans en IV-voortgang bewaren (13 oktober 2026)
 
 - Resultaten van IV Scan, Leaps en CSP in privébestand scan-results.json, atomisch geschreven.

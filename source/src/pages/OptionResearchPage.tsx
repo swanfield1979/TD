@@ -23,6 +23,22 @@ const usd = (value: number | undefined) => value === undefined ? '—' : new Int
 const expiryLabel = (value: string | undefined) => value?.replace(/^(\d{4})(\d{2})(\d{2})$/, '$3-$2-$1') ?? '—'
 const dataType = (type: number) => ({ 1: 'Live', 2: 'Bevroren', 3: 'Vertraagd', 4: 'Vertraagd / bevroren' }[type] ?? 'Onbekend')
 
+const priceRanges = [
+  { value: 'all', label: 'Alle koersen', min: '', max: '' },
+  { value: '0-10', label: '$0–$10', min: '0', max: '10' },
+  { value: '10-25', label: '$10–$25', min: '10', max: '25' },
+  { value: '25-50', label: '$25–$50', min: '25', max: '50' },
+  { value: '50-100', label: '$50–$100', min: '50', max: '100' },
+  { value: '100+', label: '$100 en hoger', min: '100', max: '' },
+]
+function loadIvFilters() {
+  try {
+    const data = JSON.parse(localStorage.getItem('tm-iv-filters') || '{}')
+    const validPrice = (value: unknown) => typeof value === 'string' && (value === '' || Number.isFinite(Number(value)) && Number(value) >= 0)
+    return { descending: data.descending !== false, min: validPrice(data.min) ? data.min as string : '', max: validPrice(data.max) ? data.max as string : '' }
+  } catch { return { descending: true, min: '', max: '' } }
+}
+
 export default function OptionResearchPage({ mode }: { mode: 'iv' | 'leaps' }) {
   const [result, setResult] = useState<Result>(empty)
   const [symbols, setSymbols] = useState<string[]>([])
@@ -35,6 +51,12 @@ export default function OptionResearchPage({ mode }: { mode: 'iv' | 'leaps' }) {
   const [retry, setRetry] = useState(0)
   const [search, setSearch] = useState('')
   const [matchesOnly, setMatchesOnly] = useState(true)
+  const [ivFilters, setIvFilters] = useState(loadIvFilters)
+  useEffect(() => {
+    if (mode === 'iv') {
+      try { localStorage.setItem('tm-iv-filters', JSON.stringify(ivFilters)) } catch { /* Filters also work without browser storage. */ }
+    }
+  }, [mode, ivFilters])
   const endpoint = mode === 'iv' ? '/api/iv-scan' : '/api/leaps'
   const running = result.state === 'running'
   const currentRound = !result.roundDate || result.roundDate === new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())
@@ -100,7 +122,15 @@ export default function OptionResearchPage({ mode }: { mode: 'iv' | 'leaps' }) {
     } catch (cause) { setError((cause as Error).message) }
     finally { setStarting(false) }
   }
-  const rows = result.rows.filter(row => row.symbol.includes(search.toUpperCase().trim()) && (mode === 'iv' || !matchesOnly || row.qualifies))
+  const minPrice = ivFilters.min === '' ? 0 : Number(ivFilters.min)
+  const maxPrice = ivFilters.max === '' ? Infinity : Number(ivFilters.max)
+  const priceError = mode !== 'iv' ? '' : !Number.isFinite(minPrice) || minPrice < 0 || (ivFilters.max !== '' && (!Number.isFinite(maxPrice) || maxPrice < 0))
+    ? 'Gebruik een geldige koers van nul of hoger.' : minPrice > maxPrice ? 'De minimumkoers mag niet hoger zijn dan de maximumkoers.' : ''
+  const selectedRange = priceRanges.find(range => range.min === ivFilters.min && range.max === ivFilters.max)?.value ?? 'custom'
+  const hasPriceFilter = mode === 'iv' && (ivFilters.min !== '' || ivFilters.max !== '')
+  const rows = result.rows.filter(row => row.symbol.includes(search.toUpperCase().trim()) && (mode === 'iv'
+    ? !priceError && row.underlyingPrice >= minPrice && row.underlyingPrice <= maxPrice : !matchesOnly || row.qualifies))
+  if (mode === 'iv') rows.sort((a, b) => (ivFilters.descending ? b.ivr - a.ivr : a.ivr - b.ivr) || a.symbol.localeCompare(b.symbol))
   return <div className="scans-page option-research">
     <section className="monitor-panel">
       <div className="monitor-panel__header"><div><h2>{mode === 'iv' ? 'Aandelen met IV-rank boven 40' : 'Langlopende puts op jouw shortlist'}</h2>
@@ -132,14 +162,27 @@ export default function OptionResearchPage({ mode }: { mode: 'iv' | 'leaps' }) {
       <p className="monitor-note">De shortlist wordt op de server bewaard en blijft na vernieuwen of een update beschikbaar.</p>
     </section>}
     <section className="monitor-panel">
-      <div className="monitor-panel__header"><h2>{mode === 'iv' ? 'IV-resultaten' : 'Leaps-kandidaten'}</h2><span>{rows.length} resultaten</span></div>
+      <div className="monitor-panel__header"><h2>{mode === 'iv' ? 'IV-resultaten' : 'Leaps-kandidaten'}</h2><span>{mode === 'iv' ? `${rows.length} / ${result.rows.length}` : rows.length} resultaten</span></div>
       <div className="scan-command"><label htmlFor="research-search">Ticker zoeken</label><input id="research-search" value={search} onChange={event => setSearch(event.target.value)} />
+        {mode === 'iv' && <button type="button" onClick={() => setIvFilters(value => ({ ...value, descending: !value.descending }))} aria-label={`IV-rank sorteren: ${ivFilters.descending ? 'hoog naar laag' : 'laag naar hoog'}`}>IV-rank: {ivFilters.descending ? 'hoog → laag' : 'laag → hoog'}</button>}
         {mode === 'leaps' && <label><input type="checkbox" checked={matchesOnly} onChange={event => setMatchesOnly(event.target.checked)} /> Alleen passende kandidaten</label>}
         {search && <button type="button" onClick={() => setSearch('')}>Zoekfilter wissen</button>}
       </div>
-      {!rows.length ? <p className="monitor-empty">{running ? 'Resultaten worden tijdens de scan aangevuld.' : result.state === 'idle' ? 'Start een scan om kandidaten te zoeken.' : result.symbolsChecked === 0 ? 'Nog geen aandelen gecontroleerd. Controleer de scanstatus en meldingen.' : 'Geen passende resultaten in de gecontroleerde aandelen. De scanstatus toont hoeveel aandelen al zijn gecontroleerd.'}</p> :
+      {mode === 'iv' && <fieldset className="iv-price-filter">
+        <legend>Prijsfilter (USD)</legend>
+        <label htmlFor="iv-price-range">Prijsrange</label><select id="iv-price-range" value={selectedRange} onChange={event => {
+          const range = priceRanges.find(value => value.value === event.target.value)
+          if (range) setIvFilters(value => ({ ...value, min: range.min, max: range.max }))
+        }}>{priceRanges.map(range => <option key={range.value} value={range.value}>{range.label}</option>)}<option value="custom" disabled>Aangepast</option></select>
+        <label htmlFor="iv-min-price">Minimumkoers</label><input id="iv-min-price" type="number" min="0" step="any" inputMode="decimal" placeholder="Geen minimum" value={ivFilters.min} aria-invalid={!!priceError} aria-describedby={priceError ? 'iv-price-error' : 'iv-filter-help'} onChange={event => setIvFilters(value => ({ ...value, min: event.target.value }))} />
+        <label htmlFor="iv-max-price">Maximumkoers</label><input id="iv-max-price" type="number" min="0" step="any" inputMode="decimal" placeholder="Geen maximum" value={ivFilters.max} aria-invalid={!!priceError} aria-describedby={priceError ? 'iv-price-error' : 'iv-filter-help'} onChange={event => setIvFilters(value => ({ ...value, max: event.target.value }))} />
+        {(hasPriceFilter || search) && <button type="button" onClick={() => { setSearch(''); setIvFilters(value => ({ ...value, min: '', max: '' })) }}>Filters wissen</button>}
+      </fieldset>}
+      {priceError && <p id="iv-price-error" role="alert">{priceError}</p>}
+      {mode === 'iv' && <p id="iv-filter-help" className="monitor-note">Filter op de getoonde aandelenkoers in USD; grenzen zijn inclusief. Sortering en prijsfilter worden in deze browser onthouden. De scanresultaten en scanvoortgang blijven bewaard.</p>}
+      {!rows.length ? <p className="monitor-empty">{priceError ? 'Pas het prijsfilter aan of wis de filters.' : mode === 'iv' && result.rows.length > 0 && (hasPriceFilter || search) ? 'Geen resultaten binnen deze filters. Wis de filters om alle gevonden aandelen te tonen.' : running ? 'Resultaten worden tijdens de scan aangevuld.' : result.state === 'idle' ? 'Start een scan om kandidaten te zoeken.' : result.symbolsChecked === 0 ? 'Nog geen aandelen gecontroleerd. Controleer de scanstatus en meldingen.' : 'Geen passende resultaten in de gecontroleerde aandelen. De scanstatus toont hoeveel aandelen al zijn gecontroleerd.'}</p> :
         <div className="scan-table-scroll" tabIndex={0} role="region" aria-label="Scanresultaten"><table className="scan-table"><thead><tr>
-          <th scope="col">Aandeel / koers</th><th scope="col">IV-rank</th><th scope="col">IV-percentile</th>
+          <th scope="col">Aandeel / koers</th><th scope="col" aria-sort={mode === 'iv' ? ivFilters.descending ? 'descending' : 'ascending' : undefined}>IV-rank</th><th scope="col">IV-percentile</th>
           {mode === 'iv' ? <><th scope="col">IV</th><th scope="col">Universum</th></> : <><th scope="col">Lange put / DTE</th><th scope="col">Strike / |delta|</th><th scope="col">Bied / laat</th><th scope="col">Premie / onderpand</th><th scope="col">Break-even</th><th scope="col" title="Koersverandering vanaf de huidige koers tot break-even bij expiratie">Decrease to break even</th><th scope="col" title="Maximale premieopbrengst gedeeld door strike min premie, alleen bij waardeloos aflopen">Return if expired</th><th scope="col" title="Rendement op strike min premie, lineair omgerekend naar 365 dagen">Return annualized</th><th scope="col">Lang per jaar (onderpand)</th><th scope="col">Korte referentie</th><th scope="col">Kort per jaar (onderpand)</th><th scope="col">Verschil</th><th scope="col">50% exit</th><th scope="col">Beoordeling</th></>}
           <th scope="col">Marktdata</th>{mode === 'iv' && <th scope="col">Shortlist</th>}
         </tr></thead><tbody>{rows.map(row => <tr key={row.id ?? row.symbol}>

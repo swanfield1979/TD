@@ -1,4 +1,4 @@
-# IV Scan en Leaps — Trading Monitor 0.31.4
+# IV Scan en Leaps — Trading Monitor 0.31.5
 
 Breakout vervalt als menupagina. `#iv` opent **IV Scan** en `#leaps` opent **Leaps**. Bestaande `#breakout`-links en het pad `/breakout` openen IV Scan. Historische breakoutbroncode, cache en zelfstandige TradingView-bestanden blijven bewaard; de oude scanner wordt vanuit het menu niet meer gestart.
 
@@ -26,7 +26,7 @@ Voor ieder aandeel berekent de API IV-rank met actuele IBKR-aandelen-IV (generic
 
 IV-rank = `(actuele IV − minimum) / (maximum − minimum) × 100`, begrensd op 0–100. IV-percentile is het percentage historische dagen met strikt lagere IV. Dit zijn verschillende maten. De IV uit de aandelenfeed beschrijft de onderliggende waarde en is niet dezelfde maat als de afzonderlijke IV van een langlopende optie.
 
-De resultaten tonen koers, IV-rank, IV-percentile, IV, universum, quote-ophaaltijd en live/vertraagde/bevroren herkomst. **Toevoegen aan Leaps** is een handmatige keuze en geen automatische beoordeling van bedrijfskwaliteit.
+De resultaten tonen koers, IV-rank, IV-percentile, IV, universum, quote-ophaaltijd en live/vertraagde/bevroren herkomst. Met **IV-rank: hoog → laag / laag → hoog** wissel je de sorteerrichting. Gelijke IV-ranken staan alfabetisch op ticker. Het prijsfilter biedt $0–$10, $10–$25, $25–$50, $50–$100, $100+ en Alle koersen, plus een vrij minimum/maximum in USD. Grenzen zijn inclusief; een minimum boven het maximum geeft een invoerfout. **Filters wissen** wist ticker- en prijsfilters en behoudt je sorteerrichting. Sortering en prijsfilter worden per browser onthouden en werken uitsluitend op de beschikbare resultaten, zonder nieuwe IBKR-aanvragen of wijzigingen aan de opgeslagen scan of scanvoortgang. **Toevoegen aan Leaps** is een handmatige keuze en geen automatische beoordeling van bedrijfskwaliteit.
 
 ## Leaps
 

@@ -2,7 +2,7 @@
 
 Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voortgang op basis van Interactive Brokers Flex-rapporten.
 
-**Versie/status:** 0.31.4. Breakout in de webapp vervangen door IV Scan (IV-rank > 40) en Leaps met een handmatige, op de server opgeslagen shortlist. Vergelijking van 30–50 met 300–700 DTE en circa 50%-winstexit. IV Scan gebruikt aandelenlijsten zonder IBKR-marktscanner, met 25 aandelen per klik en zichtbare dekking. Rustige IBKR-wachtrij, IV-historiecache en Scan stoppen. Laatste scans en IV-voortgang blijven bewaard na een API-herstart. Tests, productiebuild en browserworkflow met testdata geslaagd; echte IBKR-marktdata en serverupdate nog niet bevestigd.
+**Versie/status:** 0.31.5. Breakout in de webapp vervangen door IV Scan (IV-rank > 40) en Leaps met een handmatige, op de server opgeslagen shortlist. Vergelijking van 30–50 met 300–700 DTE en circa 50%-winstexit. IV Scan gebruikt aandelenlijsten zonder IBKR-marktscanner, met 25 aandelen per klik en zichtbare dekking. Rustige IBKR-wachtrij, IV-historiecache en Scan stoppen. Laatste scans en IV-voortgang blijven bewaard na een API-herstart. IV Scan heeft IV-ranksortering en prijsfilters. Tests, productiebuild en browserworkflow met testdata geslaagd; echte IBKR-marktdata en serverupdate nog niet bevestigd.
 
 | Map | Inhoud |
 | --- | --- |
@@ -15,7 +15,7 @@ Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voort
 Ontwikkeling: `npm run dev:lan`; productie: `npm run serve:lan`, vanuit source na dependency-installatie. Zie [LAN-handleiding](docs/breakout-lan.md). Optionele systemd-service wordt handmatig geïnstalleerd.
 
 
-Zie [IV Scan / Leaps-serverupdate 0.31.4](docs/iv-leaps.md#serverupdate-via-github): publiceer frontend en API samen en herstart de services. Een nieuwe Flex-import is voor deze uitbreiding niet vereist.
+Zie [IV Scan / Leaps-serverupdate 0.31.5](docs/iv-leaps.md#serverupdate-via-github): publiceer frontend en API samen en herstart de services. Een nieuwe Flex-import is voor deze uitbreiding niet vereist.
 
 Zie [`docs/installatie.md`](docs/installatie.md) voor de installatie en [`source/README.md`](source/README.md) voor alle ontwikkelcommando's.
 

@@ -1731,3 +1731,9 @@ button:focus-visible, a:focus-visible {
 @media (max-width: 700px) { .option-research .scan-command { align-items: stretch; flex-direction: column; } }
 .option-research button:not(.scan-button) { min-height: 36px; padding: 6px 10px; background: var(--tm-surface-2); color: var(--tm-text-primary); border: 1px solid var(--tm-stroke); border-radius: var(--tm-radius-control); cursor: pointer; }
 .option-research button:not(:disabled):hover { border-color: var(--tm-accent-primary); }
+
+.iv-price-filter { min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 16px 0 0; padding: 12px; border: 1px solid var(--tm-stroke); border-radius: var(--tm-radius-control); }
+.iv-price-filter legend { padding: 0 6px; color: var(--tm-text-secondary); }
+.iv-price-filter select { min-height: 36px; max-width: 100%; padding: 6px 10px; color: var(--tm-text-primary); background: var(--tm-surface-2); border: 1px solid var(--tm-stroke); border-radius: var(--tm-radius-control); font: inherit; }
+.option-research .iv-price-filter input { width: min(100%, 140px); }
+@media (max-width: 700px) { .iv-price-filter { align-items: stretch; flex-direction: column; } .option-research .iv-price-filter input { width: 100%; } }
