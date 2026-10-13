@@ -1,4 +1,4 @@
-# IV Scan en Leaps — Trading Monitor 0.31.1
+# IV Scan en Leaps — Trading Monitor 0.31.2
 
 Breakout vervalt als menupagina. `#iv` opent **IV Scan** en `#leaps` opent **Leaps**. Bestaande `#breakout`-links en het pad `/breakout` openen IV Scan. Historische breakoutbroncode, cache en zelfstandige TradingView-bestanden blijven bewaard; de oude scanner wordt vanuit het menu niet meer gestart.
 
@@ -8,7 +8,7 @@ De optiescans delen per Gateway een wachtrij in de Node-service. Maximaal één 
 
 Geldige IV-historie wordt in het procesgeheugen voor dezelfde New York-beursdatum hergebruikt, maximaal 24 uur, met maximaal 500 cache-items. Na API-herstart is deze cache leeg. De actuele aandelen-IV en optiequotes worden opnieuw opgehaald. De shortlist blijft op schijf bewaard.
 
-**Scanner type ... is disabled** betekent dat dat type niet beschikbaar is; het is geen pacing violation. Het type wordt één uur in het procesgeheugen overgeslagen, ook bij volgende scans of de andere marktlocatie. MOST_ACTIVE wordt hoogstens eenmaal geprobeerd als beide typen uitgeschakeld blijken. De app verwijst naar dezelfde scanner in TWS. Zonder beschikbare scannertypen ontstaat geen automatische marktshortlist. Leaps kan onafhankelijk daarvan de handmatige lijst scannen; hiervoor blijven marktdatarechten nodig.
+**Scanner type ... is disabled** betekent dat dat type niet beschikbaar is; het is geen pacing violation. Het type wordt één uur in het procesgeheugen overgeslagen, ook bij volgende scans of de andere marktlocatie. MOST_ACTIVE wordt hoogstens eenmaal geprobeerd als beide typen uitgeschakeld blijken. De app verwijst naar dezelfde scanner in TWS. Dit geldt voor de oudere CSP-marktverkenning. IV Scan gebruikt sinds 0.31.2 rechtstreeks aandelenlijsten en vraagt deze scannertypen niet meer aan. Leaps gebruikt de handmatige lijst. Voor beide blijven IBKR-marktdatarechten nodig.
 
 Bij code 100/420 of een expliciete pacing-/message-rate-melding stopt de optiescan en volgt een pauze van minstens één minuut. Geen automatische retry of andere scannertypen na een snelheidslimiet. **Scan stoppen** breekt wachttijden en actieve aanvragen af en sluit de scanverbinding; reeds gevonden resultaten blijven zichtbaar. Stoproutes: `POST /api/iv-scan/stop`, `/api/leaps/stop` en `/api/scans/stop`, met dezelfde origin-/headercontrole.
 
@@ -16,7 +16,11 @@ Bronnen: [IBKR scanners](https://www.interactivebrokers.com/docs/tws-api/doc/mar
 
 ## IV Scan
 
-Klik **Scan starten**. De read-only IBKR-koppeling vraagt maximaal 50 NASDAQ- en 50 Amerikaanse resultaten met hoge impliciete volatiliteit op. Amerikaanse resultaten worden getoetst aan de S&P 500-ledenlijst; NASDAQ-noteringen hoeven geen S&P 500-lid te zijn. Bij een niet-beschikbare IV-scanner wordt MOST_ACTIVE gebruikt, met een zichtbare waarschuwing. Deze marktshortlist is geen volledige scan van alle beursgenoteerde aandelen. De koersgrens $10–$50 van de bestaande CSP-scan geldt hier niet.
+Sinds 0.31.2 gebruikt IV Scan **geen IBKR-marktscannertype** meer. De app haalt de [S&P 500-ledenlijst](https://raw.githubusercontent.com/datasets/s-and-p-500-companies/main/data/constituents.csv) en [Nasdaq-symbolenlijst](https://www.nasdaqtrader.com/dynamic/SymDir/nasdaqlisted.txt) op. Nasdaq-testnoteringen, ETFs, warrants, units, rechten, preferente aandelen en notes worden uitgesloten op basis van de directoryvelden en naam; common/ordinary shares en ADR/ADS blijven over. Dit is geen beoordeling van bedrijfskwaliteit. Dubbele tickers worden samengevoegd. Eerst S&P 500-leden, daarna overige Nasdaq-aandelen, binnen beide groepen alfabetisch. De S&P 500-lijst is een publieke dataset; Nasdaq levert zijn eigen directory. Zie [Nasdaq-velddefinities](https://www.nasdaqtrader.com/trader.aspx?id=symboldirdefs).
+
+Klik **Scan starten** voor 25 aandelen. IBKR levert alleen koersen en IV-historie, met de bestaande wachtrij. Daarna ga je met **Volgende 25 scannen** verder. De pagina toont de dekking van deze ronde en behoudt eerder gevonden matches met hun quote-ophaaltijd. Ontbrekende actuele IV leidt direct tot overslaan, zonder nutteloze historiedownload. Geen koersgrens in IV Scan. De resultaten zijn geen volledige marktscan zolang er aandelen overblijven.
+
+De ronde, cursor en matches staan per Gateway in het Node-procesgeheugen. Stoppen hervat bij het nog niet afgeronde aandeel; na een nieuwe New York-beursdatum, API-herstart of volledige ronde begint de volgende scan een nieuwe ronde. Bij één onbereikbare aandelenlijst wordt uitsluitend de andere bron gebruikt, met waarschuwing; als beide bronnen ontbreken, volgt een fout. In de lokale broncontrole waren 3.726 unieke aandelen beschikbaar; dit aantal kan veranderen. Een tickerlijst bevat geen actuele IV, marktdatarechten blijven nodig.
 
 Voor ieder aandeel berekent de API IV-rank met actuele IBKR-aandelen-IV (generic tick 106 / tick 24) en dagelijkse OPTION_IMPLIED_VOLATILITY over een jaar. Minimaal 200 bruikbare waarnemingen, minimaal 330 dagen dekking en een laatste waarneming van maximaal zeven kalenderdagen oud zijn vereist. Alleen **IV-rank > 40** wordt getoond. IV-rank 40 zelf voldoet niet. Zonder voldoende gegevens wordt een aandeel overgeslagen en gemeld.
 

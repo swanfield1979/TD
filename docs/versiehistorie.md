@@ -1,5 +1,13 @@
 # Versiehistorie
 
+## 0.31.2 — IV Scan zonder IBKR-marktscanner (13 oktober 2026)
+
+- Tickers rechtstreeks uit S&P 500-ledenlijst en Nasdaq-directory; geen IBKR-scannersubscriptions in IV Scan.
+- 25 aandelen per klik, cursor en gevonden matches bewaard tijdens deze ronde; Volgende 25 scannen vervolgt de lijst.
+- Dekking zichtbaar; ontbrekende bron/data geeft een melding, geen succesvolle lege marktscan.
+- Ontbrekende actuele IV wordt overgeslagen voordat historische data worden aangevraagd.
+- Lokale broncontrole: 3.726 unieke tickers uit beide feeds, zonder waarschuwingen. Echte IBKR-koersen nog niet geverifieerd.
+
 ## 0.31.1 — rustig scannen bij IBKR (13 oktober 2026)
 
 - Optiequotes van 15 tegelijk naar één tegelijk; gedeelde requestwachtrij met minimaal 500 ms tussen aanvragen en 11 s tussen historiedownloads.

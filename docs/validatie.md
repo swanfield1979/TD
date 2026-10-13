@@ -1,5 +1,14 @@
 # Validatie
 
+## Trading Monitor 0.31.2 — aandelenlijsten zonder IBKR-marktscanner (13 oktober 2026)
+
+- 120 lokale Node-tests geslaagd, waarvan 110 voor de te publiceren code en tien bestaande lokale TradingView-referentietests. 13 frontendtests, TypeScript/Vite-build en browserworkflow geslaagd.
+- Broncontrole via de Node-runtime: S&P 500 en Nasdaq-feeds bereikbaar; 3.726 unieke tickers, beide bronnen en geen waarschuwingen. Dit verifieert de tickerlijsten, niet IBKR-koersen of IV.
+- Nieuwe tests controleren tickerfilters, deduplicatie, bronuitval, ongeldig/onvolledig formaat, 25-aandelenblokken, hervatten, eerdere matches behouden en nul IBKR-scannersubscriptions in IV Scan.
+- Een aandeel zonder actuele IV wordt overgeslagen voordat historische data worden aangevraagd; ontbrekende data worden expliciet gemeld.
+- Browserfixture controleert Volgende 25 scannen en de dekkingsindicator. Geen echte IBKR-login of liveserverupdate uitgevoerd.
+- Cursor en resultaten staan in het Node-procesgeheugen; nieuwe beursdatum of API-herstart begint een nieuwe ronde. De Leaps-shortlist blijft op schijf.
+
 ## Trading Monitor 0.31.1 — rustige IBKR-scans (13 oktober 2026)
 
 - Node-suite: 117 tests geslaagd, waarvan 107 voor de te publiceren code en tien reeds aanwezige lokale TradingView-referentietests. 13 frontendtests en productiebuild geslaagd.

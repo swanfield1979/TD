@@ -32,7 +32,7 @@ for (const mode of ['iv','leaps']) test(`${mode} scan uses real broker fields, c
     cancelScannerSubscription(){}
   }
   const state={portfolio:[],market:[],rows:[],puts:[],assessments:[],warnings:[],symbolsChecked:0,contractsChecked:0}
-  await runCspScan({clientId:77,scanQuoteWaitMs:1,scanPacer:{acquire:async()=>{}}},mode==='iv'?[]:['HOOD'],state,Fake,mode)
+  await runCspScan({clientId:77,ivUseBrokerScanner:true,scanQuoteWaitMs:1,scanPacer:{acquire:async()=>{}}},mode==='iv'?[]:['HOOD'],state,Fake,mode)
   assert.equal(maxActive,1)
   assert.equal(state.state,'complete');assert.equal(subscriptions.size,0);assert.equal(disconnected,true)
   if(mode==='iv'){
@@ -45,7 +45,7 @@ for (const mode of ['iv','leaps']) test(`${mode} scan uses real broker fields, c
     assert.equal(state.rows[0].reference.dte,40);assert.equal(state.rows[0].dte,400)
     assert.equal(state.assessments[0].matches,1)
     const again={portfolio:[],market:[],rows:[],puts:[],assessments:[],warnings:[],symbolsChecked:0,contractsChecked:0}
-    await runCspScan({clientId:77,scanQuoteWaitMs:1,scanPacer:{acquire:async()=>{}}},['HOOD'],again,Fake,'leaps')
+    await runCspScan({clientId:77,ivUseBrokerScanner:true,scanQuoteWaitMs:1,scanPacer:{acquire:async()=>{}}},['HOOD'],again,Fake,'leaps')
     assert.equal(historyCalls,1);assert.equal(again.historyCacheHits,1);assert.equal(again.rows[0].qualifies,true)
   }
 })
@@ -63,13 +63,13 @@ for (const failure of ['disabled', 'pacing']) test(`scanner ${failure} avoids re
     cancelScannerSubscription(){}
   }
   const state={portfolio:[],market:[],rows:[],puts:[],assessments:[],warnings:[],symbolsChecked:0,contractsChecked:0}
-  await runCspScan({clientId:77,scanPacer:{acquire:async()=>{}}},[],state,Fake,'iv')
+  await runCspScan({clientId:77,ivUseBrokerScanner:true,scanPacer:{acquire:async()=>{}}},[],state,Fake,'iv')
   assert.equal(disconnected,true)
   if(failure==='disabled'){
     assert.deepEqual(calls,['HIGH_OPT_IMP_VOLAT','MOST_ACTIVE'])
     assert.equal(state.state,'partial');assert.match(state.message,/uitgeschakeld/)
     const again={portfolio:[],market:[],rows:[],warnings:[],symbolsChecked:0,contractsChecked:0}
-    await runCspScan({clientId:77,scanPacer:{acquire:async()=>{}}},[],again,Fake,'iv')
+    await runCspScan({clientId:77,ivUseBrokerScanner:true,scanPacer:{acquire:async()=>{}}},[],again,Fake,'iv')
     assert.equal(calls.length,2)
   }else{
     assert.deepEqual(calls,['HIGH_OPT_IMP_VOLAT']);assert.equal(state.state,'error');assert.match(state.message,/snelheidslimiet/)

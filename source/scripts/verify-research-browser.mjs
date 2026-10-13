@@ -22,7 +22,7 @@ await page.route('**/api/**',async route=>{
     if(request.method()==='POST'){
       if(failure){status=503;body={message:'Marktdata niet bereikbaar; probeer opnieuw.'}}
       else if(runningFixture) results[mode]={state:'running',rows:[],warnings:[],symbolsChecked:0,contractsChecked:0,progress:'Rustig scannen'}
-      else results[mode]={state:'partial',rows:mode==='iv'?[quote]:[candidate,noMatch],warnings:['NVDA: IV-historie ontbreekt; overgeslagen.'],symbolsChecked:2,contractsChecked:6,finishedAt:new Date().toISOString(),assessments:[{symbol:'HOOD',matches:1,message:'Passende Leaps gevonden'}]}
+      else results[mode]={state:'partial',...(mode==='iv'?{universeCount:75,universeChecked:25,remainingSymbols:50,message:'25 / 75 aandelen gecontroleerd. Klik Volgende 25 scannen om verder te gaan.'}:{}),rows:mode==='iv'?[quote]:[candidate,noMatch],warnings:['NVDA: IV-historie ontbreekt; overgeslagen.'],symbolsChecked:2,contractsChecked:6,finishedAt:new Date().toISOString(),assessments:[{symbol:'HOOD',matches:1,message:'Passende Leaps gevonden'}]}
     }
     if(status===200)body=results[mode]
   } else if(path==='/api/leaps/stop'){ results.leaps={...results.leaps,state:'cancelled'};body=results.leaps
@@ -34,6 +34,8 @@ await page.goto(`${process.env.RESEARCH_URL||'http://127.0.0.1:5199'}/#breakout`
 await page.getByRole('heading',{name:'IV Scan',exact:true}).waitFor()
 assert.equal(await page.getByRole('link',{name:'Breakout',exact:true}).count(),0)
 await page.getByRole('button',{name:'Scan starten',exact:true}).click()
+await page.getByRole('button',{name:'Volgende 25 scannen',exact:true}).waitFor()
+await page.getByText('Dekking deze scanronde:',{exact:false}).waitFor()
 await page.getByRole('button',{name:'Toevoegen aan Leaps'}).click()
 assert.deepEqual(symbols,['HOOD'])
 await page.getByRole('link',{name:'Leaps',exact:true}).click()

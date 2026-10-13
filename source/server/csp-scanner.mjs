@@ -3,8 +3,9 @@ import { cspCandidate, daysToExpiry, ivRank, scanDate, sortCandidates } from '..
 
 import { ivMetrics, leapPut, compareLeaps } from '../shared/leaps-scan.mjs'
 import { scanGuard, pacingError, disabledScanner } from './scan-guard.mjs'
+import { loadIvUniverse, SP500_URL } from './iv-universe.mjs'
+export { SP500_URL } from './iv-universe.mjs'
 
-export const SP500_URL = 'https://raw.githubusercontent.com/datasets/s-and-p-500-companies/main/data/constituents.csv'
 
 // Separate read-only connection; requests are bounded and all subscriptions are cancelled.
 export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'csp') {
@@ -134,6 +135,7 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
         const stock = await availableQuote(contract, '106')
         const price = stock.last > 0 ? stock.last : stock.bid > 0 && stock.ask >= stock.bid ? (stock.bid + stock.ask) / 2 : null
         if (!price) throw new Error('Actuele aandelenkoers ontbreekt.')
+        if (!Number.isFinite(stock.iv) || stock.iv <= 0 || stock.iv >= 10) throw new Error('Actuele IV ontbreekt; historiedownload overgeslagen. Controleer optiedatarechten.')
         if (mode === 'csp' && discovery && (price < 10 || price > 50)) return
         const historyKey = `${contract.conId}:${symbol}:${today}`
         const cached = guard.history.get(historyKey)
@@ -201,6 +203,35 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
       finally { state.symbolsChecked++ }
     }
 
+    if (mode === 'iv' && !config.ivUseBrokerScanner) {
+      state.progress = 'Aandelenlijst laden · zonder IBKR-marktscanner'
+      if (!guard.ivRound || guard.ivRound.date !== today || guard.ivRound.cursor >= guard.ivRound.entries.length) {
+        const universe = await (config.ivUniverseLoader ?? loadIvUniverse)(signal)
+        guard.ivRound = { ...universe, date: today, cursor: 0, matches: new Map() }
+      }
+      const round = guard.ivRound
+      state.rows = [...round.matches.values()].sort((a,b) => b.ivr - a.ivr)
+      state.universeCount = round.entries.length
+      state.universeChecked = round.cursor
+      state.universeUpdatedAt = round.updatedAt
+      state.discoverySource = 'Aandelenlijsten · geen IBKR-scannertype'
+      state.batchSize = 25
+      state.warnings.push(...round.warnings)
+      const end = Math.min(round.cursor + state.batchSize, round.entries.length)
+      for (; round.cursor < end; round.cursor++) {
+        ensureActive()
+        const entry = round.entries[round.cursor]
+        state.progress = `IV Scan · ${entry.symbol} · ${round.cursor + 1} / ${round.entries.length}`
+        await scanSymbol(entry.symbol, true, undefined, entry.universe)
+        for (const row of state.rows) round.matches.set(row.symbol, row)
+        state.universeChecked = round.cursor + 1
+      }
+      state.remainingSymbols = round.entries.length - round.cursor
+      state.state = state.warnings.length ? 'partial' : 'complete'
+      state.message = `${round.cursor} / ${round.entries.length} aandelen gecontroleerd. ${state.remainingSymbols ? 'Klik Volgende 25 scannen om verder te gaan.' : 'Deze scanronde is afgerond.'}`
+      state.progress = state.message
+      return
+    }
     for (const symbol of [...new Set(symbols)]) await scanSymbol(symbol)
     if (mode === 'leaps') {
       state.rows = compareLeaps(state.puts)
@@ -271,6 +302,10 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
     state.progress = 'Scan afgerond'
   } catch (error) { state.state = signal?.aborted ? 'cancelled' : 'error'; state.message = error.message }
   finally {
+    if (mode === 'iv' && !config.ivUseBrokerScanner && guard.ivRound) {
+      state.universeChecked = guard.ivRound.cursor
+      state.remainingSymbols = guard.ivRound.entries.length - guard.ivRound.cursor
+    }
     signal?.removeEventListener('abort', abort)
     for (const task of pending.values()) task.finish(new Error('Scanverbinding gesloten.'))
     ib.disconnect()
