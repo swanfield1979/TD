@@ -1,5 +1,7 @@
 # Ontwikkeling
 
+Actuele versie: **0.31.0**. IV Scan vervangt Breakout in het menu; Leaps bewaart de handmatige shortlist op de server. Zie [gebruik en serverupdate](../docs/iv-leaps.md). Vanuit deze map: `npm ci`, `npm test`, `npm run test:frontend`, `npm run build`; lokaal `npm run dev:lan` of `npm run serve:lan`. Browsercontrole met expliciete testfixtures: `npm run test:research` na starten van Vite op poort 5199 (`npm run dev -- --port 5199`); installeer hiervoor tijdelijk Playwright zoals beschreven in de handleiding.
+
 De webapp staat volledig in deze map. Voer alle ontwikkel- en bouwcommando's vanuit `source/` uit.
 
 Versie 0.27.2 voegt donkere modus en een read-only CSP-scanner toe. Publiceer `dist/`, `server/` en `shared/` samen en herstart de API; zie [serverupdate](../docs/installatie.md#serverupdate-versie-0270) en [scanarchitectuur](../docs/scans.md). Voor lokaal scannen moet `IBKR_ALLOWED_ORIGINS` ook `http://127.0.0.1:5173` bevatten. Start de API met `npm run start:api` in een tweede terminal.

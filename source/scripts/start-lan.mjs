@@ -105,10 +105,10 @@ if (dev)
     String(port),
     '--strictPort',
   ])
-console.log('\nBreakout · Read-only — geen orderuitvoering')
+console.log('\nTrading Monitor · IV Scan en Leaps — geen orderuitvoering')
 if (demo)
   console.log(
     'DEMO — fictieve testdata, geen echte IBKR-marktdata. Tijdelijke database.',
   )
 console.log('Alleen lokaal/LAN gebruiken; geen router-portforwarding.')
-for (const url of urls) console.log(`LAN: ${url}/#breakout`)
+for (const url of urls) console.log(`LAN: ${url}/#iv`)

@@ -143,7 +143,7 @@ def create_app(settings=None, broker_factory=Broker):
         include_in_schema=False,
     )
     async def legacy_api(legacy_path: str, request: Request):
-        if legacy_path.split("/")[0] not in {"ibkr", "scans"}:
+        if legacy_path.split("/")[0] not in {"ibkr", "scans", "iv-scan", "leaps"}:
             raise HTTPException(404, "API-route niet gevonden.")
         try:
             async with httpx.AsyncClient(timeout=30) as client:

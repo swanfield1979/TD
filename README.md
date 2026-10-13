@@ -2,12 +2,12 @@
 
 Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voortgang op basis van Interactive Brokers Flex-rapporten.
 
-**Versie/status:** 0.30.0. Breakout met FastAPI, SQLite-cache, read-only IBKR, CSV-universum en configureerbare momentum-/stair-step-analyse. Aanvullende JSON-API, setupchecklist en één LAN-startcommando. Tests, productiebuild en lokale LAN/browserworkflow geslaagd; liveserverinstallatie en echte IBKR-data nog niet bevestigd.
+**Versie/status:** 0.31.0. Breakout in de webapp vervangen door IV Scan (IV-rank > 40) en Leaps met een handmatige, op de server opgeslagen shortlist. Vergelijking van 30–50 met 300–700 DTE en circa 50%-winstexit. Tests, productiebuild en browserworkflow met testdata geslaagd; echte IBKR-marktdata en serverupdate nog niet bevestigd.
 
 | Map | Inhoud |
 | --- | --- |
 | [`source/`](source/) | React/TypeScript, Python/FastAPI, importscript en ontwikkelcommando's |
-| [`release/`](release/) | Uit te leveren distributies; momenteel nog leeg |
+| [`release/`](release/) | Distributies en release-informatie |
 | [`docs/`](docs/) | Installatie, gebruik, architectuur en validatie |
 
 ## Starten
@@ -15,11 +15,13 @@ Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voort
 Ontwikkeling: `npm run dev:lan`; productie: `npm run serve:lan`, vanuit source na dependency-installatie. Zie [LAN-handleiding](docs/breakout-lan.md). Optionele systemd-service wordt handmatig geïnstalleerd.
 
 
-Zie [Breakout-serverupdate 0.30.0](docs/breakout-scanner.md#installatie-via-github): publiceer frontend en backend samen en herstart de API. Een nieuwe Flex-import is voor deze uitbreiding niet vereist.
+Zie [IV Scan / Leaps-serverupdate 0.31.0](docs/iv-leaps.md#serverupdate-via-github): publiceer frontend en API samen en herstart de services. Een nieuwe Flex-import is voor deze uitbreiding niet vereist.
 
 Zie [`docs/installatie.md`](docs/installatie.md) voor de installatie en [`source/README.md`](source/README.md) voor alle ontwikkelcommando's.
 
-## Breakout: installatie en onderzoek
+## Historische breakoutscanner
+
+Deze functie is vervallen in de webappnavigatie; bestaande broncode en historie blijven bewaard. Gebruik [IV Scan en Leaps](docs/iv-leaps.md) voor de actuele optiescan. Onderstaande informatie beschrijft de oudere scanner.
 
 De scanner zoekt leiders op cross-sectionele 21/63/126-sessierendementen en beoordeelt impuls, consolidatie en range-expansie. React/TypeScript en Lightweight Charts tonen een sorteerbare tabel en candlestickdetails; FastAPI, SQLAlchemy/SQLite en een read-only IBKR-adapter verzorgen API, analyse en incrementele cache. Dit is een educatief onderzoeksinstrument, geen financieel advies.
 
@@ -33,7 +35,7 @@ cp .env.example .env
 npm run serve:lan
 ```
 
-Productie opent op http://localhost:8000/#breakout; de launcher print het LAN-IP. Ontwikkeling: `npm run dev:lan`. Expliciete testdemo: `npm run dev:demo`. Zonder broker blijft bestaande historie zichtbaar als Cached met exact timestamp. Er worden geen orders uitgevoerd.
+Productie opent op http://localhost:8000/#iv; de launcher print het LAN-IP. Ontwikkeling: `npm run dev:lan`. Expliciete testdemo: `npm run dev:demo`. Zonder broker blijft bestaande historie zichtbaar als Cached met exact timestamp. Er worden geen orders uitgevoerd.
 
 Installeer en configureer TWS of IB Gateway handmatig voor paper en read-only API volgens [IBKR.md](docs/IBKR.md); daar staan ook subscriptions, reconnect, pacing en veelvoorkomende verbindingsfouten. Importeer CSV met symbol, exchange, currency en optioneel company_name/sector. De [voorbeeldlijst](source/data/example-universe.csv) is geen volledig marktuniversum. De scanner cachet contract-ID's en bars en vraagt bij volgende syncs alleen ontbrekende dagen met beperkte overlap op. Mislukte requests behouden bestaande data.
 
@@ -41,7 +43,8 @@ Installeer en configureer TWS of IB Gateway handmatig voor paper en read-only AP
 
 ## Functies
 
-- [Breakout](docs/breakout-scanner.md): marktleiders over 1M/3M/6M, toppercentages, setupdetails, koersgrafieken en CSV-export. CSV-universum, incrementele SQLite-cache en read-only Paper/TWS/Gateway-koppeling.
+- [IV Scan](docs/iv-leaps.md): NASDAQ-/S&P 500-marktshortlist met IV-rank boven 40.
+- [Leaps](docs/iv-leaps.md): handmatig gekozen aandelen, putvergelijking bij vergelijkbare delta, jaarlijks premierendement, break-even en 50%-exitprijs.
 
 
 - Donkere modus als standaard, met onthouden donker/licht-keuze, responsieve navigatie en IBKR-status.

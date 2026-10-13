@@ -1,5 +1,14 @@
 # Versiehistorie
 
+## 0.31.0 — IV Scan en Leaps (13 oktober 2026)
+
+- Breakout-menu vervangen door IV Scan met IV-rank strikt boven 40; bestaande links openen IV Scan.
+- Leaps-shortlist handmatig beheren en op de server bewaren, ook na herstart.
+- Standaard USD-puts vergelijken: 30–50 / 300–700 DTE, |delta| 0,10–0,15, maximaal 0,02 deltaverschil, IV-rank > 40 en IV-percentile > 50.
+- Langlopende put moet het beste vergelijkbare korte jaarlijkse premierendement overtreffen; biedprijs en volledig cashonderpand als basis.
+- Break-even, buffer, marktdataherkomst, gedeeltelijke resultaten, ontbrekende gegevens en 50%-exitprijs zichtbaar.
+- Node-API en LAN-proxy uitgebreid; [updatehandleiding](iv-leaps.md). Geen orderuitvoering.
+
 ## 0.30.0 — volledig API-contract en LAN-start (12 oktober 2026)
 
 - Gezamenlijke instellingen-API, universe/import, sync/start/status, stockdetails/bars en analyseherberekening; Nederlandse structured errors.

@@ -1,11 +1,13 @@
 import { IBApi, EventName, MarketDataType } from '@stoqey/ib'
 import { cspCandidate, daysToExpiry, ivRank, scanDate, sortCandidates } from '../shared/csp-scan.mjs'
 
+import { ivMetrics, leapPut, compareLeaps } from '../shared/leaps-scan.mjs'
+
 export const SP500_URL = 'https://raw.githubusercontent.com/datasets/s-and-p-500-companies/main/data/constituents.csv'
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
 // Separate read-only connection; requests are bounded and all subscriptions are cancelled.
-export async function runCspScan(config, symbols, state, Api = IBApi) {
+export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'csp') {
   const ib = new Api({ host: config.gatewayHost, port: config.gatewayPort })
   const today = scanDate()
   let nextId = 10000
@@ -25,6 +27,11 @@ export async function runCspScan(config, symbols, state, Api = IBApi) {
     task.timer = setTimeout(() => task.finish(quote ? null : new Error('IBKR-aanvraag verlopen.')), timeout)
     pending.set(id, task)
     try { start(id) } catch (error) { task.finish(error) }
+  })
+  const maybeCompleteQuote = (id) => queueMicrotask(() => {
+    const task = pending.get(id)
+    if (!task?.contract) return
+    if (completeQuote(task.contract, task.quote) && (task.generic !== '106' || Number.isFinite(task.quote.iv) && task.quote.iv > 0 && task.quote.iv < 10)) task.finish()
   })
   ib.on(EventName.error, (error, code, id) => {
     if ([2104, 2106, 2107, 2108, 2158, 2176, 10167, 10090].includes(code)) return
@@ -48,15 +55,19 @@ export async function runCspScan(config, symbols, state, Api = IBApi) {
     if (!pending.has(id) || value < 0 || !Number.isFinite(value)) return
     const field = ({ 1: 'bid', 2: 'ask', 4: 'last', 66: 'bid', 67: 'ask', 68: 'last' })[type]
     if (field) pending.get(id).quote[field] = value
+    maybeCompleteQuote(id)
   })
   ib.on(EventName.tickGeneric, (id, type, value) => {
     if (type === 24 && pending.has(id)) pending.get(id).quote.iv = value
+    maybeCompleteQuote(id)
   })
   ib.on(EventName.tickOptionComputation, (id, type, attributes, iv, delta, price, dividend, gamma, vega, theta, underlyingPrice) => {
-    if ([13, 83].includes(type) && pending.has(id)) Object.assign(pending.get(id).quote, { delta, underlyingPrice })
+    if ([13, 83].includes(type) && pending.has(id)) Object.assign(pending.get(id).quote, { delta, underlyingPrice, vega, theta })
+    maybeCompleteQuote(id)
   })
   const quote = (contract, generic = '') => request((id) => {
     subscriptions.add(id)
+    Object.assign(pending.get(id), { contract, generic })
     ib.reqMktData(id, contract, generic, false, false)
   }, 'quote', config.scanQuoteWaitMs ?? 5000, true)
   const completeQuote = (contract, value) => contract.secType === 'STK'
@@ -70,7 +81,7 @@ export async function runCspScan(config, symbols, state, Api = IBApi) {
         lastQuote = await quote(contract, generic)
         // Data type is supplied by IBKR; never label an unspecified quote as live.
         lastQuote.marketDataType ??= type
-        if (completeQuote(contract, lastQuote)) return lastQuote
+        if (completeQuote(contract, lastQuote) && (generic !== '106' || Number.isFinite(lastQuote.iv) && lastQuote.iv > 0 && lastQuote.iv < 10)) return lastQuote
       } catch (error) { lastError = error }
     }
     if (lastError && !Object.keys(lastQuote).length) throw lastError
@@ -82,12 +93,12 @@ export async function runCspScan(config, symbols, state, Api = IBApi) {
     await new Promise((resolve, reject) => {
       const timer = setTimeout(() => reject(new Error('IB Gateway is niet verbonden. Gebruik de IBKR-koppeling en probeer opnieuw.')), 10000)
       ib.once(EventName.connected, () => { clearTimeout(timer); resolve() })
-      ib.connect(config.clientId + 20)
+      ib.connect(config.clientId + (mode === 'csp' ? 20 : 21))
     })
     ib.reqMarketDataType(MarketDataType.DELAYED)
 
     async function scanSymbol(symbol, discovery = false, suppliedContract, universe) {
-      state.progress = `${discovery ? 'NASDAQ / S&P 500' : 'Portfolio'} · ${symbol}`
+      state.progress = `${mode === 'leaps' ? 'Leaps' : discovery ? 'NASDAQ / S&P 500' : 'Portfolio'} · ${symbol}`
       try {
         const details = suppliedContract ? [{ contract: suppliedContract }] : await request((id) => ib.reqContractDetails(id, { symbol, secType: 'STK', exchange: 'SMART', currency: 'USD' }), 'contractDetailsEnd')
         if (details.length !== 1) throw new Error('Geen eenduidig USD-aandelencontract gevonden.')
@@ -95,16 +106,24 @@ export async function runCspScan(config, symbols, state, Api = IBApi) {
         const stock = await availableQuote(contract, '106')
         const price = stock.last > 0 ? stock.last : stock.bid > 0 && stock.ask >= stock.bid ? (stock.bid + stock.ask) / 2 : null
         if (!price) throw new Error('Actuele aandelenkoers ontbreekt.')
-        if (discovery && (price < 10 || price > 50)) return
+        if (mode === 'csp' && discovery && (price < 10 || price > 50)) return
         const bars = await request((id) => ib.reqHistoricalData(id, contract, '', '1 Y', '1 day', 'OPTION_IMPLIED_VOLATILITY', 1, 1, false), 'historicalData', 20000)
         const ivr = ivRank(stock.iv, bars, today)
         if (ivr === null) throw new Error('Actuele IV of voldoende recente jaarhistorie ontbreekt; IVR niet toetsbaar.')
-        if (ivr <= 30) return
+        const metrics = ivMetrics(stock.iv, bars, today)
+        if (ivr <= (mode === 'csp' ? 30 : 40)) return
+        if (mode === 'iv') {
+          state.rows.push({ symbol, underlyingPrice: price, iv: stock.iv * 100, ...metrics,
+            marketDataType: stock.marketDataType, quotedAt: new Date().toISOString(), universe })
+          state.rows.sort((a, b) => b.ivr - a.ivr)
+          return
+        }
+        if (mode === 'leaps' && metrics.ivPercentile <= 50) return
         const chains = await request((id) => ib.reqSecDefOptParams(id, symbol, '', 'STK', contract.conId), 'securityDefinitionOptionParameterEnd')
         const contracts = []
         const seen = new Set()
         for (const chain of chains.filter((chain) => chain.exchange === 'SMART' && chain.multiplier === 100)) {
-          for (const expiry of chain.expirations.filter((value) => daysToExpiry(value, today) >= 35 && daysToExpiry(value, today) <= 50)) {
+          for (const expiry of chain.expirations.filter((value) => mode === 'leaps' ? ((daysToExpiry(value, today) >= 30 && daysToExpiry(value, today) <= 50) || (daysToExpiry(value, today) >= 300 && daysToExpiry(value, today) <= 700)) : daysToExpiry(value, today) >= 35 && daysToExpiry(value, today) <= 50)) {
             for (const strike of chain.strikes.filter((value) => value > 0 && value < price)) {
               const key = `${chain.tradingClass}:${expiry}:${strike}`
               if (seen.has(key)) continue
@@ -123,14 +142,18 @@ export async function runCspScan(config, symbols, state, Api = IBApi) {
             const item = quotes[index]
             const opt = batch[index]
             if (item.status !== 'fulfilled' || !Number.isFinite(item.value.delta) || !(item.value.bid > 0) || !Number.isFinite(item.value.ask)) { missing++; continue }
-            const row = cspCandidate({ ...item.value, symbol, right: 'P', currency: 'USD', multiplier: 100, strike: opt.strike,
-              expiry: opt.lastTradeDateOrContractMonth, tradingClass: opt.tradingClass, ivr,
+            const row = (mode === 'leaps' ? leapPut : cspCandidate)({ ...item.value, symbol, right: 'P', currency: 'USD', multiplier: 100, strike: opt.strike,
+              expiry: opt.lastTradeDateOrContractMonth, tradingClass: opt.tradingClass, ivr, ...metrics,
               marketDataType: item.value.marketDataType ?? 3, quotedAt: new Date().toISOString(), universe }, today, discovery)
             if (row) {
-              const list = discovery ? state.market : state.portfolio
+              const list = mode === 'leaps' ? state.puts : discovery ? state.market : state.portfolio
               list.push(row)
               list.sort((a, b) => b.annualizedYield - a.annualizedYield)
             }
+          }
+          if (mode === 'leaps') {
+            state.rows = compareLeaps(state.puts)
+            state.progress = `Leaps · ${symbol} · ${Math.min(offset + batch.length, contracts.length)} / ${contracts.length} contracten`
           }
           await pause(100)
         }
@@ -140,6 +163,18 @@ export async function runCspScan(config, symbols, state, Api = IBApi) {
     }
 
     for (const symbol of [...new Set(symbols)]) await scanSymbol(symbol)
+    if (mode === 'leaps') {
+      state.rows = compareLeaps(state.puts)
+      for (const symbol of symbols) {
+        const rows = state.rows.filter(row => row.symbol === symbol)
+        state.assessments.push({ symbol, matches: rows.filter(row => row.qualifies).length,
+          message: rows.some(row => row.qualifies) ? 'Passende Leaps gevonden' : rows.length ? 'Langlopende puts gevonden, maar geen aantoonbaar beter rendement bij vergelijkbare delta' : 'Geen passende puts of onvoldoende data; zie eventuele meldingen' })
+      }
+      state.state = state.warnings.length ? 'partial' : 'complete'
+      state.progress = 'Scan afgerond'
+      delete state.puts
+      return
+    }
     state.progress = 'Interessante NASDAQ / S&P 500-aandelen zoeken'
     let sp500 = new Set()
     try {
@@ -154,11 +189,11 @@ export async function runCspScan(config, symbols, state, Api = IBApi) {
     for (const locationCode of ['STK.US.NASDAQ', 'STK.US.MAJOR']) {
       try {
         const discover = (scanCode) => request((id) => ib.reqScannerSubscription(id, { instrument: 'STK', locationCode,
-          scanCode, numberOfRows: 50, abovePrice: 10, belowPrice: 50, stockTypeFilter: 'CORP' }), 'scannerDataEnd')
+          scanCode, numberOfRows: 50, ...(mode === 'csp' ? { abovePrice: 10, belowPrice: 50 } : {}), stockTypeFilter: 'CORP' }), 'scannerDataEnd')
         let rows
         try { rows = await discover('HIGH_OPT_IMP_VOLAT') }
         catch {
-          state.warnings.push(`${locationCode}: IV-scanner niet beschikbaar; terugval naar MOST_ACTIVE. CSP-criteria blijven ongewijzigd.`)
+          state.warnings.push(`${locationCode}: IV-scanner niet beschikbaar; terugval naar MOST_ACTIVE. Scancriteria blijven ongewijzigd.`)
           rows = await discover('MOST_ACTIVE')
         }
         for (const details of rows) {

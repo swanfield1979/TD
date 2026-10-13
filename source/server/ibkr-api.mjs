@@ -6,6 +6,7 @@ import { collectSnapshot } from './gateway-client.mjs'
 import { withPreviousBalance } from './ibkr-domain.mjs'
 import { mergeExecutions } from '../shared/gateway-trades.mjs'
 import { runCspScan } from './csp-scanner.mjs'
+import { normalizeShortlist } from '../shared/leaps-scan.mjs'
 
 let scanState = { state: 'idle', portfolio: [], market: [], warnings: [], progress: '', symbolsChecked: 0, contractsChecked: 0 }
 
@@ -148,6 +149,25 @@ async function refreshInBackground() {
   }
 }
 
+const shortlistPath = resolve(process.env.LEAPS_SHORTLIST_PATH || dirname(config.snapshotPath) + '/leaps-shortlist.json')
+let shortlist = []
+let shortlistError = null
+try { shortlist = normalizeShortlist(JSON.parse(await readFile(shortlistPath, 'utf8'))) }
+catch (error) { if (error.code !== 'ENOENT') shortlistError = 'Shortlist kon niet worden gelezen; controleer het opgeslagen bestand voordat je opnieuw opslaat.' }
+const optionScans = {
+  iv: { state: 'idle', rows: [], warnings: [], symbolsChecked: 0, contractsChecked: 0 },
+  leaps: { state: 'idle', rows: [], warnings: [], assessments: [], symbolsChecked: 0, contractsChecked: 0 },
+}
+let shortlistSaving = false
+async function readJsonBody(request) {
+  let body = ''
+  for await (const chunk of request) {
+    body += chunk
+    if (Buffer.byteLength(body) > 8192) throw new Error('Aanvraag te groot.')
+  }
+  return JSON.parse(body)
+}
+
 function sendJson(response, statusCode, body) {
   response.writeHead(statusCode, {
     'Content-Type': 'application/json; charset=utf-8',
@@ -166,9 +186,46 @@ function isAllowedPost(request) {
 
 const server = createServer(async (request, response) => {
   try {
+    if (request.url === '/api/leaps/shortlist') {
+      if (request.method === 'GET') return sendJson(response, shortlistError ? 500 : 200, { symbols: shortlist, message: shortlistError })
+      if (request.method === 'PUT') {
+        if (!isAllowedPost(request)) return sendJson(response, 403, { message: 'Ongeldige aanvraag.' })
+        if (shortlistError) return sendJson(response, 409, { message: shortlistError })
+        if (shortlistSaving) return sendJson(response, 409, { message: 'Opslaan is bezig; probeer opnieuw.' })
+        shortlistSaving = true
+        try {
+          const body = await readJsonBody(request)
+          const values = normalizeShortlist(body.symbols)
+          await mkdir(dirname(shortlistPath), { recursive: true })
+          await writeFile(shortlistPath + '.tmp', JSON.stringify(values))
+          await rename(shortlistPath + '.tmp', shortlistPath)
+          shortlist = values
+          return sendJson(response, 200, { symbols: shortlist })
+        } catch (error) { return sendJson(response, 400, { message: error.message }) }
+        finally { shortlistSaving = false }
+      }
+    }
+    const mode = request.url === '/api/iv-scan' ? 'iv' : request.url === '/api/leaps' ? 'leaps' : null
+    if (mode) {
+      if (request.method === 'GET') return sendJson(response, 200, optionScans[mode])
+      if (request.method === 'POST') {
+        if (!isAllowedPost(request)) return sendJson(response, 403, { message: 'Ongeldige aanvraag.' })
+        if (optionScans[mode].state === 'running') return sendJson(response, 202, optionScans[mode])
+        if (scanState.state === 'running' || Object.values(optionScans).some(scan => scan.state === 'running'))
+          return sendJson(response, 409, { message: 'Er loopt al een optiescan. Wacht tot deze klaar is.' })
+        if (mode === 'leaps' && (shortlistError || !shortlist.length)) return sendJson(response, 400, { message: shortlistError || 'Voeg eerst aandelen toe aan de shortlist.' })
+        const symbols = mode === 'leaps' ? [...shortlist] : []
+        const state = { state: 'running', rows: [], puts: [], portfolio: [], market: [], assessments: [], warnings: [], symbols,
+          symbolsChecked: 0, contractsChecked: 0, startedAt: new Date().toISOString(), progress: 'Verbinding met IBKR maken' }
+        optionScans[mode] = state
+        void runCspScan(config, symbols, state, undefined, mode)
+        return sendJson(response, 202, state)
+      }
+    }
     if (request.method === 'GET' && request.url === '/api/scans') return sendJson(response, 200, scanState)
     if (request.method === 'POST' && request.url === '/api/scans') {
       if (!isAllowedPost(request)) return sendJson(response, 403, { message: 'Ongeldige aanvraag.' })
+      if (Object.values(optionScans).some(scan => scan.state === 'running')) return sendJson(response, 409, { message: 'Er loopt al een IV- of Leaps-scan.' })
       if (scanState.state !== 'running') {
         scanState = { state: 'running', startedAt: new Date().toISOString(), portfolio: [], market: [], warnings: [], progress: 'Portfolio laden', symbolsChecked: 0, contractsChecked: 0 }
         void startScan()

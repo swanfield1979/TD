@@ -1,5 +1,5 @@
 import { contributionReturn, contributionsSince } from '../shared/contribution-return.mjs'
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   ArrowSwapRegular,
   ChartMultipleRegular,
@@ -19,16 +19,17 @@ import GoalsPage from './GoalsPage'
 import TradesPage from './TradesPage'
 import StatsPage from './StatsPage'
 import ScansPage from './ScansPage'
-const BreakoutPage = lazy(() => import('./pages/BreakoutPage'))
+import OptionResearchPage from './pages/OptionResearchPage'
 import TradingActivityCards from './TradingActivityCards'
 import IbkrConnectionControl from './IbkrConnectionControl'
 import { mergeLiveSnapshot, resolvePortfolio } from './ibkr'
 
 const DATA_URL = '/data/portfolio-summary.json'
-type Page = 'dashboard' | 'stocks' | 'options' | 'goals' | 'stats' | 'trades' | 'scans' | 'breakout'
+type Page = 'dashboard' | 'stocks' | 'options' | 'goals' | 'stats' | 'trades' | 'scans' | 'iv' | 'leaps'
 
 const pageFromHash = (): Page => {
-  if (window.location.hash === '#breakout' || (!window.location.hash && window.location.pathname === '/breakout')) return 'breakout'
+  if (['#iv', '#breakout'].includes(window.location.hash) || (!window.location.hash && ['/iv', '/breakout'].includes(window.location.pathname))) return 'iv'
+  if (window.location.hash === '#leaps' || (!window.location.hash && window.location.pathname === '/leaps')) return 'leaps'
   if (window.location.hash === '#scans') return 'scans'
   if (window.location.hash === '#stocks') return 'stocks'
   if (window.location.hash === '#options') return 'options'
@@ -46,7 +47,8 @@ const pageTitles: Record<Page, string> = {
   stats: 'Stats',
   trades: 'Trades',
   scans: 'Scans',
-  breakout: 'Breakout',
+  iv: 'IV Scan',
+  leaps: 'Leaps',
 }
 
 const currencyFormatter = (currency: string, showSign = false) =>
@@ -298,8 +300,11 @@ function App() {
           <a className={`nav-item${currentPage === 'scans' ? ' nav-item--active' : ''}`} href="#scans" aria-current={currentPage === 'scans' ? 'page' : undefined}>
             <TargetArrowRegular aria-hidden="true" /><span>Scans</span>
           </a>
-          <a className={`nav-item${currentPage === 'breakout' ? ' nav-item--active' : ''}`} href="#breakout" aria-current={currentPage === 'breakout' ? 'page' : undefined}>
-            <DataTrendingRegular aria-hidden="true" /><span>Breakout</span>
+          <a className={`nav-item${currentPage === 'iv' ? ' nav-item--active' : ''}`} href="#iv" aria-current={currentPage === 'iv' ? 'page' : undefined}>
+            <DataTrendingRegular aria-hidden="true" /><span>IV Scan</span>
+          </a>
+          <a className={`nav-item${currentPage === 'leaps' ? ' nav-item--active' : ''}`} href="#leaps" aria-current={currentPage === 'leaps' ? 'page' : undefined}>
+            <ArrowSwapRegular aria-hidden="true" /><span>Leaps</span>
           </a>
           <a
             className={`nav-item${currentPage === 'goals' ? ' nav-item--active' : ''}`}
@@ -338,7 +343,7 @@ function App() {
             <h1>{pageTitles[currentPage]}</h1>
             {currentPage === 'dashboard' && <p className="page-subtitle">Je portefeuille in één oogopslag</p>}
           </div>
-          {summary && currentPage !== 'scans' && currentPage !== 'breakout' && (
+          {summary && currentPage !== 'scans' && currentPage !== 'iv' && currentPage !== 'leaps' && (
             <div className="data-freshness" title={showLiveFreshness ? `IBKR-snapshot opgehaald op ${summary.sourceUpdatedAt}; historische Flex-basis t/m ${importedSummary?.balance.toDate}` : `Bronbestand gegenereerd op ${importedSummary?.sourceUpdatedAt}`}>
               <span className="data-freshness__pulse" aria-hidden="true" />
               <span>
@@ -350,10 +355,11 @@ function App() {
         </header>
 
         {currentPage === 'scans' && <ScansPage />}
-        {currentPage === 'breakout' && <Suspense fallback={<p role="status">Breakout laden…</p>}><BreakoutPage /></Suspense>}
-        {isLoading && currentPage !== 'scans' && currentPage !== 'breakout' && <LoadingDashboard />}
+        {(currentPage === 'iv' || currentPage === 'leaps') && <OptionResearchPage key={currentPage} mode={currentPage} />}
 
-        {!isLoading && error && currentPage !== 'scans' && currentPage !== 'breakout' && (
+        {isLoading && currentPage !== 'scans' && currentPage !== 'iv' && currentPage !== 'leaps' && <LoadingDashboard />}
+
+        {!isLoading && error && currentPage !== 'scans' && currentPage !== 'iv' && currentPage !== 'leaps' && (
           <section className="state-panel state-panel--error" role="alert">
             <div>
               <h2>Dashboarddata ontbreekt</h2>

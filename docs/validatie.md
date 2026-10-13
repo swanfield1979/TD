@@ -1,5 +1,16 @@
 # Validatie
 
+## Trading Monitor 0.31.0 — IV Scan en Leaps (13 oktober 2026)
+
+- 101 Git-gevolgde Node-tests inclusief zeven nieuwe tests geslaagd. De volledige lokale suite bevat daarnaast tien reeds aanwezige, ongepubliceerde TradingView-referentietests: 111 tests geslaagd.
+- 13 Vitest-frontendtests en 43 pytest-backendtests geslaagd; één bestaande Starlette/httpx-deprecatiewaarschuwing.
+- TypeScript/Vite-productiebuild geslaagd; bouwuitvoer uitsluitend in source/dist.
+- Browserworkflow met expliciete marktdatafixtures geslaagd op 360, 768, 1024 en 1440 pixels: menuvervanging, shortlisttoevoegen/-verwijderen, verversen, vergelijkingsresultaten, filters en API-fouten; geen browserfouten of pagina-overflow.
+- API-integratietest bevestigt atomisch shortlistopslaan, invoervalidatie, origincontrole, behoud na API-herstart en exclusieve optiescans.
+- Brokerfixtures bevestigen IV-rankfilter, geen $10–$50-koersgrens in IV Scan, alleen de handmatige lijst in Leaps, vergelijking en opruimen van marktdata-abonnementen.
+- Geen echte IBKR-login of marktdata geverifieerd en geen liveserverupdate uitgevoerd. Het Linux-updatescript is geleverd, maar lokaal op Windows niet uitgevoerd.
+- [Gebruiks- en updatehandleiding](iv-leaps.md). Testcommando's worden vanuit source uitgevoerd.
+
 ## 12 oktober 2026 — aanvullende scanneracceptatie 0.30.0
 
 - 43 pytest-tests geslaagd, waaronder zes deterministische setupfixtures, dubbele bars, CSV, filters, disconnected/cached-herstart, health en verbod op orderfuncties in de scanner. Eén deprecation warning uit Starlette/httpx; geen testfouten.
