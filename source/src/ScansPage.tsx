@@ -3,7 +3,7 @@ import { matchingCandidates, sortCandidates, type CspCandidate } from '../shared
 import { scanResponse, scanWarningSummary } from '../shared/scan-feedback.mjs'
 
 interface ScanResult {
-  state: 'idle' | 'running' | 'complete' | 'partial' | 'error'
+  state: 'idle' | 'running' | 'complete' | 'partial' | 'error' | 'cancelled'
   portfolio: CspCandidate[]; market: CspCandidate[]; warnings: string[]; progress: string
   symbolsChecked: number; contractsChecked: number; message?: string; startedAt?: string; finishedAt?: string
   portfolioSymbols?: string[]; marketSymbols?: number; portfolioAsOfDate?: string
@@ -56,10 +56,10 @@ export default function ScansPage() {
     return () => { controller.abort(); clearTimeout(timer) }
   }, [retry])
 
-  const start = async () => {
+  const start = async (stop = false) => {
     setSubmitting(true); setError(null)
     try {
-      const response = await fetch('/api/scans', { method: 'POST', headers: { 'X-Requested-With': 'trading-monitor' } })
+      const response = await fetch(stop ? '/api/scans/stop' : '/api/scans', { method: 'POST', headers: { 'X-Requested-With': 'trading-monitor' } })
       setResult(await scanResponse(response) as ScanResult)
       setRetry((value) => value + 1)
     } catch (error) { setError(error instanceof Error ? error.message : 'De scan kon niet starten. Controleer de server-API.') }
@@ -71,11 +71,11 @@ export default function ScansPage() {
   return <div className="scans-page">
     <section className="monitor-panel">
       <div className="monitor-panel__header"><div><h2>Cash-secured puts zoeken</h2><p className="monitor-note">Eerst je bestaande onderliggende waarden, daarna interessante NASDAQ / S&P 500-aandelen van $ 10–$ 50.</p></div>
-        <button className="scan-button" type="button" onClick={() => void start()} disabled={running || submitting}>{running || submitting ? 'Scan bezig…' : 'Start scan'}</button></div>
+        <button className="scan-button" type="button" onClick={() => void start()} disabled={running || submitting}>{running || submitting ? 'Scan bezig…' : 'Start scan'}</button>{running && <button type="button" disabled={submitting} onClick={() => void start(true)}>Scan stoppen</button>}</div>
       <ul className="scan-criteria" aria-label="CSP-criteria"><li>35–50 dagen</li><li>|Delta| 0,16–0,22</li><li>IVR &gt; 30</li><li>Put OTM: strike &lt; koers</li><li>POP &gt; 80%</li></ul>
       <p className="monitor-note">POP = (1 − |delta|) × 100%. Daardoor is de effectieve delta 0,16 tot onder 0,20. IVR gebruikt de actuele IV en het bereik van de afgelopen 12 maanden.</p>
       <div className="scan-command"><label htmlFor="scan-sort">Sorteer op</label><select id="scan-sort" value={sort} onChange={(event) => setSort(event.target.value as typeof sort)}><option value="annualizedYield">Jaarrendement, hoogste eerst</option><option value="yieldPercentage">Rendement op onderpand</option><option value="premium">Premie per contract</option></select></div>
-      <p role="status" aria-live="polite">{running ? 'CSP-criteria worden gecontroleerd…' : result.state === 'idle' ? 'Klaar om te scannen' : result.state === 'error' ? result.message : result.state === 'partial' ? 'Scan afgerond met ontbrekende data; zie meldingen.' : 'Scan afgerond'}{result.startedAt && <> · Gestart {date(result.startedAt)}</>}{result.finishedAt && <> · Afgerond {date(result.finishedAt)}</>}</p>
+      <p role="status" aria-live="polite">{running ? result.progress || 'CSP-criteria worden gecontroleerd…' : result.state === 'idle' ? 'Klaar om te scannen' : result.state === 'cancelled' ? 'Scan gestopt; reeds gevonden resultaten blijven zichtbaar.' : result.state === 'error' ? result.message : result.state === 'partial' ? result.message || 'Scan afgerond met ontbrekende data; zie meldingen.' : 'Scan afgerond'}{result.startedAt && <> · Gestart {date(result.startedAt)}</>}{result.finishedAt && <> · Afgerond {date(result.finishedAt)}</>}</p>
       {result.startedAt && <p className="monitor-note">{result.symbolsChecked} aandelen en {result.contractsChecked} contracten gecontroleerd.{result.portfolioAsOfDate && <> Portfoliobasis t/m {result.portfolioAsOfDate}.</>} Alleen CSP’s die aan alle criteria voldoen worden getoond.</p>}
       <p className="monitor-note">De marktverkenning gebruikt maximaal 50 NASDAQ- en 50 Amerikaanse IBKR-scannerresultaten met de hoogste IV, met terugval naar actieve aandelen als de IV-scanner niet beschikbaar is. Amerikaanse resultaten worden getoetst aan de S&P 500-ledenlijst. Dit is een shortlist, geen volledige marktscan. Ontbrekende koersdata, Greeks of IVR worden overgeslagen.</p>
     </section>

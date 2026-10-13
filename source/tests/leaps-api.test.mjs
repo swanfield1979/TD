@@ -35,5 +35,8 @@ test('API persists manual shortlist across restart, validates edits and starts s
     assert.deepEqual((await scan.json()).symbols,['HOOD','NVDA'])
     assert.equal((await fetch(`${origin}/api/iv-scan`,{method:'POST',headers})).status,409)
     assert.equal((await fetch(`${origin}/api/scans`,{method:'POST',headers})).status,409)
+    assert.equal((await fetch(`${origin}/api/leaps/stop`,{method:'POST',headers})).status,202)
+    await pause(30)
+    assert.equal((await (await fetch(`${origin}/api/leaps`)).json()).state,'cancelled')
   }finally{if(child?.exitCode===null)await stop();await rm(directory,{recursive:true,force:true})}
 })

@@ -8,6 +8,7 @@ import { mergeExecutions } from '../shared/gateway-trades.mjs'
 import { runCspScan } from './csp-scanner.mjs'
 import { normalizeShortlist } from '../shared/leaps-scan.mjs'
 
+const scanControllers = {}
 let scanState = { state: 'idle', portfolio: [], market: [], warnings: [], progress: '', symbolsChecked: 0, contractsChecked: 0 }
 
 async function startScan() {
@@ -24,7 +25,7 @@ async function startScan() {
     const symbols = [...new Set(positions.filter((position) => (position.quantity ?? position.position) !== 0)
       .map((position) => position.symbol).filter((symbol) => typeof symbol === 'string' && /^[A-Z0-9. -]{1,20}$/.test(symbol)))]
     scanState.portfolioSymbols = symbols
-    await runCspScan(config, symbols, scanState)
+    await runCspScan({ ...config, scanSignal: scanControllers.csp.signal }, symbols, scanState)
   } catch (error) { scanState.state = 'error'; scanState.message = error.message }
 }
 
@@ -186,6 +187,13 @@ function isAllowedPost(request) {
 
 const server = createServer(async (request, response) => {
   try {
+    const stopMode = { '/api/iv-scan/stop': 'iv', '/api/leaps/stop': 'leaps', '/api/scans/stop': 'csp' }[request.url]
+    if (stopMode && request.method === 'POST') {
+      if (!isAllowedPost(request)) return sendJson(response, 403, { message: 'Ongeldige aanvraag.' })
+      const state = stopMode === 'csp' ? scanState : optionScans[stopMode]
+      if (state.state === 'running') { state.progress = 'Scan stoppen…'; scanControllers[stopMode]?.abort() }
+      return sendJson(response, 202, state)
+    }
     if (request.url === '/api/leaps/shortlist') {
       if (request.method === 'GET') return sendJson(response, shortlistError ? 500 : 200, { symbols: shortlist, message: shortlistError })
       if (request.method === 'PUT') {
@@ -218,7 +226,8 @@ const server = createServer(async (request, response) => {
         const state = { state: 'running', rows: [], puts: [], portfolio: [], market: [], assessments: [], warnings: [], symbols,
           symbolsChecked: 0, contractsChecked: 0, startedAt: new Date().toISOString(), progress: 'Verbinding met IBKR maken' }
         optionScans[mode] = state
-        void runCspScan(config, symbols, state, undefined, mode)
+        scanControllers[mode] = new AbortController()
+        void runCspScan({ ...config, scanSignal: scanControllers[mode].signal }, symbols, state, undefined, mode)
         return sendJson(response, 202, state)
       }
     }
@@ -228,6 +237,7 @@ const server = createServer(async (request, response) => {
       if (Object.values(optionScans).some(scan => scan.state === 'running')) return sendJson(response, 409, { message: 'Er loopt al een IV- of Leaps-scan.' })
       if (scanState.state !== 'running') {
         scanState = { state: 'running', startedAt: new Date().toISOString(), portfolio: [], market: [], warnings: [], progress: 'Portfolio laden', symbolsChecked: 0, contractsChecked: 0 }
+        scanControllers.csp = new AbortController()
         void startScan()
       }
       return sendJson(response, 202, scanState)

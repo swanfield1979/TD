@@ -15,7 +15,7 @@ interface IvRow {
 interface Result {
   state: string; rows: (IvRow & Partial<LeapCandidate>)[]; warnings: string[]; progress?: string;
   symbolsChecked: number; contractsChecked: number; startedAt?: string; finishedAt?: string;
-  message?: string; symbols?: string[]; assessments?: { symbol: string; matches: number; message: string }[];
+  historyCacheHits?: number; message?: string; symbols?: string[]; assessments?: { symbol: string; matches: number; message: string }[];
 }
 const empty: Result = { state: 'idle', rows: [], warnings: [], symbolsChecked: 0, contractsChecked: 0 }
 const num = (value: number | undefined | null) => value == null ? '—' : value.toLocaleString('nl-NL', { maximumFractionDigits: 2 })
@@ -91,17 +91,27 @@ export default function OptionResearchPage({ mode }: { mode: 'iv' | 'leaps' }) {
     } catch (cause) { setError((cause as Error).message) }
     finally { setStarting(false) }
   }
+  async function stop() {
+    setStarting(true); setError('')
+    try {
+      const response = await fetch(`${endpoint}/stop`, { method: 'POST', headers: { 'X-Requested-With': 'trading-monitor' } })
+      setResult(await researchResponse<Result>(response)); setRetry(value => value + 1)
+    } catch (cause) { setError((cause as Error).message) }
+    finally { setStarting(false) }
+  }
   const rows = result.rows.filter(row => row.symbol.includes(search.toUpperCase().trim()) && (mode === 'iv' || !matchesOnly || row.qualifies))
   return <div className="scans-page option-research">
     <section className="monitor-panel">
       <div className="monitor-panel__header"><div><h2>{mode === 'iv' ? 'Aandelen met IV-rank boven 40' : 'Langlopende puts op jouw shortlist'}</h2>
         <p className="monitor-note">{mode === 'iv' ? 'Verken NASDAQ en S&P 500 en voeg gewenste aandelen handmatig toe aan Leaps.' : 'Alleen aandelen die jij wilt bezitten. Vergelijk korte en lange puts op dezelfde kapitaalbasis.'}</p></div>
         <button className="scan-button" type="button" disabled={running || starting || saving || (mode === 'leaps' && (!shortlistLoaded || !symbols.length))} onClick={() => void start()}>{running || starting ? 'Scan bezig…' : 'Scan starten'}</button>
+        {running && <button type="button" disabled={starting} onClick={() => void stop()}>Scan stoppen</button>}
       </div>
       <ul className="scan-criteria"><li>IV-rank &gt; 40</li>{mode === 'leaps' && <><li>IV-percentile &gt; 50 · liefst 60+</li><li>|Delta| 0,10–0,15</li><li>30–50 versus 300–700 DTE</li><li>Hoger jaarrendement</li></>}</ul>
       <p className="monitor-note">{mode === 'iv' ? 'IBKR levert maximaal 50 NASDAQ- en 50 Amerikaanse scannerresultaten; Amerikaanse resultaten worden getoetst aan de S&P 500. Geen koersgrens. Dit is een marktshortlist, geen volledige marktscan.' : 'Vergelijking met de beste kortlopende put binnen maximaal 0,02 verschil in absolute delta. Beide puts moeten aan de IV- en deltacriteria voldoen. Zonder vergelijkbare korte put wordt geen match toegekend.'}</p>
+      <p className="monitor-note">Rustige scan: één quote tegelijk, minimaal 0,5 seconde tussen aanvragen en minimaal 11 seconden tussen historische downloads. Geldige IV-historie wordt voor deze beursdatum hergebruikt; optiequotes blijven nieuw opgevraagd.{!!result.historyCacheHits && <> {result.historyCacheHits} historiedownloads uit de cache.</>}</p>
       <p className="monitor-note">IV-rank = positie tussen de laagste en hoogste IV in de afgelopen 12 maanden. IV-percentile = percentage historische dagen met lagere IV. Minimaal 200 waarnemingen met voldoende jaar- en recente dekking vereist.</p>
-      <p role="status" aria-live="polite">{running ? result.progress || 'Scan loopt…' : result.state === 'idle' ? 'Klaar om te scannen' : result.state === 'error' ? result.message : result.state === 'partial' ? 'Scan afgerond met ontbrekende data; zie meldingen.' : 'Scan afgerond'}{result.finishedAt && <> · {new Date(result.finishedAt).toLocaleString('nl-NL')}</>}</p>
+      <p role="status" aria-live="polite">{running ? result.progress || 'Scan loopt…' : result.state === 'idle' ? 'Klaar om te scannen' : result.state === 'cancelled' ? 'Scan gestopt; reeds gevonden resultaten blijven zichtbaar.' : result.state === 'error' ? result.message : result.state === 'partial' ? result.message || 'Scan afgerond met ontbrekende data; zie meldingen.' : 'Scan afgerond'}{result.finishedAt && <> · {new Date(result.finishedAt).toLocaleString('nl-NL')}</>}</p>
       {result.startedAt && <p className="monitor-note">{result.symbolsChecked} aandelen en {result.contractsChecked} optiecontracten gecontroleerd.{mode === 'leaps' && result.symbols && <> Gescand: {result.symbols.join(', ')}.</>}</p>}
     </section>
     {error && <section className="state-panel state-panel--error" role="alert"><p>{error}</p><button type="button" onClick={() => { setError(''); setRetry(value => value + 1) }}>Opnieuw laden</button></section>}

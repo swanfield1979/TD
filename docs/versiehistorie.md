@@ -1,5 +1,14 @@
 # Versiehistorie
 
+## 0.31.1 — rustig scannen bij IBKR (13 oktober 2026)
+
+- Optiequotes van 15 tegelijk naar één tegelijk; gedeelde requestwachtrij met minimaal 500 ms tussen aanvragen en 11 s tussen historiedownloads.
+- Conservatief budget van 55 historische requests per 10 minuten; identieke aanvragen minimaal 15 s uiteen.
+- IV-jaarhistorie voor dezelfde beursdatum uit geheugencache; nieuwe aandelen-IV en optiequotes blijven vereist.
+- Uitgeschakelde scannertypen één uur onthouden; niet opnieuw proberen voor de andere marktlocatie of volgende scans.
+- Echte pacingfout stopt de scan met een pauze van minstens één minuut; geen automatische vervolgaanvragen.
+- Scan stoppen in IV Scan, Leaps en CSP. Reeds gevonden resultaten blijven zichtbaar. [Werking en update](iv-leaps.md).
+
 ## 0.31.0 — IV Scan en Leaps (13 oktober 2026)
 
 - Breakout-menu vervangen door IV Scan met IV-rank strikt boven 40; bestaande links openen IV Scan.

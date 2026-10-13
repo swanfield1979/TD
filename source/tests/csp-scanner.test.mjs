@@ -1,3 +1,4 @@
+import { resetScanGuards } from '../server/scan-guard.mjs'
 import { EventEmitter } from 'node:events'
 import test from 'node:test'
 import assert from 'node:assert/strict'
@@ -6,6 +7,7 @@ import { runCspScan } from '../server/csp-scanner.mjs'
 import { scanDate } from '../shared/csp-scan.mjs'
 
 for (const fallback of [false, true]) test(fallback ? 'closed-market quotes and disabled IV scanner use frozen data and active-stock fallback' : 'Gateway scan prioritizes holdings, discovers stocks, applies filters and cleans subscriptions', async (t) => {
+  resetScanGuards()
   t.mock.method(globalThis, 'fetch', async () => ({ ok: true, text: async () => `Symbol,Security\n${Array.from({ length: 501 }, (_, i) => `SP${i},Company`).join('\n')}` }))
   const today = scanDate()
   const expiry = new Date(Date.parse(`${today}T00:00:00Z`) + 40 * 86400000).toISOString().slice(0, 10).replaceAll('-', '')
@@ -49,7 +51,7 @@ for (const fallback of [false, true]) test(fallback ? 'closed-market quotes and 
     cancelScannerSubscription() {}
   }
   const state = { portfolio: [], market: [], warnings: [], symbolsChecked: 0, contractsChecked: 0 }
-  await runCspScan({ clientId: 77, scanQuoteWaitMs: 1 }, ['OWNED'], state, FakeApi)
+  await runCspScan({ clientId: 77, scanQuoteWaitMs: 1, scanPacer: { acquire: async () => {} } }, ['OWNED'], state, FakeApi)
   assert.equal(state.state, fallback ? 'partial' : 'complete')
   if (fallback) {
     assert.ok(marketDataTypes.includes(MarketDataType.FROZEN))

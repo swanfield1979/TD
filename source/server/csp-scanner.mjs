@@ -2,20 +2,36 @@ import { IBApi, EventName, MarketDataType } from '@stoqey/ib'
 import { cspCandidate, daysToExpiry, ivRank, scanDate, sortCandidates } from '../shared/csp-scan.mjs'
 
 import { ivMetrics, leapPut, compareLeaps } from '../shared/leaps-scan.mjs'
+import { scanGuard, pacingError, disabledScanner } from './scan-guard.mjs'
 
 export const SP500_URL = 'https://raw.githubusercontent.com/datasets/s-and-p-500-companies/main/data/constituents.csv'
-const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
 // Separate read-only connection; requests are bounded and all subscriptions are cancelled.
 export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'csp') {
   const ib = new Api({ host: config.gatewayHost, port: config.gatewayPort })
   const today = scanDate()
+  const guard = scanGuard(config)
+  const pacer = config.scanPacer ?? guard.pacer
+  let fatalError = null
+  const signal = config.scanSignal
+  const ensureActive = () => {
+    if (signal?.aborted) throw new Error('Scan gestopt door gebruiker.')
+    if (fatalError) throw fatalError
+    if (guard.cooldownUntil > Date.now()) throw new Error('IBKR-pauze actief na een snelheidslimiet; wacht een minuut en probeer opnieuw.')
+  }
   let nextId = 10000
   const pending = new Map()
   const subscriptions = new Set()
-  const request = (start, endEvent, timeout = 12000, quote = false) => new Promise((resolve, reject) => {
+  const request = async (start, endEvent, timeout = 12000, quote = false, key = '') => {
+    ensureActive()
+    await pacer.acquire({ signal, historical: endEvent === 'historicalData', key, onWait: ms => {
+      state.progress = `Rustig scannen · ${Math.ceil(ms / 1000)} s wachten voor volgende IBKR-aanvraag`
+    } })
+    ensureActive()
+    return new Promise((resolve, reject) => {
     const id = nextId++
     const task = { rows: [], quote: {}, endEvent, finish(error) {
+      if (!pending.has(id)) return
       clearTimeout(task.timer)
       pending.delete(id)
       if (subscriptions.delete(id)) ib.cancelMktData(id)
@@ -27,7 +43,10 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
     task.timer = setTimeout(() => task.finish(quote ? null : new Error('IBKR-aanvraag verlopen.')), timeout)
     pending.set(id, task)
     try { start(id) } catch (error) { task.finish(error) }
-  })
+    })
+  }
+  const abort = () => { for (const task of [...pending.values()]) task.finish(new Error('Scan gestopt door gebruiker.')) }
+  signal?.addEventListener('abort', abort)
   const maybeCompleteQuote = (id) => queueMicrotask(() => {
     const task = pending.get(id)
     if (!task?.contract) return
@@ -35,6 +54,12 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
   })
   ib.on(EventName.error, (error, code, id) => {
     if ([2104, 2106, 2107, 2108, 2158, 2176, 10167, 10090].includes(code)) return
+    if (pacingError(code, error.message)) {
+      guard.cooldownUntil = Date.now() + 60000
+      fatalError = new Error(`Scan gestopt: IBKR meldt een snelheidslimiet of ongeldige realtime-aanvraag (${code}). Wacht minstens een minuut en probeer opnieuw.`)
+      for (const task of [...pending.values()]) task.finish(fatalError)
+      return
+    }
     // Errors such as missing market-data permissions must never become valid candidates.
     if (pending.has(id)) pending.get(id).finish(new Error(`IBKR ${code}: ${error.message}`))
   })
@@ -82,7 +107,7 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
         // Data type is supplied by IBKR; never label an unspecified quote as live.
         lastQuote.marketDataType ??= type
         if (completeQuote(contract, lastQuote) && (generic !== '106' || Number.isFinite(lastQuote.iv) && lastQuote.iv > 0 && lastQuote.iv < 10)) return lastQuote
-      } catch (error) { lastError = error }
+      } catch (error) { ensureActive(); lastError = error }
     }
     if (lastError && !Object.keys(lastQuote).length) throw lastError
     return lastQuote
@@ -90,9 +115,12 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
   const warn = (symbol, error) => state.warnings.push(`${symbol}: ${error.message}`)
 
   try {
+    ensureActive()
     await new Promise((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error('IB Gateway is niet verbonden. Gebruik de IBKR-koppeling en probeer opnieuw.')), 10000)
-      ib.once(EventName.connected, () => { clearTimeout(timer); resolve() })
+      const cancelConnect = () => { clearTimeout(timer); reject(new Error('Scan gestopt door gebruiker.')) }
+      const timer = setTimeout(() => { signal?.removeEventListener('abort', cancelConnect); reject(new Error('IB Gateway is niet verbonden. Gebruik de IBKR-koppeling en probeer opnieuw.')) }, 10000)
+      signal?.addEventListener('abort', cancelConnect, { once: true })
+      ib.once(EventName.connected, () => { clearTimeout(timer); signal?.removeEventListener('abort', cancelConnect); resolve() })
       ib.connect(config.clientId + (mode === 'csp' ? 20 : 21))
     })
     ib.reqMarketDataType(MarketDataType.DELAYED)
@@ -107,7 +135,18 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
         const price = stock.last > 0 ? stock.last : stock.bid > 0 && stock.ask >= stock.bid ? (stock.bid + stock.ask) / 2 : null
         if (!price) throw new Error('Actuele aandelenkoers ontbreekt.')
         if (mode === 'csp' && discovery && (price < 10 || price > 50)) return
-        const bars = await request((id) => ib.reqHistoricalData(id, contract, '', '1 Y', '1 day', 'OPTION_IMPLIED_VOLATILITY', 1, 1, false), 'historicalData', 20000)
+        const historyKey = `${contract.conId}:${symbol}:${today}`
+        const cached = guard.history.get(historyKey)
+        let bars
+        if (cached && Date.now() - cached.savedAt < 86400000) {
+          bars = cached.bars; state.historyCacheHits = (state.historyCacheHits ?? 0) + 1
+        } else {
+          bars = await request((id) => ib.reqHistoricalData(id, contract, '', '1 Y', '1 day', 'OPTION_IMPLIED_VOLATILITY', 1, 1, false), 'historicalData', 20000, false, historyKey)
+          if (ivRank(stock.iv, bars, today) !== null) {
+            if (guard.history.size >= 500) guard.history.delete(guard.history.keys().next().value)
+            guard.history.set(historyKey, { bars, savedAt: Date.now() })
+          }
+        }
         const ivr = ivRank(stock.iv, bars, today)
         if (ivr === null) throw new Error('Actuele IV of voldoende recente jaarhistorie ontbreekt; IVR niet toetsbaar.')
         const metrics = ivMetrics(stock.iv, bars, today)
@@ -132,10 +171,10 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
             }
           }
         }
-        if (!contracts.length) throw new Error('Geen standaardputketen met 35–50 dagen looptijd beschikbaar.')
+        if (!contracts.length) throw new Error(mode === 'leaps' ? 'Geen standaardputs binnen 30–50 of 300–700 DTE beschikbaar.' : 'Geen standaardputketen met 35–50 dagen looptijd beschikbaar.')
         let missing = 0
-        for (let offset = 0; offset < contracts.length; offset += 15) {
-          const batch = contracts.slice(offset, offset + 15)
+        for (let offset = 0; offset < contracts.length; offset += 1) {
+          const batch = contracts.slice(offset, offset + 1)
           const quotes = await Promise.allSettled(batch.map((contract) => availableQuote(contract)))
           for (let index = 0; index < batch.length; index++) {
             state.contractsChecked++
@@ -155,10 +194,10 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
             state.rows = compareLeaps(state.puts)
             state.progress = `Leaps · ${symbol} · ${Math.min(offset + batch.length, contracts.length)} / ${contracts.length} contracten`
           }
-          await pause(100)
+          ensureActive()
         }
         if (missing) state.warnings.push(`${symbol}: ${missing} contracten zonder volledige bied/laat/greeks; overgeslagen.`)
-      } catch (error) { warn(symbol, error) }
+      } catch (error) { ensureActive(); warn(symbol, error) }
       finally { state.symbolsChecked++ }
     }
 
@@ -178,7 +217,7 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
     state.progress = 'Interessante NASDAQ / S&P 500-aandelen zoeken'
     let sp500 = new Set()
     try {
-      const response = await fetch(SP500_URL, { signal: AbortSignal.timeout(10000) })
+      const response = await fetch(SP500_URL, { signal: config.scanSignal ? AbortSignal.any([config.scanSignal, AbortSignal.timeout(10000)]) : AbortSignal.timeout(10000) })
       if (!response.ok) throw new Error(`HTTP ${response.status}`)
       const csv = await response.text()
       sp500 = new Set(csv.split(/\r?\n/).slice(1).map((line) => line.split(',')[0].replace('.', ' ')))
@@ -188,12 +227,26 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
     const discovered = new Map()
     for (const locationCode of ['STK.US.NASDAQ', 'STK.US.MAJOR']) {
       try {
-        const discover = (scanCode) => request((id) => ib.reqScannerSubscription(id, { instrument: 'STK', locationCode,
-          scanCode, numberOfRows: 50, ...(mode === 'csp' ? { abovePrice: 10, belowPrice: 50 } : {}), stockTypeFilter: 'CORP' }), 'scannerDataEnd')
+        const discover = async (scanCode) => {
+          ensureActive()
+          if ((guard.disabled.get(scanCode) ?? 0) > Date.now()) throw new Error(`${scanCode}: scannertype door IBKR uitgeschakeld; gedurende één uur niet opnieuw aangevraagd.`)
+          try {
+            return await request((id) => ib.reqScannerSubscription(id, { instrument: 'STK', locationCode,
+              scanCode, numberOfRows: 50, ...(mode === 'csp' ? { abovePrice: 10, belowPrice: 50 } : {}), stockTypeFilter: 'CORP' }), 'scannerDataEnd')
+          } catch (error) {
+            ensureActive()
+            if (disabledScanner(error.message)) {
+              guard.disabled.set(scanCode, Date.now() + 3600000)
+              throw new Error(`${scanCode}: IBKR heeft dit scannertype uitgeschakeld. Eén uur overgeslagen; controleer dezelfde scanner in TWS. (${error.message})`)
+            }
+            throw error
+          }
+        }
         let rows
         try { rows = await discover('HIGH_OPT_IMP_VOLAT') }
-        catch {
-          state.warnings.push(`${locationCode}: IV-scanner niet beschikbaar; terugval naar MOST_ACTIVE. Scancriteria blijven ongewijzigd.`)
+        catch (error) {
+          ensureActive()
+          state.warnings.push(`${locationCode}: IV-scanner niet beschikbaar (${error.message}); terugval naar MOST_ACTIVE. Scancriteria blijven ongewijzigd.`)
           rows = await discover('MOST_ACTIVE')
         }
         for (const details of rows) {
@@ -202,16 +255,23 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
           if (!contract || (!nasdaq && !sp500.has(contract.symbol)) || symbols.includes(contract.symbol)) continue
           discovered.set(contract.symbol, { contract, universe: nasdaq ? (sp500.has(contract.symbol) ? 'NASDAQ · S&P 500' : 'NASDAQ') : 'S&P 500' })
         }
-      } catch (error) { warn(locationCode, error) }
+      } catch (error) { ensureActive(); warn(locationCode, error) }
     }
     state.marketSymbols = discovered.size
+    if (!discovered.size && state.warnings.some(warning => /scannertype.*uitgeschakeld|scanner type.*disabled/.test(warning))) {
+      state.message = 'Marktscan niet beschikbaar: IBKR heeft de scannertypen uitgeschakeld. Controleer de Advanced Market Scanner in TWS; Leaps op je handmatige shortlist blijft afzonderlijk beschikbaar.'
+      state.state = 'partial'
+      state.progress = state.message
+      return
+    }
     for (const [symbol, entry] of discovered) await scanSymbol(symbol, true, entry.contract, entry.universe)
     state.portfolio = sortCandidates(state.portfolio)
     state.market = sortCandidates(state.market)
     state.state = state.warnings.length ? 'partial' : 'complete'
     state.progress = 'Scan afgerond'
-  } catch (error) { state.state = 'error'; state.message = error.message }
+  } catch (error) { state.state = signal?.aborted ? 'cancelled' : 'error'; state.message = error.message }
   finally {
+    signal?.removeEventListener('abort', abort)
     for (const task of pending.values()) task.finish(new Error('Scanverbinding gesloten.'))
     ib.disconnect()
     state.finishedAt = new Date().toISOString()

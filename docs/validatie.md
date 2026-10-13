@@ -1,5 +1,14 @@
 # Validatie
 
+## Trading Monitor 0.31.1 — rustige IBKR-scans (13 oktober 2026)
+
+- Node-suite: 117 tests geslaagd, waarvan 107 voor de te publiceren code en tien reeds aanwezige lokale TradingView-referentietests. 13 frontendtests en productiebuild geslaagd.
+- Nieuwe tests bewijzen requestspreiding, historiebudget, identieke aanvragen, één actieve quote, hergebruik van IV-historie, onthouden van disabled scanners, stoppen na pacingfouten en annuleren van actieve brokerrequests.
+- API-test controleert de stoproute; browserworkflow controleert Scan stoppen naast shortlist, resultaten, fouten en responsive weergave.
+- Wachtrij geldt voor de optiescans in de Node-service, niet voor andere API-processen of TWS. Cache en disabled-scannergeheugen zijn leeg na API-herstart; de handmatige shortlist blijft op schijf.
+- Disabled scannertypes op de echte IBKR-installatie blijven een beschikbaarheidsprobleem. Geen echte brokerlogin of serverupdate uitgevoerd.
+- [Werking, bronnen en update](iv-leaps.md).
+
 ## Trading Monitor 0.31.0 — IV Scan en Leaps (13 oktober 2026)
 
 - 101 Git-gevolgde Node-tests inclusief zeven nieuwe tests geslaagd. De volledige lokale suite bevat daarnaast tien reeds aanwezige, ongepubliceerde TradingView-referentietests: 111 tests geslaagd.

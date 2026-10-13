@@ -5,7 +5,7 @@ const browser = await chromium.launch({ channel: process.env.PLAYWRIGHT_CHANNEL 
 const page = await browser.newPage({viewport:{width:1440,height:1000}})
 const errors=[]
 page.on('pageerror', error=>errors.push(error.message))
-let symbols=[], failure=false
+let symbols=[], failure=false, runningFixture=false
 const quote={symbol:'HOOD',underlyingPrice:110,ivr:55,ivPercentile:65,iv:60,marketDataType:3,quotedAt:new Date().toISOString(),universe:'NASDAQ'}
 const reference={expiry:'20261120',dte:40,strike:85,absoluteDelta:.12,annualizedYield:5}
 const candidate={...quote,id:'HOOD:long',expiry:'20280121',dte:465,strike:40,absoluteDelta:.12,bid:8,ask:8.5,premium:800,collateral:4000,breakEven:32,buffer:70.91,annualizedYield:15.7,reference,qualifies:true,yieldAdvantage:10.7,exitPrice:4}
@@ -21,9 +21,11 @@ await page.route('**/api/**',async route=>{
     const mode=path==='/api/iv-scan'?'iv':'leaps'
     if(request.method()==='POST'){
       if(failure){status=503;body={message:'Marktdata niet bereikbaar; probeer opnieuw.'}}
+      else if(runningFixture) results[mode]={state:'running',rows:[],warnings:[],symbolsChecked:0,contractsChecked:0,progress:'Rustig scannen'}
       else results[mode]={state:'partial',rows:mode==='iv'?[quote]:[candidate,noMatch],warnings:['NVDA: IV-historie ontbreekt; overgeslagen.'],symbolsChecked:2,contractsChecked:6,finishedAt:new Date().toISOString(),assessments:[{symbol:'HOOD',matches:1,message:'Passende Leaps gevonden'}]}
     }
     if(status===200)body=results[mode]
+  } else if(path==='/api/leaps/stop'){ results.leaps={...results.leaps,state:'cancelled'};body=results.leaps
   } else if(path==='/api/ibkr/status')body={state:'offline',message:'Testverbinding',isBusy:false}
   else status=404
   await route.fulfill({status,contentType:'application/json',body:JSON.stringify(body)})
@@ -66,6 +68,10 @@ failure=true
 await page.getByRole('button',{name:'Scan starten',exact:true}).click()
 await page.getByRole('alert').waitFor()
 assert.match(await page.getByRole('alert').innerText(),/Marktdata niet bereikbaar/)
+failure=false;runningFixture=true
+await page.getByRole('button',{name:'Scan starten',exact:true}).click()
+await page.getByRole('button',{name:'Scan stoppen',exact:true}).click()
+await page.getByText('Scan gestopt; reeds gevonden resultaten blijven zichtbaar.').waitFor()
 assert.deepEqual(errors,[])
 console.log('IV Scan / Leaps browserworkflow geslaagd: navigatie, toevoegen, verwijderen, bewaren, vergelijking, filters, fouten en 360/768/1024/1440px. Marktdata is een expliciete testfixture.')
 await browser.close()

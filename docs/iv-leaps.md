@@ -1,6 +1,18 @@
-# IV Scan en Leaps — Trading Monitor 0.31.0
+# IV Scan en Leaps — Trading Monitor 0.31.1
 
 Breakout vervalt als menupagina. `#iv` opent **IV Scan** en `#leaps` opent **Leaps**. Bestaande `#breakout`-links en het pad `/breakout` openen IV Scan. Historische breakoutbroncode, cache en zelfstandige TradingView-bestanden blijven bewaard; de oude scanner wordt vanuit het menu niet meer gestart.
+
+## Rustige IBKR-aanvragen (0.31.1)
+
+De optiescans delen per Gateway een wachtrij in de Node-service. Maximaal één optiequote tegelijk (voorheen 15), minimaal 500 ms tussen nieuwe aanvragen en minimaal 11 seconden tussen historische downloads. Historie krijgt een conservatief budget van 55 requests per 10 minuten en 15 seconden tussen identieke aanvragen. Dit is ons voorzorgsbeleid voor dagelijkse IV-historie, geen claim dat de officiële small-bar-limieten rechtstreeks op dagbars gelden. Andere API-processen en TWS gebruiken dezelfde accountcapaciteit; deze wachtrij regelt alleen de optiescans in deze Node-service.
+
+Geldige IV-historie wordt in het procesgeheugen voor dezelfde New York-beursdatum hergebruikt, maximaal 24 uur, met maximaal 500 cache-items. Na API-herstart is deze cache leeg. De actuele aandelen-IV en optiequotes worden opnieuw opgehaald. De shortlist blijft op schijf bewaard.
+
+**Scanner type ... is disabled** betekent dat dat type niet beschikbaar is; het is geen pacing violation. Het type wordt één uur in het procesgeheugen overgeslagen, ook bij volgende scans of de andere marktlocatie. MOST_ACTIVE wordt hoogstens eenmaal geprobeerd als beide typen uitgeschakeld blijken. De app verwijst naar dezelfde scanner in TWS. Zonder beschikbare scannertypen ontstaat geen automatische marktshortlist. Leaps kan onafhankelijk daarvan de handmatige lijst scannen; hiervoor blijven marktdatarechten nodig.
+
+Bij code 100/420 of een expliciete pacing-/message-rate-melding stopt de optiescan en volgt een pauze van minstens één minuut. Geen automatische retry of andere scannertypen na een snelheidslimiet. **Scan stoppen** breekt wachttijden en actieve aanvragen af en sluit de scanverbinding; reeds gevonden resultaten blijven zichtbaar. Stoproutes: `POST /api/iv-scan/stop`, `/api/leaps/stop` en `/api/scans/stop`, met dezelfde origin-/headercontrole.
+
+Bronnen: [IBKR scanners](https://www.interactivebrokers.com/docs/tws-api/doc/market-scanner/introduction) en [historische beperkingen en soft throttling](https://interactivebrokers.github.io/tws-api/historical_limitations.html).
 
 ## IV Scan
 
