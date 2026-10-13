@@ -1,4 +1,4 @@
-# IV Scan en Leaps — Trading Monitor 0.31.2
+# IV Scan en Leaps — Trading Monitor 0.31.3
 
 Breakout vervalt als menupagina. `#iv` opent **IV Scan** en `#leaps` opent **Leaps**. Bestaande `#breakout`-links en het pad `/breakout` openen IV Scan. Historische breakoutbroncode, cache en zelfstandige TradingView-bestanden blijven bewaard; de oude scanner wordt vanuit het menu niet meer gestart.
 
@@ -47,6 +47,14 @@ De shortlist staat standaard naast `IBKR_SNAPSHOT_PATH` in `leaps-shortlist.json
 De scan controleert alle door de standaard SMART-keten aangeboden strikes onder de koers en expiraties in deze intervallen. Niet-bestaande expiry/strike-combinaties en contracten zonder volledige quotes of Greeks worden overgeslagen en gemeld. Grote ketens kunnen meerdere minuten of langer kosten. Voortgang en gedeeltelijke kandidaten worden tussentijds bijgewerkt; er loopt maximaal één optiescan tegelijk, inclusief de bestaande CSP-scan. Zonder volledige datadekking kun je alleen de gevonden contracten vergelijken, niet aantonen dat er nergens een betere korte put bestaat.
 
 ### Berekeningen en afhandeling
+
+Sinds 0.31.3 toont Leaps drie calculatorvelden volgens het aangeleverde voorbeeld:
+
+- **Decrease to break even** = `(break-even / koers − 1) × 100%`. Een daling wordt negatief weergegeven. Dit is de koersafstand tot break-even bij expiratie, geen grens waaronder tussentijds pas risico ontstaat.
+- **Return if expired** = `biedpremie / (strike − biedpremie) × 100%`: maximale premieopbrengst als de put waardeloos afloopt, berekend over strike min premie. Toewijzing of aflopen onder de strike geeft niet automatisch dit rendement.
+- **Return annualized** = `Return if expired × 365 / DTE`: lineair geannualiseerd, vóór kosten, zonder rente of samengestelde herbelegging.
+
+De twee bestaande kolommen **Lang per jaar (onderpand)** en **Kort per jaar (onderpand)** blijven rekenen over de volledige strike. De selectieregel en de delta-/looptijdvergelijking veranderen niet door het toevoegen van de calculatorvelden. Gebruik dezelfde kapitaalbasis bij vergelijking. Voor het voorbeeld koers $220,28, strike $200, premie $2,94 en 46 DTE zijn de nieuwe waarden −10,54%, 1,49% en 11,84%. De app gebruikt het eigen bestaande kalender-DTE; de voorbeeldtests gebruiken de getoonde DTE uit de afbeelding.
 
 Premie = `biedprijs × 100`; volledig cashonderpand = `strike × 100`; lineair jaarrendement = `premie / onderpand × 365 / DTE × 100%`. Geen cashrente, samengestelde herbelegging, kosten of belasting in deze vergelijking. Het geannualiseerde korte rendement is een vergelijkingsmaatstaf en geen garantie dat die put steeds opnieuw tegen dezelfde voorwaarden kan worden verkocht.
 

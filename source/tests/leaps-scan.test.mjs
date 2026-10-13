@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { normalizeShortlist, ivMetrics, leapPut, compareLeaps } from '../shared/leaps-scan.mjs'
+import { normalizeShortlist, ivMetrics, leapPut, compareLeaps, putReturnMetrics } from '../shared/leaps-scan.mjs'
 const today = '2026-10-13'
 const expiry = days => new Date(Date.parse(`${today}T00:00:00Z`) + days * 86400000).toISOString().slice(0,10).replaceAll('-', '')
 const quote = { symbol: 'HOOD', expiry: expiry(400), strike: 40, underlyingPrice: 100, delta: -.12,
@@ -38,4 +38,18 @@ test('long puts must beat strongest short comparison within delta tolerance, nev
     const [missing] = compareLeaps([long,reference])
     assert.equal(missing.qualifies,false); assert.equal(missing.reference,null)
   }
+})
+
+test('calculator metrics reproduce all three supplied examples on strike minus premium', () => {
+  for (const [strike,bid,dte,decrease,expired,annual] of [[215,1.08,7,-2.89,.50,26.32],[200,2.94,46,-10.54,1.49,11.84],[190,6.78,137,-16.82,3.70,9.86]]) {
+    const result=putReturnMetrics({strike,bid,dte,underlyingPrice:220.28})
+    assert.equal(Number(result.decreaseToBreakEven.toFixed(2)),decrease)
+    assert.equal(Number(result.returnIfExpired.toFixed(2)),expired)
+    assert.equal(Number(result.returnAnnualized.toFixed(2)),annual)
+  }
+  for (const change of [{dte:0},{underlyingPrice:0},{bid:40},{bid:-1},{strike:NaN}]) assert.equal(putReturnMetrics({strike:40,bid:8,dte:400,underlyingPrice:110,...change}),null)
+  const result=leapPut(quote,today)
+  assert.equal(result.returnIfExpired,25)
+  assert.equal(result.returnAnnualized,22.8125)
+  assert.equal(result.annualizedYield,18.25)
 })

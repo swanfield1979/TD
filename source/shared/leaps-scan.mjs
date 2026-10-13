@@ -21,6 +21,17 @@ export function ivMetrics(current, bars, today) {
   return { ivr, ivPercentile: history.filter(bar => bar.close < current).length / history.length * 100 }
 }
 
+export function putReturnMetrics({ strike, bid, underlyingPrice, dte }) {
+  if (![strike, bid, underlyingPrice, dte].every(Number.isFinite) || strike <= 0 || bid < 0 || bid >= strike || underlyingPrice <= 0 || dte <= 0) return null
+  const breakEven = strike - bid
+  const returnIfExpired = bid / breakEven * 100
+  return {
+    decreaseToBreakEven: (breakEven / underlyingPrice - 1) * 100,
+    returnIfExpired,
+    returnAnnualized: returnIfExpired * 365 / dte,
+  }
+}
+
 export function leapPut(quote, today) {
   const { strike, underlyingPrice, delta, bid, ask, multiplier } = quote
   const dte = daysToExpiry(quote.expiry, today)
@@ -32,7 +43,7 @@ export function leapPut(quote, today) {
     || !((dte >= 30 && dte <= 50) || (dte >= 300 && dte <= 700))) return null
   const premium = bid * 100, collateral = strike * 100, breakEven = strike - bid
   return { ...quote, id: `${quote.symbol}:${quote.expiry}:${strike}:${quote.tradingClass ?? quote.symbol}`,
-    dte, absoluteDelta, premium, collateral, breakEven, buffer: (1 - breakEven / underlyingPrice) * 100,
+    dte, absoluteDelta, premium, collateral, breakEven, ...putReturnMetrics({ strike, bid, underlyingPrice, dte }), buffer: (1 - breakEven / underlyingPrice) * 100,
     annualizedYield: premium / collateral * 365 / dte * 100, exitPrice: bid / 2 }
 }
 

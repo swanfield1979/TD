@@ -1,5 +1,12 @@
 # Validatie
 
+## Trading Monitor 0.31.3 — calculatorvelden (13 oktober 2026)
+
+- 121 lokale Node-tests geslaagd, waarvan 111 voor de te publiceren code en tien bestaande lokale referentietests. 13 frontendtests, productiebuild en browserworkflow geslaagd.
+- Rekentest reproduceert de drie aangeleverde voorbeelden: −2,89% / 0,50% / 26,32%; −10,54% / 1,49% / 11,84%; −16,82% / 3,70% / 9,86%, met de in de afbeelding vermelde DTE.
+- Ongeldige prijzen, nul-DTE en strike gelijk aan premie worden afgewezen. Netto-calculatorrendement blijft gescheiden van de bestaande volledige-onderpandvergelijking.
+- Browserfixture controleert de drie kolomtitels en de getoonde percentages; geen extra IBKR-aanvragen voor deze berekeningen.
+
 ## Trading Monitor 0.31.2 — aandelenlijsten zonder IBKR-marktscanner (13 oktober 2026)
 
 - 120 lokale Node-tests geslaagd, waarvan 110 voor de te publiceren code en tien bestaande lokale TradingView-referentietests. 13 frontendtests, TypeScript/Vite-build en browserworkflow geslaagd.

@@ -8,7 +8,7 @@ page.on('pageerror', error=>errors.push(error.message))
 let symbols=[], failure=false, runningFixture=false
 const quote={symbol:'HOOD',underlyingPrice:110,ivr:55,ivPercentile:65,iv:60,marketDataType:3,quotedAt:new Date().toISOString(),universe:'NASDAQ'}
 const reference={expiry:'20261120',dte:40,strike:85,absoluteDelta:.12,annualizedYield:5}
-const candidate={...quote,id:'HOOD:long',expiry:'20280121',dte:465,strike:40,absoluteDelta:.12,bid:8,ask:8.5,premium:800,collateral:4000,breakEven:32,buffer:70.91,annualizedYield:15.7,reference,qualifies:true,yieldAdvantage:10.7,exitPrice:4}
+const candidate={...quote,id:'HOOD:long',expiry:'20280121',dte:465,strike:40,absoluteDelta:.12,bid:8,ask:8.5,premium:800,collateral:4000,breakEven:32,buffer:70.91,decreaseToBreakEven:-70.9090909091,returnIfExpired:25,returnAnnualized:19.623655914,annualizedYield:15.7,reference,qualifies:true,yieldAdvantage:10.7,exitPrice:4}
 const noMatch={...candidate,id:'HOOD:no-match',strike:50,qualifies:false,reference:null,yieldAdvantage:null}
 const results={iv:{state:'idle',rows:[],warnings:[],symbolsChecked:0,contractsChecked:0},leaps:{state:'idle',rows:[],warnings:[],symbolsChecked:0,contractsChecked:0}}
 await page.route('**/api/**',async route=>{
@@ -47,6 +47,8 @@ assert.deepEqual(symbols,['HOOD','NVDA','COIN'])
 await page.getByRole('button',{name:'COIN verwijderen uit shortlist'}).click()
 await page.getByRole('button',{name:'Scan starten',exact:true}).click()
 await page.getByRole('cell',{name:'Voldoet',exact:true}).waitFor()
+for (const label of ['Decrease to break even','Return if expired','Return annualized']) await page.getByRole('columnheader',{name:label,exact:true}).waitFor()
+for (const value of ['-70,91%','25%','19,62%']) await page.getByRole('cell',{name:value,exact:true}).waitFor()
 assert.equal(await page.locator('tbody tr').count(),1)
 await page.getByLabel('Alleen passende kandidaten').uncheck()
 assert.equal(await page.locator('tbody tr').count(),2)

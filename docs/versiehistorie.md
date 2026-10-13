@@ -1,5 +1,12 @@
 # Versiehistorie
 
+## 0.31.3 — Leaps-calculatorvelden (13 oktober 2026)
+
+- Decrease to break even als negatieve koersafstand tot break-even bij expiratie.
+- Return if expired en Return annualized volgens netto rekenbasis strike min biedpremie.
+- Bestaande bruto-onderpandvergelijking expliciet gelabeld; selectiecriteria behouden.
+- Tests vergelijken de drie aangeleverde calculatorvoorbeelden en browserkolommen. [Formules](iv-leaps.md#berekeningen-en-afhandeling).
+
 ## 0.31.2 — IV Scan zonder IBKR-marktscanner (13 oktober 2026)
 
 - Tickers rechtstreeks uit S&P 500-ledenlijst en Nasdaq-directory; geen IBKR-scannersubscriptions in IV Scan.
