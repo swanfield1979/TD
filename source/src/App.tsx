@@ -182,6 +182,14 @@ function LoadingDashboard() {
 }
 
 function App() {
+  const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 700px)').matches)
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 700px)')
+    const update = () => setIsMobile(media.matches)
+    media.addEventListener('change', update)
+    update()
+    return () => media.removeEventListener('change', update)
+  }, [])
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     try { return localStorage.getItem('tm-theme') === 'light' ? 'light' : 'dark' } catch { return 'dark' }
   })
@@ -334,7 +342,7 @@ function App() {
         <button className="theme-toggle" type="button" aria-pressed={theme === 'dark'} onClick={() => setTheme((value) => value === 'dark' ? 'light' : 'dark')}>
           Donkere modus: {theme === 'dark' ? 'aan' : 'uit'}
         </button>
-        <IbkrConnectionControl onSnapshot={handleLiveSnapshot} />
+        {!isMobile && <IbkrConnectionControl onSnapshot={handleLiveSnapshot} />}
       </aside>
 
       <main className="main-content">
@@ -353,6 +361,8 @@ function App() {
             </div>
           )}
         </header>
+
+        {isMobile && <IbkrConnectionControl onSnapshot={handleLiveSnapshot} />}
 
         {currentPage === 'scans' && <ScansPage />}
         {(currentPage === 'iv' || currentPage === 'leaps') && <OptionResearchPage key={currentPage} mode={currentPage} />}

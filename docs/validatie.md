@@ -1,5 +1,13 @@
 # Validatie
 
+## Lokale mobiele IBKR-correctie (14 oktober 2026, nog niet gepubliceerd)
+
+- IBKR-bediening op mobiel uit het verborgen menu naar direct onder de paginatitel verplaatst; desktop houdt de bediening in de zijbalk. Er is steeds één bediening gemount.
+- 128 Node-tests, 13 frontendtests en TypeScript/productiebuild geslaagd.
+- Edge-browsercontrole met API-fixtures op 320/360/390/700/701/768/1024/1440 pixels: bediening zichtbaar, binnen schermbreedte en geen horizontale pagina-overflow.
+- Vernieuwen via toetsenbord verstuurt één POST en blokkeert de knop tijdens ophalen; verbonden, offline, fout, ophalen, MFA en ontbrekende service gecontroleerd op mobiel.
+- Mobiele weergave visueel gecontroleerd. Echte IBKR-synchronisatie en serverpublicatie zijn niet uitgevoerd.
+
 ## Trading Monitor 0.31.6 — automatische IV-blokken (13 oktober 2026)
 
 - 128 lokale Node-tests geslaagd, waarvan 118 voor de te publiceren code. 13 frontendtests, productiebuild en browserworkflow geslaagd.

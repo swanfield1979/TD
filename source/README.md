@@ -4,6 +4,8 @@ Actuele versie: **0.31.6**. IV Scan vervangt Breakout in het menu; Leaps bewaart
 
 De webapp staat volledig in deze map. Voer alle ontwikkel- en bouwcommando's vanuit `source/` uit.
 
+Mobiele correctie (14 oktober 2026, nog niet gepubliceerd): de IBKR-bediening staat t/m 700 pixels onder de paginatitel en daarboven in de zijbalk. Verificatie: `npm test`, `npm run test:frontend`, `npm run build` en browsercontrole op 320–1440 pixels; zie [validatie](../docs/validatie.md).
+
 Versie 0.27.2 voegt donkere modus en een read-only CSP-scanner toe. Publiceer `dist/`, `server/` en `shared/` samen en herstart de API; zie [serverupdate](../docs/installatie.md#serverupdate-versie-0270) en [scanarchitectuur](../docs/scans.md). Voor lokaal scannen moet `IBKR_ALLOWED_ORIGINS` ook `http://127.0.0.1:5173` bevatten. Start de API met `npm run start:api` in een tweede terminal.
 
 Live saldoverandering werkt mee met **Vernieuwen**. Publiceer de nieuwe `dist/` en backendbestanden samen en herstart `trading-monitor-api.service` om eerdere dagmetingen te bewaren. Zie [gebruik en berekeningen](../docs/gebruik.md) voor de vergelijkingsbron en terugval bij ontbrekende dagen.

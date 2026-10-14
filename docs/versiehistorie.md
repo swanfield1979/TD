@@ -1,5 +1,10 @@
 # Versiehistorie
 
+## Nog niet uitgebracht — mobiele IBKR-bediening (14 oktober 2026)
+
+- IBKR-status en Verbinden/Vernieuwen direct onder de paginatitel op schermen t/m 700 pixels, bereikbaar met gesloten menu.
+- Desktopbediening blijft in de zijbalk; knop op mobiel minimaal 44 pixels hoog en statusberichten kunnen afbreken.
+
 ## 0.31.6 — IV Scan automatisch vervolgen (13 oktober 2026)
 
 - Serverreeks: 25 aandelen, 20 seconden pauze, volgend blok tot de lijst is afgerond.

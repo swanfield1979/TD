@@ -12,7 +12,7 @@ Onder deze rij staan de handelsdetails. Deze en vorige maand combineren nettores
 
 ## IBKR-gegevens vernieuwen
 
-Linksonder staat de IBKR-status. Klik op **Verbinden** wanneer Gateway niet actief is. De webapp start dan IBC en toont **IB Key bevestigen**. Keur de melding binnen drie minuten goed in IBKR Mobile.
+Op desktop staat de IBKR-status linksonder. Op mobiel (t/m 700 pixels) staan de status en vernieuwknop direct onder de paginatitel, ook wanneer het menu gesloten is. Klik op **Verbinden** wanneer Gateway niet actief is. De webapp start dan IBC en toont **IB Key bevestigen**. Keur de melding binnen drie minuten goed in IBKR Mobile.
 
 Na verbinding toont de bediening **IBKR verbonden**. Met **Vernieuwen** worden de actuele netto liquidatiewaarde, open posities, marktprijzen en ongerealiseerde winst/verlies opnieuw opgehaald. Tijdens het ophalen is de knop geblokkeerd om dubbele aanvragen te voorkomen.
 

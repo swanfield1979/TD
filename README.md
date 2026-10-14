@@ -10,6 +10,8 @@ Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voort
 | [`release/`](release/) | Distributies en release-informatie |
 | [`docs/`](docs/) | Installatie, gebruik, architectuur en validatie |
 
+Lokale mobiele correctie (14 oktober 2026): IBKR-status en vernieuwknop staan op schermen t/m 700 pixels direct onder de paginatitel. Build en browsercontrole geslaagd; serverpublicatie nog niet uitgevoerd. Zie [validatie](docs/validatie.md).
+
 ## Starten
 
 Ontwikkeling: `npm run dev:lan`; productie: `npm run serve:lan`, vanuit source na dependency-installatie. Zie [LAN-handleiding](docs/breakout-lan.md). Optionele systemd-service wordt handmatig geïnstalleerd.
