@@ -45,6 +45,8 @@ Installeer en configureer TWS of IB Gateway handmatig voor paper en read-only AP
 
 ## Functies
 
+- [Martin-selectiescanner](docs/martin-scanner.md): zelfstandige dag-, maand- en premarketselectie met focuslijst, filterdiagnose en TradingView-export. Start vanuit `source/` met `node scripts/scan-martin.mjs`; standaard een beperkt universum van 29 aandelen.
+
 - [IV Scan](docs/iv-leaps.md): NASDAQ-/S&P 500-marktshortlist met IV-rank boven 40.
 - [Leaps](docs/iv-leaps.md): handmatig gekozen aandelen, putvergelijking bij vergelijkbare delta, jaarlijks premierendement, break-even en 50%-exitprijs.
 

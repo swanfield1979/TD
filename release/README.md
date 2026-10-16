@@ -1,5 +1,7 @@
 # Releases
 
+Martin-selectiescanner v1.0 wordt als [Node.js-broncode](../source/scripts/scan-martin.mjs) geleverd, met [handleiding](../docs/martin-scanner.md). Er is geen afzonderlijk installatiepakket; de scanner maakt lokale Markdown-, CSV-, JSON- en TradingView-watchlists vanuit `source/`.
+
 ## Trading Monitor 0.31.6
 
 IV Scan en Leaps worden uitgeleverd via de [GitHub-broncode](https://github.com/swanfield1979/TD). Er is geen afzonderlijk installatiepakket voor deze webappversie. Bouwuitvoer staat tijdelijk in `source/dist/`. Gebruik de [serverupdate-instructies](../docs/iv-leaps.md#serverupdate-via-github). De historische breakoutbroncode blijft bewaard en staat los van de vervallen Breakout-menupagina.

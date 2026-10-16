@@ -1,5 +1,12 @@
 # Versiehistorie
 
+## Martin-selectiescanner v1.0 — lokaal beschikbaar (16 oktober 2026)
+
+- Zelfstandige scanner op basis van Martins interview: Potent, Leaders, Premarket en strengere focusselectie.
+- EMA9/21/50, ADR, dollaromzet, compactheid, inside day, stopreferentie en themaclusters met aangeleverde metadata.
+- Eigen tickeruniversum en lokale OHLCV-import; Markdown-, CSV-, JSON- en TradingView-export. Zie [handleiding](martin-scanner.md).
+- Trading Monitor blijft 0.31.6; geen wijziging aan de webapp of publicatie.
+
 ## Nog niet uitgebracht — mobiele IBKR-bediening (14 oktober 2026)
 
 - IBKR-status en Verbinden/Vernieuwen direct onder de paginatitel op schermen t/m 700 pixels, bereikbaar met gesloten menu.

@@ -29,6 +29,8 @@ Deze map en de gegenereerde dashboarddata zijn bewust uitgesloten van Git.
 
 ## Commando's
 
+Martin-watchlists: `node scripts/scan-martin.mjs`. Eigen universum: `node scripts/scan-martin.mjs --universe data/private/tickers.txt`. Uitvoer: `data/private/martin/watchlist.md`, CSV, JSON en TradingView-txt. Tests: `node --test tests/martin-selection.test.mjs`. Zie [criteria en dataformaten](../docs/martin-scanner.md).
+
 ```powershell
 npm install
 npm run import:flex

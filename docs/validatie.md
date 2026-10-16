@@ -1,5 +1,13 @@
 # Validatie
 
+## Martin-selectiescanner (16 oktober 2026, lokaal)
+
+- Zelfstandige CLI, geen webappwijziging: `node scripts/scan-martin.mjs` vanuit `source/`.
+- Echte Yahoo-dagdata voor 29/29 tickers verwerkt, peildatum 15 oktober 2026; nul downloadfouten. Premarket 27/29 bruikbare snapshots, twee oude snapshots uitgesloten; geen gapmatches op de ingestelde filters. Focuslijst leeg.
+- Markdown, CSV, JSON, ruwe bars en vier TradingView-lijsten aangemaakt in `source/data/private/martin/`. Herimport van 29 reeksen geslaagd.
+- `node --test tests/*.test.mjs`: 136 geslaagd, inclusief acht Martin-tests voor trend/ADR, stop, compacte setup, ongeldige data, tijdzone/afgesloten dag, premarket, ranking/thema's, tickers en provideraggregatie.
+- Geen rendement/backtest, TradingView-import of serverpublicatie geclaimd. Geen UI- of buildwijziging. Databron en geselecteerde getallen zijn beschreven in [de handleiding](martin-scanner.md).
+
 ## Lokale mobiele IBKR-correctie (14 oktober 2026, nog niet gepubliceerd)
 
 - IBKR-bediening op mobiel uit het verborgen menu naar direct onder de paginatitel verplaatst; desktop houdt de bediening in de zijbalk. Er is steeds één bediening gemount.
