@@ -20,14 +20,16 @@ import TradesPage from './TradesPage'
 import StatsPage from './StatsPage'
 import ScansPage from './ScansPage'
 import OptionResearchPage from './pages/OptionResearchPage'
+import MartinScanPage from './pages/MartinScanPage'
 import TradingActivityCards from './TradingActivityCards'
 import IbkrConnectionControl from './IbkrConnectionControl'
 import { mergeLiveSnapshot, resolvePortfolio } from './ibkr'
 
 const DATA_URL = '/data/portfolio-summary.json'
-type Page = 'dashboard' | 'stocks' | 'options' | 'goals' | 'stats' | 'trades' | 'scans' | 'iv' | 'leaps'
+type Page = 'dashboard' | 'stocks' | 'options' | 'goals' | 'stats' | 'trades' | 'scans' | 'iv' | 'leaps' | 'martin'
 
 const pageFromHash = (): Page => {
+  if (window.location.hash === '#martin' || (!window.location.hash && window.location.pathname === '/martin')) return 'martin'
   if (['#iv', '#breakout'].includes(window.location.hash) || (!window.location.hash && ['/iv', '/breakout'].includes(window.location.pathname))) return 'iv'
   if (window.location.hash === '#leaps' || (!window.location.hash && window.location.pathname === '/leaps')) return 'leaps'
   if (window.location.hash === '#scans') return 'scans'
@@ -49,6 +51,7 @@ const pageTitles: Record<Page, string> = {
   scans: 'Scans',
   iv: 'IV Scan',
   leaps: 'Leaps',
+  martin: 'Martin-scan',
 }
 
 const currencyFormatter = (currency: string, showSign = false) =>
@@ -314,6 +317,9 @@ function App() {
           <a className={`nav-item${currentPage === 'leaps' ? ' nav-item--active' : ''}`} href="#leaps" aria-current={currentPage === 'leaps' ? 'page' : undefined}>
             <ArrowSwapRegular aria-hidden="true" /><span>Leaps</span>
           </a>
+          <a className={`nav-item${currentPage === 'martin' ? ' nav-item--active' : ''}`} href="#martin" aria-current={currentPage === 'martin' ? 'page' : undefined}>
+            <TargetArrowRegular aria-hidden="true" /><span>Martin-scan</span>
+          </a>
           <a
             className={`nav-item${currentPage === 'goals' ? ' nav-item--active' : ''}`}
             href="#goals"
@@ -351,7 +357,7 @@ function App() {
             <h1>{pageTitles[currentPage]}</h1>
             {currentPage === 'dashboard' && <p className="page-subtitle">Je portefeuille in één oogopslag</p>}
           </div>
-          {summary && currentPage !== 'scans' && currentPage !== 'iv' && currentPage !== 'leaps' && (
+          {summary && currentPage !== 'scans' && currentPage !== 'iv' && currentPage !== 'leaps' && currentPage !== 'martin' && (
             <div className="data-freshness" title={showLiveFreshness ? `IBKR-snapshot opgehaald op ${summary.sourceUpdatedAt}; historische Flex-basis t/m ${importedSummary?.balance.toDate}` : `Bronbestand gegenereerd op ${importedSummary?.sourceUpdatedAt}`}>
               <span className="data-freshness__pulse" aria-hidden="true" />
               <span>
@@ -365,11 +371,12 @@ function App() {
         {isMobile && <IbkrConnectionControl onSnapshot={handleLiveSnapshot} />}
 
         {currentPage === 'scans' && <ScansPage />}
+        {currentPage === 'martin' && <MartinScanPage />}
         {(currentPage === 'iv' || currentPage === 'leaps') && <OptionResearchPage key={currentPage} mode={currentPage} />}
 
-        {isLoading && currentPage !== 'scans' && currentPage !== 'iv' && currentPage !== 'leaps' && <LoadingDashboard />}
+        {isLoading && currentPage !== 'scans' && currentPage !== 'iv' && currentPage !== 'leaps' && currentPage !== 'martin' && <LoadingDashboard />}
 
-        {!isLoading && error && currentPage !== 'scans' && currentPage !== 'iv' && currentPage !== 'leaps' && (
+        {!isLoading && error && currentPage !== 'scans' && currentPage !== 'iv' && currentPage !== 'leaps' && currentPage !== 'martin' && (
           <section className="state-panel state-panel--error" role="alert">
             <div>
               <h2>Dashboarddata ontbreekt</h2>

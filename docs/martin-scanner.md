@@ -1,6 +1,32 @@
 # Martin-selectiescanner
 
-Lokale scanner v1.0, 16 oktober 2026. Gebaseerd op het aangeleverde interview **283% Gain in 1 Year – The Story of the 22-Year-Old Swing Trader**, met Martin Luke. Dit is een zelfstandige onderzoeksscan binnen Trading Monitor; de appversie blijft 0.31.6. Geen automatische orders of wijziging aan de navigatie.
+Scanner met webbediening in Trading Monitor **0.31.7**, 16 oktober 2026. Gebaseerd op het aangeleverde interview **283% Gain in 1 Year – The Story of the 22-Year-Old Swing Trader**, met Martin Luke. De bestaande CLI blijft beschikbaar; er worden geen orders uitgevoerd.
+
+## In het menu
+
+Open **Martin-scan** in Trading Monitor of ga naar `/#martin`. Hiervoor is geen IBKR-login of Flex-import nodig. Pas **Aandelen om te scannen** aan en kies **Scan starten**. De startlijst bevat 29 aandelen; maximaal 200 per run. De browser controleert de voortgang iedere 1,5 seconde. Je kunt tussendoor van pagina wisselen; de server voltooit de scan. Dubbele starts gebruiken de lopende job.
+
+Kies onder **Watchlist** tussen Focus, Potent, Leaders, Premarket en Alle aandelen. Elke rij toont de koersdatum, ADR, dollaromzet, rendementen, referentietrigger/-stop en ontbrekende criteria. Zoek op ticker en sorteer ADR, dag- of maandrendement met de kolomknoppen. **CSV downloaden** en **TradingView downloaden** exporteren de getoonde, gefilterde lijst. Bij een lege focuslijst kun je de bredere kandidatenlijsten bekijken.
+
+Het rapport vermeldt dagdata- en premarketdekking. Resultaten houden hun oorspronkelijke scanmoment; scans ouder dan 24 uur krijgen een melding. Een mislukte nieuwe scan behoudt het vorige resultaat met een zichtbare melding. Serverherstart onderbreekt een lopende scan; start die handmatig opnieuw.
+
+### Serverupdate
+
+Na de GitHub-push op de bestaande Linux-server, vanuit de repository-root:
+
+```bash
+git pull --ff-only
+cd source
+bash deploy/update-options.sh
+```
+
+Dit gebruikt de bestaande services en publiceert frontend en Node-API samen; de aanwezige Python-service wordt ook herstart voor de LAN-proxy. Open daarna `/#martin` en vernieuw met Ctrl+F5. Bij `npm run serve:lan`: stop het bestaande proces, pull, voer `npm ci` vanuit `source/` uit en start `npm run serve:lan` opnieuw. Alleen `dist/` vervangen is onvoldoende: de nieuwe API-route moet ook beschikbaar zijn. De lokale tests publiceren niet naar de server.
+
+API: `GET /api/martin-scan` geeft status en rapport; `POST /api/martin-scan` met `{"symbols":"NVDA,AMD"}` start een job. POST vereist de bestaande toegestane Origin plus `X-Requested-With: trading-monitor`. De server accepteert geen aangeleverde bestandspaden. Vite, Nginx en de FastAPI LAN-host sturen de route naar de bestaande Node-API op 8787.
+
+Opslag staat standaard in de map `martin/` naast `IBKR_SNAPSHOT_PATH`; optioneel via `MARTIN_SCAN_DIR`, buiten de publieke webroot. `ui-state.json` bewaart het vorige rapport, de tickerlijst en start-/eindstatus via een tijdelijke file en atomische rename. Ontbreekt dit bestand, dan kan een bestaand CLI-rapport `scan.json` als beginresultaat worden gelezen. Corrupte UI-opslag wordt gemeld en niet overschreven. Een schrijffout bij starten verhindert dat de scan als gestart wordt bevestigd. Alle koersbestanden staan eveneens in deze privémappen.
+
+Browsercontrole met fixtures vanuit `source/`: start `npm run dev -- --port 5198`, daarna `npm run test:martin`. Installeer zo nodig tijdelijk `npm install --no-save --package-lock=false playwright`. Standaard wordt Edge gebruikt; `PLAYWRIGHT_CHANNEL` en `MARTIN_URL` kunnen browser/adres wijzigen. Screenshots staan in `data/private/martin-ui-validation/`.
 
 ## Starten
 

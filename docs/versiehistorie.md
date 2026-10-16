@@ -1,5 +1,11 @@
 # Versiehistorie
 
+## 0.31.7 — Martin-scan in het menu (16 oktober 2026)
+
+- Menupagina `#martin` met scanstart, voortgang, aanpasbaar universum, vijf watchlistweergaven, zoeken, sortering en CSV-/TradingView-export.
+- Asynchrone Node-job met behoud van vorige resultaten, origincontrole, invoervalidatie, opslag en herstel na herstart. De bestaande CLI en selectiecriteria blijven beschikbaar.
+- FastAPI LAN-proxy en update-script bijgewerkt; frontend en Node-API samen publiceren. Zie [handleiding](martin-scanner.md).
+
 ## Martin-selectiescanner v1.0 — lokaal beschikbaar (16 oktober 2026)
 
 - Zelfstandige scanner op basis van Martins interview: Potent, Leaders, Premarket en strengere focusselectie.

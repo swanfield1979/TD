@@ -10,6 +10,7 @@ import { normalizeShortlist } from '../shared/leaps-scan.mjs'
 import { createScanStore } from './scan-store.mjs'
 import { scanGuard } from './scan-guard.mjs'
 import { runIvSequence } from './iv-sequence.mjs'
+import { createMartinScan } from './martin-scan.mjs'
 
 const scanControllers = {}
 let scanState = { state: 'idle', portfolio: [], market: [], warnings: [], progress: '', symbolsChecked: 0, contractsChecked: 0 }
@@ -222,8 +223,19 @@ function isAllowedPost(request) {
     && config.allowedOrigins.has(origin)
 }
 
+const martinScan = await createMartinScan(resolve(process.env.MARTIN_SCAN_DIR || dirname(config.snapshotPath) + '/martin'))
 const server = createServer(async (request, response) => {
   try {
+    if (request.url === '/api/martin-scan') {
+      if (request.method === 'GET') return sendJson(response, 200, martinScan.snapshot())
+      if (request.method === 'POST') {
+        if (!isAllowedPost(request)) return sendJson(response, 403, { message: 'Ongeldige aanvraag.' })
+        try {
+          const body = await readJsonBody(request)
+          return sendJson(response, 202, await martinScan.start(body.symbols))
+        } catch (error) { return sendJson(response, 400, { message: error.message }) }
+      }
+    }
     const stopMode = { '/api/iv-scan/stop': 'iv', '/api/leaps/stop': 'leaps', '/api/scans/stop': 'csp' }[request.url]
     if (stopMode && request.method === 'POST') {
       if (!isAllowedPost(request)) return sendJson(response, 403, { message: 'Ongeldige aanvraag.' })

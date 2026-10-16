@@ -1,5 +1,13 @@
 # Validatie
 
+## Trading Monitor 0.31.7 — Martin-menupagina (16 oktober 2026)
+
+- `npm test`: 140 JavaScript-tests geslaagd in de lokale werkmap; afzonderlijk alle 130 tests van de te pushen Git-bestanden geslaagd. Vier nieuwe servertests controleren dubbel starten, voortgang, opslag/herstart, foutafhandeling en behoud van eerdere resultaten. `npm run test:frontend`: 13 geslaagd. `npm run build`: TypeScript en productiebuild geslaagd.
+- `backend/.venv/Scripts/python.exe -m pytest backend/tests -q`: 45 geslaagd, inclusief GET/POST-doorgifte van `/api/martin-scan` via de FastAPI LAN-host. Bestaande Starlette/httpx-deprecationwaarschuwing blijft aanwezig.
+- `npm run test:martin`: browserworkflow met fixtures geslaagd voor menu, start, voortgang, navigatie, herstel, lege/partiële resultaten, zoeken, sorteren, downloaden, fouten en 360/768/1024/1440 pixels plus 720px als 200%-zoom-equivalent. Geen browserruntimefouten. Screenshots in de genegeerde `source/data/private/martin-ui-validation/` visueel gecontroleerd.
+- Echte Node-API op tijdelijke lokale poort met aparte privéopslag: ongeoorloofde POST 403, ongeldige ticker 400, geldige scan 202. Browserstart haalde twee echte USD-aandelen (NVDA/AMD) bij Yahoo op en toonde beide in de watchlist; geen IBKR-login vereist.
+- Update-script controleert versie 0.31.7 en de nieuwe API-route. Geen installatie op de bestaande Linux-server uitgevoerd; zie [serverupdate](martin-scanner.md#serverupdate).
+
 ## Martin-selectiescanner (16 oktober 2026, lokaal)
 
 - Zelfstandige CLI, geen webappwijziging: `node scripts/scan-martin.mjs` vanuit `source/`.

@@ -1,7 +1,7 @@
 {
   "name": "trading-monitor",
   "private": true,
-  "version": "0.31.6",
+  "version": "0.31.7",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -16,7 +16,8 @@
     "dev:lan": "node scripts/start-lan.mjs --dev",
     "serve:lan": "node scripts/start-lan.mjs",
     "dev:demo": "node scripts/start-lan.mjs --dev --demo",
-    "test:research": "node scripts/verify-research-browser.mjs"
+    "test:research": "node scripts/verify-research-browser.mjs",
+    "test:martin": "node scripts/verify-martin-browser.mjs"
   },
   "dependencies": {
     "@fluentui/react-icons": "2.0.343",

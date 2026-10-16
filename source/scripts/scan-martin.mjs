@@ -4,7 +4,7 @@ import { pathToFileURL } from 'node:url'
 import { defaults, analyzeMartin, completedBars, nyTime, premarketSignal, makeLists } from '../shared/martin-selection.mjs'
 
 // Beperkt startuniversum; eigen universum kan via --universe worden aangeleverd.
-const starterSymbols = ['ONDS', 'SMR', 'SOFI', 'OUST', 'RKLB', 'TSLA', 'HOOD', 'HIMS', 'PLTR', 'APP', 'NET', 'CRWD', 'NVDA', 'AMD', 'MU', 'AVGO', 'ALAB', 'ASTS', 'IONQ', 'OKLO', 'CCJ', 'CLSK', 'MARA', 'IREN', 'NBIS', 'RBRK', 'DUOL', 'CELH', 'TEM']
+export const starterSymbols = ['ONDS', 'SMR', 'SOFI', 'OUST', 'RKLB', 'TSLA', 'HOOD', 'HIMS', 'PLTR', 'APP', 'NET', 'CRWD', 'NVDA', 'AMD', 'MU', 'AVGO', 'ALAB', 'ASTS', 'IONQ', 'OKLO', 'CCJ', 'CLSK', 'MARA', 'IREN', 'NBIS', 'RBRK', 'DUOL', 'CELH', 'TEM']
 
 export function parseSymbols(text) {
   const symbols = [...new Set(text.trim().split(/[\s,;]+/).filter(Boolean).map(s => s.toUpperCase()))]
@@ -35,7 +35,7 @@ export async function download(symbol, now) {
   return { symbol, bars, source: url, premarket, premarketError }
 }
 const csvCell = value => `"${String(value ?? '').replaceAll('"', '""')}"`
-export async function main(args = process.argv.slice(2)) {
+export async function main(args = process.argv.slice(2), hooks = {}) {
   const { values: v } = parseArgs({ args, options: { symbols: { type: 'string' }, universe: { type: 'string' }, input: { type: 'string' }, premarket: { type: 'string' }, themes: { type: 'string' }, out: { type: 'string', default: 'data/private/martin' }, top: { type: 'string', default: '20' }, 'adr-min': { type: 'string', default: '5' }, 'min-volume': { type: 'string', default: '10000000' }, 'gap-min': { type: 'string', default: '3' }, 'premarket-volume': { type: 'string', default: '100000' }, help: { type: 'boolean' } } })
   if (v.help) { console.log('node scripts/scan-martin.mjs [--symbols NVDA,AMD] [--universe tickers.txt] [--input bars.json] [--themes themes.json] [--premarket quotes.json] [--top 20] [--adr-min 5] [--min-volume 10000000] [--gap-min 3] [--premarket-volume 100000] [--out data/private/martin]\nZie docs/martin-scanner.md voor formaten en beperkingen.'); return }
   if (v.symbols && v.universe) throw new Error('Kies --symbols of --universe')
@@ -53,10 +53,12 @@ export async function main(args = process.argv.slice(2)) {
     if (new Set(entries.map(r => r.symbol)).size !== entries.length) throw new Error('Dubbele ticker in input')
   } else {
     const symbols = v.universe ? parseSymbols(await readFile(v.universe, 'utf8')) : v.symbols ? parseSymbols(v.symbols) : starterSymbols.filter(s => s !== 'URA')
+    hooks.onProgress?.({ checked: 0, total: symbols.length })
     entries = []
     for (let i = 0; i < symbols.length; i += 3) {
       const settled = await Promise.allSettled(symbols.slice(i, i + 3).map(s => download(s, now)))
       settled.forEach((r, j) => r.status === 'fulfilled' ? entries.push(r.value) : failures.push({ symbol: symbols[i + j], error: r.reason.message }))
+      hooks.onProgress?.({ checked: Math.min(i + 3, symbols.length), total: symbols.length })
     }
   }
   for (const entry of entries) {
@@ -81,7 +83,8 @@ export async function main(args = process.argv.slice(2)) {
   const table = items => ['| Ticker | Datum | Status | ADR % | $ mln/dag | Dag % | Maand % | Trigger* | Stop* | Redenen |', '| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |', ...items.map(r => `| ${r.symbol} | ${r.date} | ${r.status} | ${f(r.adr)} | ${f(r.dollarVolume / 1e6)} | ${f(r.dayReturn)} | ${f(r.monthReturn)} | ${f(r.trigger)} | ${f(r.stopReference)} | ${r.reasons.join('; ') || 'Dagfilters voldoen; grafiek beoordelen'} |`)].join('\n')
   const md = ['# Martin-watchlist', '', `Gegenereerd: ${report.generatedAt}. Bronmodus: ${report.mode}. Dekking: ${rows.length}/${report.requested}.`, '', 'Selectie binnen het opgegeven universum; geen volledige marktscan. KLAARZETTEN is een kandidaat voor handmatige beoordeling, geen koop- of live-uitbraaksignaal. Geen orders.', '', '## Focus', table(lists.focus), '', '## Potent: sterkste laatste afgesloten handelsdag', table(lists.potent), '', '## Leaders: sterkste 21 sessies', table(lists.leaders), '', '## Premarket', `${lists.premarket.length} actuele matches; ${rows.filter(r => ['GAPPER', 'GEEN_MATCH'].includes(r.premarket.status)).length}/${rows.length} bruikbare quotes. Automatisch ophalen alleen tussen 04:00 en 09:30 New York. Ontbrekende/oude quotes worden niet gebruikt.`, table(lists.premarket), ...rows.filter(r => r.premarketError).map(r => `- ${r.symbol}: ${r.premarketError}`), '', '## Thematische clusters', ...lists.themes.map(g => `- ${g.theme}: ${g.symbols.join(', ')}`), ...(lists.themes.length ? [] : ['Geen clusters vastgesteld; themametadata kan ontbreken.']), '', '## Alle beoordeelde aandelen', table(rows), '', '## Data-uitval', ...failures.map(r => `- ${r.symbol}: ${r.error}`), '', '* Trigger = laatste daghigh + $0,01; stopreferentie = laatste daglow − $0,01, voor de volgende sessie. Geen actuele daglow of vijfminutenstop. Stopafstand < min(5%, ADR/2). Earnings, splits, spreads, indices en weekbasis handmatig beoordelen. Premier: dollaromzet > $100 miljoen. Extra drempels zijn ontwerpkeuzes; zie docs/martin-scanner.md.', ''].join('\n')
   await writeFile(`${v.out}/watchlist.md`, md)
-  console.log(JSON.stringify({ report: `${v.out}/watchlist.md`, analyzed: rows.length, requested: report.requested, focus: lists.focus.map(r => r.symbol), failures }, null, 2))
-  if (!rows.length) process.exitCode = 1
+  if (!hooks.quiet) console.log(JSON.stringify({ report: `${v.out}/watchlist.md`, analyzed: rows.length, requested: report.requested, focus: lists.focus.map(r => r.symbol), failures }, null, 2))
+  if (!rows.length && !hooks.quiet) process.exitCode = 1
+  return report
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main().catch(e => { console.error(e.message); process.exitCode = 1 })

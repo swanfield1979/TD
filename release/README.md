@@ -1,5 +1,9 @@
 # Releases
 
+## Trading Monitor 0.31.7
+
+**Martin-scan** staat in het menu en biedt scan starten, eigen tickerlijst, voortgang, opgeslagen watchlists en CSV-/TradingView-downloads. Uitgeleverd via GitHub-broncode; geen apart installatiepakket. Publiceer frontend en API samen met de [serverupdate](../docs/martin-scanner.md#serverupdate). Tests en lokale browsercontrole geslaagd; installatie op de server nog niet uitgevoerd.
+
 Martin-selectiescanner v1.0 wordt als [Node.js-broncode](../source/scripts/scan-martin.mjs) geleverd, met [handleiding](../docs/martin-scanner.md). Er is geen afzonderlijk installatiepakket; de scanner maakt lokale Markdown-, CSV-, JSON- en TradingView-watchlists vanuit `source/`.
 
 ## Trading Monitor 0.31.6

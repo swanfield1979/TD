@@ -2,7 +2,7 @@
 
 Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voortgang op basis van Interactive Brokers Flex-rapporten.
 
-**Versie/status:** 0.31.6. Breakout in de webapp vervangen door IV Scan (IV-rank > 40) en Leaps met een handmatige, op de server opgeslagen shortlist. Vergelijking van 30–50 met 300–700 DTE en circa 50%-winstexit. IV Scan gebruikt aandelenlijsten zonder IBKR-marktscanner, met automatische blokken van 25 aandelen, 20 seconden pauze ertussen en zichtbare dekking. Rustige IBKR-wachtrij, IV-historiecache en Scan stoppen. Laatste scans en IV-voortgang blijven bewaard na een API-herstart. IV Scan heeft IV-ranksortering en prijsfilters. Tests, productiebuild en browserworkflow met testdata geslaagd; echte IBKR-marktdata en serverupdate nog niet bevestigd.
+**Versie/status:** 0.31.7. Martin-scan toegevoegd aan het menu: scan starten, tickerlijst aanpassen, voortgang volgen en focus-, dag-, maand- en premarketwatchlists bekijken of downloaden. Laatste resultaten blijven op de server bewaard. Tests, productiebuild, browserworkflow op mobiel/desktop en ophalen van echte Yahoo-data geslaagd; serverinstallatie nog niet uitgevoerd. IV Scan en Leaps blijven beschikbaar.
 
 | Map | Inhoud |
 | --- | --- |
@@ -45,7 +45,7 @@ Installeer en configureer TWS of IB Gateway handmatig voor paper en read-only AP
 
 ## Functies
 
-- [Martin-selectiescanner](docs/martin-scanner.md): zelfstandige dag-, maand- en premarketselectie met focuslijst, filterdiagnose en TradingView-export. Start vanuit `source/` met `node scripts/scan-martin.mjs`; standaard een beperkt universum van 29 aandelen.
+- [Martin-selectiescanner](docs/martin-scanner.md): menu **Martin-scan** (`#martin`) met startknop, eigen tickerlijst, dag-, maand- en premarketselectie, focuslijst en CSV-/TradingView-export. Ook beschikbaar als CLI via `node scripts/scan-martin.mjs` vanuit `source/`.
 
 - [IV Scan](docs/iv-leaps.md): NASDAQ-/S&P 500-marktshortlist met IV-rank boven 40.
 - [Leaps](docs/iv-leaps.md): handmatig gekozen aandelen, putvergelijking bij vergelijkbare delta, jaarlijks premierendement, break-even en 50%-exitprijs.

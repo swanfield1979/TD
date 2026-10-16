@@ -1,4 +1,4 @@
-# IV Scan en Leaps — Trading Monitor 0.31.6
+# IV Scan en Leaps — Trading Monitor 0.31.7
 
 Breakout vervalt als menupagina. `#iv` opent **IV Scan** en `#leaps` opent **Leaps**. Bestaande `#breakout`-links en het pad `/breakout` openen IV Scan. Historische breakoutbroncode, cache en zelfstandige TradingView-bestanden blijven bewaard; de oude scanner wordt vanuit het menu niet meer gestart.
 
@@ -81,6 +81,8 @@ De bestaande Node-service op 8787 levert:
 Mutaties vereisen de bestaande toegestane Origin en `X-Requested-With: trading-monitor`. Een tweede verschillende optiescan krijgt HTTP 409. De Node-service gebruikt bestaande `IBKR_HOST`, `IBKR_PORT` en `IBKR_CLIENT_ID`; de nieuwe scanverbinding gebruikt client-ID + 21. De portefeuilleverbinding en bestaande CSP-scanner blijven werken. Voor nieuwe IV- en Leaps-data gebruik je de IBKR-koppeling in de sidebar. Nginx en de FastAPI LAN-host sturen deze routes naar Node.
 
 ## Serverupdate via GitHub
+
+Versie 0.31.7 voegt daarnaast [Martin-scan](martin-scanner.md) aan het menu toe. Hetzelfde updatescript publiceert de nieuwe pagina en API-route; open daarna `/#martin`.
 
 Op de bestaande Linux-server, vanuit de repository-root:
 

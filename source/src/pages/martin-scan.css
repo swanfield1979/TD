@@ -1,0 +1,20 @@
+.martin-scan textarea, .martin-scan input, .martin-scan select {
+  background: var(--tm-surface-2);
+  color: var(--tm-text-primary);
+  border: 1px solid var(--tm-stroke);
+  border-radius: var(--tm-radius-control);
+  padding: 10px;
+  font: inherit;
+  max-width: 100%;
+}
+.martin-scan textarea { display: block; width: 100%; margin-top: 8px; resize: vertical; }
+.martin-filters, .martin-exports { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; }
+.martin-filters label { display: grid; gap: 6px; min-width: 0; }
+.martin-scan progress { width: 100%; accent-color: var(--tm-accent-primary); }
+.martin-scan .martin-reasons { white-space: normal; text-align: left; min-width: 240px; max-width: 360px; }
+.martin-empty { padding: 16px 0; color: var(--tm-text-secondary); }
+@media (max-width: 700px) {
+  .martin-filters { align-items: stretch; flex-direction: column; }
+  .martin-exports { width: 100%; }
+  .martin-exports button { flex: 1; }
+}
