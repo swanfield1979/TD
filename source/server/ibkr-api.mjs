@@ -226,15 +226,19 @@ function isAllowedPost(request) {
 const martinScan = await createMartinScan(resolve(process.env.MARTIN_SCAN_DIR || dirname(config.snapshotPath) + '/martin'))
 const server = createServer(async (request, response) => {
   try {
-    if (request.url === '/api/martin-scan') {
-      if (request.method === 'GET') return sendJson(response, 200, martinScan.snapshot())
+    if (request.url.split('?')[0] === '/api/martin-scan') {
+      if (request.method === 'GET') return sendJson(response, 200, martinScan.snapshot(new URL(request.url, 'http://localhost').searchParams.get('reportVersion')))
       if (request.method === 'POST') {
         if (!isAllowedPost(request)) return sendJson(response, 403, { message: 'Ongeldige aanvraag.' })
         try {
           const body = await readJsonBody(request)
-          return sendJson(response, 202, await martinScan.start(body.symbols))
+          return sendJson(response, 202, await martinScan.start(body.symbols, { universeMode: body.universeMode, resume: body.resume === true }))
         } catch (error) { return sendJson(response, 400, { message: error.message }) }
       }
+    }
+    if (request.url === '/api/martin-scan/stop' && request.method === 'POST') {
+      if (!isAllowedPost(request)) return sendJson(response, 403, { message: 'Ongeldige aanvraag.' })
+      return sendJson(response, 202, martinScan.stop())
     }
     const stopMode = { '/api/iv-scan/stop': 'iv', '/api/leaps/stop': 'leaps', '/api/scans/stop': 'csp' }[request.url]
     if (stopMode && request.method === 'POST') {

@@ -1,4 +1,4 @@
-# IV Scan en Leaps — Trading Monitor 0.31.7
+# IV Scan en Leaps — Trading Monitor 0.31.8
 
 Breakout vervalt als menupagina. `#iv` opent **IV Scan** en `#leaps` opent **Leaps**. Bestaande `#breakout`-links en het pad `/breakout` openen IV Scan. Historische breakoutbroncode, cache en zelfstandige TradingView-bestanden blijven bewaard; de oude scanner wordt vanuit het menu niet meer gestart.
 

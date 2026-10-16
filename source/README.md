@@ -1,6 +1,6 @@
 # Ontwikkeling
 
-Actuele versie: **0.31.7**. Menu **Martin-scan** (`#martin`) start de selectiescanner en toont de watchlists. IV Scan en Leaps blijven beschikbaar. Zie [Martin-scan en installatie](../docs/martin-scanner.md) en [serverupdate](../docs/iv-leaps.md#serverupdate-via-github). Vanuit deze map: `npm ci`, `npm test`, `npm run test:frontend`, `npm run build`; lokaal `npm run dev:lan` of `npm run serve:lan`. Browsercontrole met Playwright: `npm run test:martin` na starten van Vite op poort 5198 (`npm run dev -- --port 5198`); optiescancontrole: `npm run test:research` op poort 5199.
+Actuele versie: **0.31.8**. Menu **Martin-scan** (`#martin`) scant standaard automatisch Nasdaq en overige Amerikaanse beursnoteringen. Ondersteunt koerscache, stoppen/hervatten, watchlists en exports; eigen tickers zijn optioneel. Zie [Martin-scan en installatie](../docs/martin-scanner.md). Vanuit deze map: `npm ci`, `npm test`, `npm run test:frontend`, `npm run build`; lokaal `npm run dev:lan` of `npm run serve:lan`. Browsercontrole: start Vite op 5198 (`npm run dev -- --port 5198`) en voer `npm run test:martin` uit.
 
 De webapp staat volledig in deze map. Voer alle ontwikkel- en bouwcommando's vanuit `source/` uit.
 

@@ -9,17 +9,22 @@ try {
   let posts = 0, unavailable = false
   const base = { symbol: 'IONQ', date: '2026-10-15', close: 34, status: 'VOLGEN', adr: 6.5, dollarVolume: 200e6, dayReturn: 9, monthReturn: 15, premier: true, insideDay: true, tight: true, trigger: 35, stopReference: 32, stopPct: 8, maxStopPct: 3.25, reasons: ['Stopreferentie te breed; intraday opnieuw beoordelen'], premarket: { status: 'ONTBREEKT' } }
   const other = { ...base, symbol: 'AMD', adr: 5.5, monthReturn: 20, dayReturn: 1 }
-  const report = { generatedAt: '2026-10-16T12:00:00Z', requested: 3, analyzed: 2, rows: [base, other], lists: { focus: [], potent: [base, other], leaders: [other, base], premarket: [], themes: [] }, failures: [{ symbol: 'INVALID', error: 'Geen USD-aandeel of ontbrekende data' }] }
-  let state = { state: 'idle', symbols: ['IONQ', 'AMD'], checked: 0, total: 0, report: null }
+  const report = { generatedAt: '2026-10-16T12:00:00Z', requested: 121, analyzed: 120, rows: [base, other, ...Array.from({ length: 118 }, (_, i) => ({ ...base, symbol: `NEW${i}` }))], universe: { name: 'Amerikaanse beursnoteringen', updatedAt: '2026-10-16T12:00:00Z', sources: [] }, lists: { focus: [], potent: [base, other], leaders: [other, base], premarket: [], themes: [] }, failures: [{ symbol: 'INVALID', error: 'Geen USD-aandeel of ontbrekende data' }] }
+  let state = { state: 'idle', universeMode: 'us', symbols: [], checked: 0, total: 0, report: null }
   await page.route('**/api/**', async route => {
     const path = new URL(route.request().url()).pathname
     if (path === '/api/martin-scan') {
       if (unavailable) return route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ message: 'Marktdata niet bereikbaar; probeer opnieuw.' }) })
       if (route.request().method() === 'POST') {
         posts++; assert.equal(route.request().headers()['x-requested-with'], 'trading-monitor')
-        assert.equal(route.request().postDataJSON().symbols, 'IONQ, AMD')
-        state = { ...state, state: 'running', checked: 1, total: 2 }
+        assert.equal(route.request().postDataJSON().universeMode, 'us')
+        assert.equal(route.request().postDataJSON().symbols, undefined)
+        state = { ...state, state: 'running', phase: 'daily', checked: 100, total: 5613 }
       }
+      return route.fulfill({ contentType: 'application/json', body: JSON.stringify(state) })
+    }
+    if (path === '/api/martin-scan/stop') {
+      state = { ...state, state: 'interrupted', canResume: true, message: 'Scan gestopt.' }
       return route.fulfill({ contentType: 'application/json', body: JSON.stringify(state) })
     }
     return route.fulfill({ status: path === '/api/ibkr/status' ? 200 : 404, contentType: 'application/json', body: JSON.stringify({ state: 'offline', message: 'Testverbinding', isBusy: false }) })
@@ -28,15 +33,21 @@ try {
   await page.goto(`${url}/#martin`)
   await page.getByRole('heading', { name: 'Martin-scan', exact: true }).waitFor()
   await page.getByRole('button', { name: 'Scan starten', exact: true }).waitFor()
+  assert.equal(await page.getByLabel('Universum', { exact: true }).inputValue(), 'us')
+  assert.equal(await page.getByLabel('Aandelen om te scannen').count(), 0)
+  await page.getByLabel('Universum', { exact: true }).selectOption('custom')
   await page.getByLabel('Aandelen om te scannen').fill('')
   assert.ok(await page.getByRole('button', { name: 'Scan starten', exact: true }).isDisabled())
-  await page.getByLabel('Aandelen om te scannen').fill('IONQ, AMD')
+  await page.getByLabel('Universum', { exact: true }).selectOption('us')
   await page.getByRole('button', { name: 'Scan starten', exact: true }).click()
   await page.getByRole('progressbar', { name: 'Voortgang Martin-scan' }).waitFor()
   assert.equal(posts, 1)
   assert.ok(await page.getByRole('button', { name: 'Scan bezig…' }).isDisabled())
+  await page.getByRole('button', { name: 'Scan stoppen', exact: true }).click()
+  await page.getByRole('button', { name: 'Scan hervatten', exact: true }).click()
+  assert.equal(posts, 2)
   await page.getByRole('link', { name: 'Stocks', exact: true }).click()
-  state = { ...state, state: 'partial', report, message: 'Scan afgerond met ontbrekende data.', restored: true }
+  state = { ...state, state: 'partial', report, canResume: false, message: 'Scan afgerond met ontbrekende data.', restored: true }
   await page.getByRole('link', { name: 'Martin-scan', exact: true }).click()
   await page.getByText('Geen aandelen voldoen aan alle focuscriteria.', { exact: false }).waitFor()
   await page.getByText('INVALID: Geen USD-aandeel', { exact: false }).waitFor()
@@ -51,9 +62,17 @@ try {
   const downloadEvent = page.waitForEvent('download')
   await page.getByRole('button', { name: 'TradingView downloaden' }).click()
   assert.equal((await downloadEvent).suggestedFilename(), 'martin-potent-tradingview.txt')
+  await page.getByRole('combobox', { name: 'Watchlist', exact: true }).selectOption('all')
+  assert.equal(await page.locator('tbody tr').count(), 50)
+  await page.getByRole('button', { name: 'Volgende pagina', exact: true }).click()
+  assert.equal(await page.locator('tbody tr').count(), 50)
+  await page.getByRole('button', { name: 'Volgende pagina', exact: true }).click()
+  assert.equal(await page.locator('tbody tr').count(), 20)
+  await page.getByRole('combobox', { name: 'Watchlist', exact: true }).selectOption('potent')
   await mkdir('data/private/martin-ui-validation', { recursive: true })
   for (const width of [360, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 1000 })
+    await page.evaluate(() => window.scrollTo(0, 0))
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `Geen horizontale pagina-overloop bij ${width}`)
     await page.screenshot({ path: `data/private/martin-ui-validation/martin-${width}.png`, fullPage: true, animations: 'disabled' })
   }

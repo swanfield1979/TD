@@ -1,5 +1,12 @@
 # Versiehistorie
 
+## 0.31.8 — breed Amerikaans Martin-universum (16 oktober 2026)
+
+- Standaard officiële Nasdaq Trader-lijsten voor Nasdaq en overige Amerikaanse beurzen, ontdubbeld en gefilterd op gewone aandelen/ADR’s. Geen vaste shortlistfallback. Bronmetadata en dekking zichtbaar.
+- Automatische Potent-, Leaders-, Premarket- en Focuslijsten uit het brede universum; optionele eigen lijst behouden.
+- Koerscache per aandeel/datum/slotperiode, checkpoint, stoppen/hervatten en pauzeren bij bronbegrenzing. Premarket pas na dagselectie voor ADR/liquiditeitskandidaten.
+- Browserpaginering voor grote resultaten; export behoudt volledige gefilterde lijst. Update migreert de oude standaardshortlist naar brede modus.
+
 ## 0.31.7 — Martin-scan in het menu (16 oktober 2026)
 
 - Menupagina `#martin` met scanstart, voortgang, aanpasbaar universum, vijf watchlistweergaven, zoeken, sortering en CSV-/TradingView-export.

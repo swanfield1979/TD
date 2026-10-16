@@ -2,7 +2,7 @@
 
 Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voortgang op basis van Interactive Brokers Flex-rapporten.
 
-**Versie/status:** 0.31.7. Martin-scan toegevoegd aan het menu: scan starten, tickerlijst aanpassen, voortgang volgen en focus-, dag-, maand- en premarketwatchlists bekijken of downloaden. Laatste resultaten blijven op de server bewaard. Tests, productiebuild, browserworkflow op mobiel/desktop en ophalen van echte Yahoo-data geslaagd; serverinstallatie nog niet uitgevoerd. IV Scan en Leaps blijven beschikbaar.
+**Versie/status:** 0.31.8. Martin-scan selecteert automatisch uit een breed Amerikaans beursuniversum via officiële Nasdaq Trader-lijsten, met koerscache, stoppen/hervatten en focus-, dag-, maand- en premarketwatchlists. Eigen tickers blijven optioneel. Lokale tests, productiebuild en beperkte echte broncontrole geslaagd; serverinstallatie nog niet uitgevoerd.
 
 | Map | Inhoud |
 | --- | --- |
@@ -17,7 +17,7 @@ Lokale mobiele correctie (14 oktober 2026): IBKR-status en vernieuwknop staan op
 Ontwikkeling: `npm run dev:lan`; productie: `npm run serve:lan`, vanuit source na dependency-installatie. Zie [LAN-handleiding](docs/breakout-lan.md). Optionele systemd-service wordt handmatig geïnstalleerd.
 
 
-Zie [IV Scan / Leaps-serverupdate 0.31.6](docs/iv-leaps.md#serverupdate-via-github): publiceer frontend en API samen en herstart de services. Een nieuwe Flex-import is voor deze uitbreiding niet vereist.
+Zie [Serverupdate naar 0.31.8](docs/iv-leaps.md#serverupdate-via-github): publiceer frontend en API samen en herstart de services. Een nieuwe Flex-import is voor deze uitbreiding niet vereist.
 
 Zie [`docs/installatie.md`](docs/installatie.md) voor de installatie en [`source/README.md`](source/README.md) voor alle ontwikkelcommando's.
 
@@ -45,7 +45,7 @@ Installeer en configureer TWS of IB Gateway handmatig voor paper en read-only AP
 
 ## Functies
 
-- [Martin-selectiescanner](docs/martin-scanner.md): menu **Martin-scan** (`#martin`) met startknop, eigen tickerlijst, dag-, maand- en premarketselectie, focuslijst en CSV-/TradingView-export. Ook beschikbaar als CLI via `node scripts/scan-martin.mjs` vanuit `source/`.
+- [Martin-selectiescanner](docs/martin-scanner.md): menu **Martin-scan** (`#martin`) met automatisch breed Amerikaans beursuniversum, stoppen/hervatten, koerscache, watchlists en CSV-/TradingView-export. Eigen tickers en CLI blijven beschikbaar.
 
 - [IV Scan](docs/iv-leaps.md): NASDAQ-/S&P 500-marktshortlist met IV-rank boven 40.
 - [Leaps](docs/iv-leaps.md): handmatig gekozen aandelen, putvergelijking bij vergelijkbare delta, jaarlijks premierendement, break-even en 50%-exitprijs.

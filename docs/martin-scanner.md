@@ -1,18 +1,102 @@
 # Martin-selectiescanner
 
-Scanner met webbediening in Trading Monitor **0.31.7**, 16 oktober 2026. Gebaseerd op het aangeleverde interview **283% Gain in 1 Year – The Story of the 22-Year-Old Swing Trader**, met Martin Luke. De bestaande CLI blijft beschikbaar; er worden geen orders uitgevoerd.
+Trading Monitor **0.31.8**, 16 oktober 2026. De scanner gebruikt standaard een breed universum van Amerikaanse beursnoteringen en stelt automatisch Potent, Leaders, Premarket en Focus samen. Gebaseerd op het aangeleverde interview met Martin Luke. Geen orderuitvoering.
 
-## In het menu
+## Bediening
 
-Open **Martin-scan** in Trading Monitor of ga naar `/#martin`. Hiervoor is geen IBKR-login of Flex-import nodig. Pas **Aandelen om te scannen** aan en kies **Scan starten**. De startlijst bevat 29 aandelen; maximaal 200 per run. De browser controleert de voortgang iedere 1,5 seconde. Je kunt tussendoor van pagina wisselen; de server voltooit de scan. Dubbele starts gebruiken de lopende job.
+Open **Martin-scan** (`/#martin`), laat **Universum** op **Amerikaanse beurzen · automatisch** staan en kies **Scan starten**. Geen tickers, IBKR-login of Flex-import nodig. Bij een nieuwe ronde worden beide officiële beurslijsten opgehaald. Bij bronuitval volgt een foutmelding; er is geen terugval naar de oude lijst van 29 aandelen.
 
-Kies onder **Watchlist** tussen Focus, Potent, Leaders, Premarket en Alle aandelen. Elke rij toont de koersdatum, ADR, dollaromzet, rendementen, referentietrigger/-stop en ontbrekende criteria. Zoek op ticker en sorteer ADR, dag- of maandrendement met de kolomknoppen. **CSV downloaden** en **TradingView downloaden** exporteren de getoonde, gefilterde lijst. Bij een lege focuslijst kun je de bredere kandidatenlijsten bekijken.
+De eerste scan kan geruime tijd duren. Maximaal drie downloads tegelijk, minimaal 0,5 seconde tussen netwerkblokken. De voortgang toont universum, dagdata en premarket. De scan loopt op de server door bij navigatie. Dubbele starts gebruiken de lopende job.
 
-Het rapport vermeldt dagdata- en premarketdekking. Resultaten houden hun oorspronkelijke scanmoment; scans ouder dan 24 uur krijgen een melding. Een mislukte nieuwe scan behoudt het vorige resultaat met een zichtbare melding. Serverherstart onderbreekt een lopende scan; start die handmatig opnieuw.
+**Scan stoppen** bewaart voortgang en voorlopige watchlists. **Scan hervatten** vervolgt de ronde binnen dezelfde New York-datum en slotperiode, ook na serverherstart. Bij HTTP 403/429/5xx stopt de scanner met aanvragen; wacht en hervat later. Niet-verwerkte namen blijven openstaan. Na een nieuwe beursdatum of overgang naar afgesloten dagdata (16:15 ET) moet een nieuwe ronde starten. **Scan starten** begint opnieuw met hergebruik van geldige koerscache.
 
-### Serverupdate
+Tijdens dagverwerking wordt ten minste iedere 25 namen en bij stoppen een checkpoint geschreven. Na een harde crash kunnen de namen sinds het laatste checkpoint opnieuw worden beoordeeld; hun koerscache blijft bruikbaar. Geen automatische hervatting na serverherstart.
 
-Na de GitHub-push op de bestaande Linux-server, vanuit de repository-root:
+**Eigen tickerlijst** blijft optioneel voor maximaal 200 namen. De brede modus heeft die limiet niet. Oude opgeslagen shortlists worden bij de upgrade niet opnieuw als standaard ingesteld; eerdere resultaten blijven herkenbaar als oude eigen lijst.
+
+## Universum en herkomst
+
+De scanner combineert en ontdubbelt de officiële [Nasdaq-listed](https://www.nasdaqtrader.com/dynamic/SymDir/nasdaqlisted.txt) en [Other-exchange listed](https://www.nasdaqtrader.com/dynamic/SymDir/otherlisted.txt) lijsten. De tweede bevat onder meer NYSE en NYSE American. Zie de [officiële velddefinities](https://www.nasdaqtrader.com/trader.aspx?id=symboldirdefs).
+
+Kopregels en footer zijn verplicht. De parser gebruikt Test Issue, ETF, NextShares en Security Name: gewone aandelen, ordinary shares en ADR/ADS blijven over; ETF’s, testnoteringen, warrants, rechten, units en herkenbare preferente effecten vallen uit. Class shares worden vertaald naar Yahoo, bijvoorbeeld `BRK.B` naar `BRK-B`. De koersprovider controleert daarna USD en instrumenttype EQUITY.
+
+Op 16 oktober 2026 leverden de lijsten **5.613** unieke namen: 3.321 Nasdaq en 2.292 overige. Aantallen veranderen met de bron. Het betreft Amerikaanse **beursnoteringen**, ook buitenlandse ondernemingen/ADR’s, geen uitsluitend Amerikaanse vestigingslanden en geen OTC-universum. Tekstfilters kunnen ongewone effectnamen missen; dit is geen garantie op iedere aandelenklasse.
+
+Rapporten tonen universumnaam, ophaaltijd, bronlinks en aantallen. JSON bewaart ook beurscodes, originele symbolen, bedrijfsnamen en file-creation-timestamps. Dekking vergelijkt succesvol beoordeelde reeksen met alle namen in de ronde. Onvoldoende/ongeldige historie telt als data-uitval. Onvoltooide rondes worden als voorlopig gemarkeerd.
+
+## Selectie en watchlists
+
+| Onderdeel | Regel | Herkomst |
+| --- | --- | --- |
+| Potent | Positieve dagslotprestatie, aflopend; beste 20 ADR/liquiditeitskandidaten | Interview 91:30; aantal 20 is ontwerpkeuze |
+| Leaders | Positief rendement over 21 sessies, aflopend; beste 20 kandidaten | Interview 93:03; maandbenadering |
+| Premarket | Gap ≥ 3%, cumulatief volume ≥ 100.000 aandelen | Interview 90:38; getallen zijn ontwerpkeuzes |
+| ADR | Gemiddelde `(high/low − 1) × 100` over 20 sessies > 5% | Interview 26:32; formule/periode zijn ontwerpkeuzes |
+| Liquiditeit | Gemiddelde `slot × volume` over 20 sessies ≥ $10 miljoen | Ontwerpkeuze |
+| Premier | Gemiddelde dollaromzet > $100 miljoen | Interview 100:03; periode is ontwerpkeuze |
+| Trend | EMA9 > EMA21 > EMA50 en slot boven EMA9 | Interview 95:35; slotvoorwaarde is ontwerpkeuze |
+| Compactheid | Inside day of laatste 3 dagen range ≤ 65% van laatste 10 dagen range | Interview 36:47; contractiemaat is ontwerpkeuze |
+| Stopcontrole | Afstand tot referentiestop < min(5%, ADR/2) | Interview 26:00 |
+
+**Focus** vereist een plek in minimaal één kandidatenlijst plus trend, compactheid en stopcontrole; eerst premier, dan maandrendement. **KLAARZETTEN** is een kandidaat voor beoordeling, **VOLGEN** mist focuscriteria, **AFGEWEZEN** faalt op ADR/liquiditeit. Geen winstkansscore. Trigger = laatste daghigh + $0,01, stopreferentie = laatste daglow − $0,01: volgende-sessiereferenties, geen actuele intradayorder.
+
+Kies Focus, Potent, Leaders, Premarket of Alle aandelen. Zoek op ticker en sorteer ADR, dag- of maandrendement via kolomknoppen. Grote lijsten hebben pagina’s van 50 rijen. CSV/TradingView-downloads bevatten de volledige gefilterde lijst, over alle pagina’s.
+
+## Data en cache
+
+Yahoo-chartdata zijn experimenteel, zonder beschikbaarheidsgarantie. Per aandeel worden gevalideerde dagdata privé gecachet. Cache is geldig binnen dezelfde New York-datum en vóór/na-slotperiode. Na 16:15 ET of op een nieuwe datum worden nieuwe dagreeksen opgehaald. Cachedata worden opnieuw gevalideerd; corrupte cache wordt opnieuw gedownload.
+
+Een open dag telt niet mee tot 16:15 ET, ook op vroege sluitingsdagen. Minimaal 60 candles nodig. Ontbrekende/ongeldige OHLCV of dubbele datums sluiten de hele reeks uit; nulvolume blijft behouden. Reeksen ouder dan vijf kalenderdagen vallen uit. Geen volledige beurskalendercontrole op ontbrekende sessies. EMA’s starten bij het eerste beschikbare slot; online maximaal een jaar historie.
+
+Na de dagselectie worden alleen ADR/liquiditeitskandidaten op premarket gecontroleerd, tussen 04:00–09:30 ET. Alleen afgesloten vijfminutencandles vanaf 04:00 vandaag tellen. Volume wordt opgeteld; de laatste slotkoers vormt de snapshot. Quotes ouder dan 15 minuten of buiten het venster worden bij het eindrapport uitgesloten. Een ronde die pas na 09:30 ET klaar is heeft dus geen actuele premarketmatches; een volgende ronde met warme dagcache kan veel sneller zijn. Dekking wordt apart vermeld. Geen vergelijking met historisch premarketvolume.
+
+Rapporten behouden hun scanmoment; na 24 uur verschijnt een ouderdomsmelding. Een mislukte run zonder bruikbare data behoudt het vorige rapport. Sectoren/thema’s worden niet geraden: alleen optioneel aangeleverde metadata geeft clusters. Earnings, nieuws, splits, weekbasis, marktcontext, spreads en de werkelijke intradayinstap/-stop blijven handmatige controles. Geen bewezen handelsrendement geclaimd.
+
+## CLI en eigen data
+
+Node.js 22.12+; geen extra dependencies of API-sleutel. Vanuit `source/`:
+
+```powershell
+node scripts/scan-martin.mjs
+node scripts/scan-martin.mjs --resume
+node scripts/scan-martin.mjs --symbols NVDA,AMD,IONQ
+node scripts/scan-martin.mjs --universe data/private/tickers.txt --top 30
+node scripts/scan-martin.mjs --help
+```
+
+Ctrl+C stopt met checkpoint en voorlopig rapport. Gebruik een eigen `--out`-map om gelijktijdig schrijven door CLI en web te vermijden. Een tickerbestand bevat komma’s/spaties/nieuwe regels zonder kopregel. Instelbaar: `--top`, `--adr-min`, `--min-volume` (dollars), `--gap-min`, `--premarket-volume` (aandelen). Hervatten vereist dezelfde configuratie en eigen lijst.
+
+`--themes data/private/themes.json`: bijvoorbeeld `{"IONQ":"Quantum","RGTI":"Quantum"}`. Twee of meer kandidaten met hetzelfde label vormen een cluster, geen bewijs van geldinstroom. `--premarket data/private/quotes.json` overschrijft automatische snapshots: `{"IONQ":{"asOf":"2026-10-16T12:55:00Z","price":40,"volume":1250000}}`. Gebruik actuele tijden; volume is cumulatief sinds 04:00 ET.
+
+`--input data/private/eigen-bars.json` accepteert lokale dagelijkse OHLCV met minimaal 60 candles per ticker. Formaat (één voorbeeldcandle, geen volledige reeks):
+
+```json
+{"results":[{"symbol":"NVDA","source":"Eigen provider, USD, reguliere sessie","bars":[{"date":"2026-10-15","open":100,"high":103,"low":99,"close":102,"volume":1000000}]}]}
+```
+
+Bij lokale input controleert de scanner instrumentsoort/valuta niet bij een provider.
+
+## Opslag
+
+CLI standaard: `source/data/private/martin/`. Web: `martin/` naast `IBKR_SNAPSHOT_PATH`, optioneel `MARTIN_SCAN_DIR`, buiten de webroot en Git. UI-status en ronde worden via tijdelijke bestanden en atomische rename geschreven. Corrupte UI-status wordt gemeld en niet overschreven. Ongebruikte cachebestanden worden niet automatisch verwijderd.
+
+| Bestand | Inhoud |
+| --- | --- |
+| `watchlist.md`, `scan.json` | Rapport, diagnose en herkomst |
+| `watchlist.csv` | Alle beoordeelde aandelen |
+| `focus-tradingview.txt`, `potent-tradingview.txt`, `leaders-tradingview.txt`, `premarket-tradingview.txt` | Vier tickerlijsten |
+| `daily-cache/<ticker>.json` | Dagdata en cacheperiode |
+| `market-round.json` | Bevroren universum, resultaten, hervatvoortgang |
+| `ui-state.json` | Laatste webstatus en rapport |
+| `bars.json` | Online: cachemanifest; lokale input: gebruikte reeksen |
+
+Vanaf 0.31.8 bevat online `bars.json` geen bulk-OHLCV meer; gebruik de per-aandeelcache voor hercontrole. Afzonderlijk bewaarde oude bulkbestanden blijven bestaan.
+
+<a id="serverupdate"></a>
+
+## Serverupdate en verificatie
+
+Op de bestaande Linux-server vanuit de repository-root:
 
 ```bash
 git pull --ff-only
@@ -20,96 +104,8 @@ cd source
 bash deploy/update-options.sh
 ```
 
-Dit gebruikt de bestaande services en publiceert frontend en Node-API samen; de aanwezige Python-service wordt ook herstart voor de LAN-proxy. Open daarna `/#martin` en vernieuw met Ctrl+F5. Bij `npm run serve:lan`: stop het bestaande proces, pull, voer `npm ci` vanuit `source/` uit en start `npm run serve:lan` opnieuw. Alleen `dist/` vervangen is onvoldoende: de nieuwe API-route moet ook beschikbaar zijn. De lokale tests publiceren niet naar de server.
+Publiceer frontend en Node-API samen; het script herstart ook de aanwezige Python-service voor de LAN-proxy. Open `/#martin` en vernieuw met Ctrl+F5. Bij `npm run serve:lan`: stop, pull, `npm ci`, opnieuw starten. Lokale tests publiceren niets op de bestaande server.
 
-API: `GET /api/martin-scan` geeft status en rapport; `POST /api/martin-scan` met `{"symbols":"NVDA,AMD"}` start een job. POST vereist de bestaande toegestane Origin plus `X-Requested-With: trading-monitor`. De server accepteert geen aangeleverde bestandspaden. Vite, Nginx en de FastAPI LAN-host sturen de route naar de bestaande Node-API op 8787.
+API: `GET /api/martin-scan`; POST met `{"universeMode":"us"}` voor breed of `{"universeMode":"custom","symbols":"NVDA,AMD"}` voor eigen tickers. Voeg `"resume":true` toe voor hervatten. `POST /api/martin-scan/stop` stopt. Mutaties vereisen de toegestane Origin en `X-Requested-With: trading-monitor`. Geen browserbestandspaden. Vite, Nginx en FastAPI sturen de route naar Node op 8787.
 
-Opslag staat standaard in de map `martin/` naast `IBKR_SNAPSHOT_PATH`; optioneel via `MARTIN_SCAN_DIR`, buiten de publieke webroot. `ui-state.json` bewaart het vorige rapport, de tickerlijst en start-/eindstatus via een tijdelijke file en atomische rename. Ontbreekt dit bestand, dan kan een bestaand CLI-rapport `scan.json` als beginresultaat worden gelezen. Corrupte UI-opslag wordt gemeld en niet overschreven. Een schrijffout bij starten verhindert dat de scan als gestart wordt bevestigd. Alle koersbestanden staan eveneens in deze privémappen.
-
-Browsercontrole met fixtures vanuit `source/`: start `npm run dev -- --port 5198`, daarna `npm run test:martin`. Installeer zo nodig tijdelijk `npm install --no-save --package-lock=false playwright`. Standaard wordt Edge gebruikt; `PLAYWRIGHT_CHANNEL` en `MARTIN_URL` kunnen browser/adres wijzigen. Screenshots staan in `data/private/martin-ui-validation/`.
-
-## Starten
-
-Node.js 22.12+ vereist; geen extra dependencies of API-sleutel. Voer uit vanuit `source/`:
-
-```powershell
-node scripts/scan-martin.mjs
-node scripts/scan-martin.mjs --symbols NVDA,AMD,IONQ,RKLB,SOFI
-node scripts/scan-martin.mjs --universe data/private/tickers.txt --top 30
-```
-
-De standaardlijst bevat 29 bestaande onderzoekstickers, zonder de context-ETF URA. Dit is geen beursbreed universum. Voor marktbrede ontdekking lever je zelf een actueel universum aan. `tickers.txt` bevat tickers gescheiden door komma's, spaties of nieuwe regels, zonder kopregel; gebruik Yahoo-symbolen zoals `BRK-B`, geen beursvoorvoegsels. Maximaal drie tickers worden tegelijk opgehaald. Dagdata komen uit dezelfde experimentele Yahoo-chartbron als de bestaande breakoutscan. Deze bron kan vertraging, blokkades of correcties hebben; er is geen gegarandeerde beschikbaarheid. Er wordt geen brokerverbinding gebruikt.
-
-Open daarna `source/data/private/martin/watchlist.md`. Uitvoer:
-
-| Bestand | Inhoud |
-| --- | --- |
-| `watchlist.md` | Leesbaar rapport met focus, drie scans, thema's, redenen en uitval |
-| `watchlist.csv` | Alle beoordeelde aandelen met meetwaarden |
-| `focus-tradingview.txt` | Kandidaten die ook trend, compactheid en stopcontrole doorstaan |
-| `potent-tradingview.txt` | Sterkste laatste afgesloten handelsdag |
-| `leaders-tradingview.txt` | Sterkste afgelopen 21 sessies |
-| `premarket-tradingview.txt` | Actuele positieve gaps met voldoende premarketvolume |
-| `scan.json` | Volledige diagnose, filters, peildata, bron en datadekking |
-| `bars.json` | Gebruikte OHLCV en eventueel premarketsnapshot voor hercontrole |
-
-Elke run vervangt de uitvoer in de gekozen map; gebruik `--out data/private/martin-archief` om apart te bewaren. De standaarduitvoer is privé en uitgesloten van Git. TradingView-import: kies de overeenkomstige txt-lijst via de importfunctie van je watchlist en controleer de beursmapping. Een lege focuslijst wordt bewust leeg geëxporteerd.
-
-## Bronregels en gekozen benaderingen
-
-| Onderdeel | Implementatie | Herkomst |
-| --- | --- | --- |
-| Potent | Positief dagrendement, aflopend; maximaal 20 | Scanner uit interview 91:30; aantal 20 is ontwerpkeuze |
-| Leaders | Positief rendement over 21 sessies, aflopend | Interview 93:03; 21 sessies als maandbenadering |
-| Premarket | Gap ≥ 3%, cumulatief volume ≥ 100.000 aandelen | Interview 90:38; getallen zijn instelbare ontwerpkeuzes |
-| ADR | Gemiddelde `(high/low − 1) × 100` over 20 sessies > 5% | Interview 26:32; formule en periode zijn ontwerpkeuzes |
-| Liquiditeit | Minimaal $10 miljoen gemiddelde `slot × volume` over 20 sessies | Instelbare ontwerpkeuze |
-| Premier | Gemiddelde dollaromzet > $100 miljoen | Interview 100:03; periode 20 sessies is ontwerpkeuze |
-| Trend | EMA9 > EMA21 > EMA50 en slot > EMA9 | EMA-volgorde uit 95:35; slotvoorwaarde is ontwerpkeuze |
-| Compactheid | Inside day of breedte laatste 3 dagen ≤ 65% van breedte laatste 10 | Inside day uit 36:47; contractiemaat is ontwerpkeuze |
-| Stopcontrole | Afstand tot referentiestop < min(5%, ADR/2) | Interview 26:00; daghigh/daglow als volgende-sessiereferentie |
-| Thema's | Twee of meer kandidaten met hetzelfde aangeleverde themalabel | Interview 92:11; geen automatische classificatie |
-
-**KLAARZETTEN** vereist ADR/liquiditeit, sterke trend, compactheid en passende stopreferentie. **VOLGEN** voldoet aan ADR/liquiditeit, maar mist nog een of meer focuscriteria. **AFGEWEZEN** faalt op ADR/liquiditeit. Focus bevat alleen namen uit minimaal een van de drie kandidatenlijsten; eerst premier, daarna maandrendement. Er is geen winstkansscore.
-
-De trigger is laatste daghigh + $0,01 en de stopreferentie laatste daglow − $0,01. Dat is een plan voor de volgende sessie, geen actuele intradaytrigger, definitieve instap of simulatie van Martins vijfminutenstop. Een brede referentiestop kan later intraday alsnog een goede setup worden. EMA's zijn recursief met eerste beschikbare slot als beginwaarde; minimaal 60 candles, bij online ophalen tot een jaar historie.
-
-Instelbare keuzes:
-
-```powershell
-node scripts/scan-martin.mjs --top 30 --adr-min 5 --min-volume 10000000 --gap-min 3 --premarket-volume 100000
-node scripts/scan-martin.mjs --help
-```
-
-## Premarket en thema's
-
-Tijdens 04:00–09:30 New York haalt de scanner automatisch vijfminutencandles inclusief extended hours op. Alleen afgesloten premarketcandles van vandaag tellen; volume wordt opgeteld en de laatste slotkoers vormt de snapshot. De snapshot moet maximaal 15 minuten oud zijn. Buiten dat venster ontstaat geen actueel premarketsignaal. Datadekking staat apart in het rapport; ontbrekende data gelden niet als nul matches op complete dekking. De vijfminutencandles zijn vertraagde brondata, geen live ticks. Er is geen controle of het volume uitzonderlijk is tegenover historische premarketsessies.
-
-Optioneel: `--premarket data/private/premarket.json` overschrijft automatisch opgehaalde snapshots. Formaat (tijd alleen als voorbeeld; vervangen door actuele brondata):
-
-```json
-{"NVDA":{"asOf":"2026-10-16T12:55:00Z","price":180.25,"volume":1250000}}
-```
-
-`price` is de waargenomen USD-koers; `volume` is cumulatief aantal verhandelde aandelen sinds 04:00 ET, geen dollaromzet of dagvolume. De gap wordt berekend tegenover het laatste afgesloten dagslot. Ontbrekende, oude of toekomstige quotes vallen uit.
-
-Voor themaclusters: `--themes data/private/themes.json`, bijvoorbeeld `{"IONQ":"Quantum","RGTI":"Quantum"}`. Lever classificaties zelf aan; de scanner leidt geen thema af uit een tickernaam. Clusters tonen aantallen kandidaten binnen dit universum en bewijzen geen geldinstroom of sectoroutperformance.
-
-## Lokale databron en verificatie
-
-Voor eigen dagelijkse OHLCV kun je `--input data/private/eigen-bars.json` gebruiken. Formaat:
-
-```json
-{"results":[{"symbol":"NVDA","source":"Eigen provider, reguliere sessie, USD-aandeel","bars":[{"date":"2026-10-15","open":100,"high":103,"low":99,"close":102,"volume":1000000}]}]}
-```
-
-Het voorbeeld toont één candle; minimaal 60 zijn nodig. Geef uitsluitend USD-aandelen met reguliere dagcandles en consistente corporate-actionbehandeling op. Lokale import controleert de instrumentsoort niet bij een provider. Volume nul wordt behouden; ontbrekende of ongeldige OHLCV en dubbele datums sluiten de volledige reeks uit zodat rendementvensters niet ongemerkt verschuiven. Een peildatum ouder dan vijf kalenderdagen valt uit. Een open dag wordt uitgesloten tot 16:15 New York; op dagen met vroege sluiting is dat bewust conservatief. De scanner heeft geen kalendercontrole voor ontbrekende sessies of beursfeestdagen. Vergelijk peildata vóór gebruik, vooral bij reeksen met ontbrekende handelsdagen.
-
-```powershell
-node --test tests/martin-selection.test.mjs
-node scripts/scan-martin.mjs --input data/private/martin/bars.json --out data/private/martin-hercontrole
-```
-
-Handmatig blijven: earnings en nieuws, splits/corporate actions, weekbasis, relatieve sterkte tegenover indices, marktweerstand, spreads, intraday opening range en echte stop. Hiervoor ontbreken voldoende data in deze eerste versie. De scanner reproduceert een deel van het selectieproces, geen bewezen handelsrendement.
-
-CLI-argumenten gebruiken de standaard [Node.js parseArgs-API](https://nodejs.org/api/util.html#utilparseargsconfig).
+Vanuit `source/`: `npm test`, `npm run test:frontend`, `npm run build`. Browserfixtures: start `npm run dev -- --port 5198`, daarna `npm run test:martin`. Zo nodig tijdelijk `npm install --no-save --package-lock=false playwright`; Edge is standaard. Screenshots: `data/private/martin-ui-validation/`. Marktenginetests controleren 1.001 fictieve aandelen buiten de oude shortlist, stoppen/hervatten, cache, bronbegrenzing en data-uitval; geen bewijs van handelsedge.

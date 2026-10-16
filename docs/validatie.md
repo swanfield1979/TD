@@ -1,5 +1,14 @@
 # Validatie
 
+## Trading Monitor 0.31.8 — breed Martin-universum (16 oktober 2026)
+
+- Officiële Nasdaq Trader-bronnen daadwerkelijk opgehaald: 3.321 Nasdaq en 2.292 overige beursnoteringen, samen 5.613 unieke namen na filtering. Geen vaste-shortlistfallback.
+- Marktenginetest met 1.001 fictieve aandelen buiten de oude lijst: stoppen op drie, hervatten zonder dubbele downloads, volledige dekking, automatische watchlists en een nieuwe ronde geheel uit dagcache. Aanvullend getest: directoryvalidatie, ontdubbelen, effectfilters, 429-pauze/hervatten, data-uitval, premarketselectie/-ouderdom en cacheperiode.
+- Echte CLI-proef: gestart en gestopt op 30, hervat tot 60 verwerkte namen; 58 beoordeeld, twee data-uitval, resterend 5.553. Geen volledige marktbrede koersdownload geclaimd. De echte API startte zonder tickers met totaal 5.613; stop en hervatstatus werkten. Ongewijzigd rapport wordt bij voortgangspolls niet opnieuw meegestuurd.
+- `npm test`: 149 lokale JavaScript-tests geslaagd; de commit bevat 139 tests, afzonderlijk gecontroleerd. `npm run test:frontend`: 13 geslaagd. `npm run build`: geslaagd.
+- `npm run test:martin`: brede standaardmodus, eigen-lijstvalidatie, start/stop/hervatten, voortgang, navigatie, zoeken/sorteren, paginering, export, fout/herstel en 360–1440px geslaagd. Mobiele screenshot visueel beoordeeld; geen browserruntimefouten.
+- Geen serverinstallatie uitgevoerd. Zie [serverupdate](martin-scanner.md#serverupdate-en-verificatie). Eerste volledige brede run kan geruime tijd duren en blijft afhankelijk van Yahoo-beschikbaarheid; ontbrekende en onvoltooide dekking wordt vermeld.
+
 ## Trading Monitor 0.31.7 — Martin-menupagina (16 oktober 2026)
 
 - `npm test`: 140 JavaScript-tests geslaagd in de lokale werkmap; afzonderlijk alle 130 tests van de te pushen Git-bestanden geslaagd. Vier nieuwe servertests controleren dubbel starten, voortgang, opslag/herstart, foutafhandeling en behoud van eerdere resultaten. `npm run test:frontend`: 13 geslaagd. `npm run build`: TypeScript en productiebuild geslaagd.

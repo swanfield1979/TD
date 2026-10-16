@@ -31,6 +31,9 @@ test('Martin-job voorkomt dubbele starts, meldt voortgang en herstelt resultaten
   const restored = await createMartinScan(dir)
   assert.equal(restored.snapshot().report.rows[0].symbol, 'TEST')
   assert.equal(restored.snapshot().restored, true)
+  assert.equal(restored.snapshot(restored.snapshot().report.generatedAt).report, null)
+  assert.equal(restored.snapshot(restored.snapshot().report.generatedAt).reportUnchanged, true)
+  assert.ok(restored.snapshot('different-version').report)
 })
 test('Totale data-uitval bewaart vorige resultaten en rapporteert fouten', async t => {
   const dir = await directory(t)
@@ -61,4 +64,25 @@ test('Runnerfout wordt foutstatus en schrijft geen schijnsucces', async t => {
   await service.start('TEST'); await service.wait()
   assert.equal(service.snapshot().state, 'error')
   assert.equal(service.snapshot().report, null)
+})
+test('Standaardstart gebruikt breed universum zonder tickers en ondersteunt stoppen', async t => {
+  let argsSeen
+  const service = await createMartinScan(await directory(t), async (args, hooks) => {
+    argsSeen = args
+    await new Promise(resolve => hooks.signal.addEventListener('abort', resolve, { once: true }))
+    return { ...report(), complete: false, canResume: true, stopReason: 'Scan gestopt.' }
+  })
+  await service.start(undefined, { universeMode: 'us' })
+  assert.equal(argsSeen.includes('--symbols'), false)
+  service.stop(); await service.wait()
+  assert.equal(service.snapshot().state, 'interrupted')
+  assert.equal(service.snapshot().canResume, true)
+})
+test('Upgrade van oude shortlist kiest brede modus en labelt oud resultaat', async t => {
+  const dir = await directory(t)
+  await writeFile(join(dir, 'ui-state.json'), JSON.stringify({ state: 'complete', symbols: ['ONDS'], report: report() }))
+  const service = await createMartinScan(dir)
+  assert.equal(service.snapshot().universeMode, 'us')
+  assert.deepEqual(service.snapshot().symbols, [])
+  assert.equal(service.snapshot().report.universe.kind, 'legacy')
 })

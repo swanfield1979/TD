@@ -1,5 +1,9 @@
 # Releases
 
+## Trading Monitor 0.31.8
+
+Martin-scan gebruikt standaard officiële Nasdaq- en overige Amerikaanse beurslijsten in plaats van 29 vaste tickers. Automatische watchlists, per-aandeelkoerscache, stoppen/hervatten en paginering. Broncode via GitHub; geen apart installatiepakket. Frontend en API samen bijwerken volgens [serverupdate](../docs/martin-scanner.md#serverupdate-en-verificatie). Serverinstallatie nog niet uitgevoerd.
+
 ## Trading Monitor 0.31.7
 
 **Martin-scan** staat in het menu en biedt scan starten, eigen tickerlijst, voortgang, opgeslagen watchlists en CSV-/TradingView-downloads. Uitgeleverd via GitHub-broncode; geen apart installatiepakket. Publiceer frontend en API samen met de [serverupdate](../docs/martin-scanner.md#serverupdate). Tests en lokale browsercontrole geslaagd; installatie op de server nog niet uitgevoerd.
