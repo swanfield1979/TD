@@ -35,3 +35,5 @@
 @media (max-width: 1100px) { .spreads-layout { grid-template-columns: 240px minmax(0, 1fr); } .spreads-intro { align-items: start; flex-direction: column; } }
 @media (max-width: 760px) { .spreads-layout { grid-template-columns: minmax(0, 1fr); } .spreads-filters fieldset { grid-template-columns: repeat(2, minmax(0, 1fr)); } .spreads-filters fieldset label { grid-template-columns: minmax(0, 1fr); } .spreads-filters fieldset input { width: 100%; } }
 @media (max-width: 420px) { .spreads-toolbar { align-items: stretch; flex-direction: column; } }
+
+.spreads-assessment-reason { white-space: normal; min-width: 260px; max-width: 420px; text-align: left !important; }

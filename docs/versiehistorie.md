@@ -1,5 +1,13 @@
 # Versiehistorie
 
+## 0.33.0 — brede put-spreadscan en oude chains (24 oktober 2026)
+
+- Standaard alle gewone Amerikaanse aandelen/ADR’s uit Nasdaq Trader-noteringen; geen 50-aandelenlimiet voor breed scannen. Optiegeschiktheid via IBKR, zonder vaste shortlist of beperking tot Nasdaq/S&P 500. Eigen tickers blijven optioneel.
+- Koersfilter vóór IV-historie en IV-rank vóór optiechain; overslagreden per aandeel zichtbaar. Optieafhankelijke filters volgen na de chain.
+- Ruwe putquotes en chainmetadata per aandeel in private servercache. Gesloten beurs: opgeslagen quotes herfilteren, anders bevroren IBKR-data proberen. Uitval: cache gebruiken en ontbrekende data melden. Ophaaltijden, cachelabels en verlopen contracten expliciet behandeld.
+- Duurzame universumcursor, stoppen/hervatten met dezelfde filters, voortgang en laatste 50 aandelenbeoordelingen. Geen automatische hervatting na serverherstart.
+- Tests/build en browsercontrole geslaagd; nog geen echte IBKR-proef of serverinstallatie.
+
 ## 0.32.0 — bull-put-spreadscanner (24 oktober 2026)
 
 - Nieuwe pagina **Put spreads** met filters links, eigen tickers of overname van maximaal 50 IV-resultaten, sortering, zoeken, paginering en CSV.

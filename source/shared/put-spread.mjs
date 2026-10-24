@@ -1,6 +1,6 @@
 import { daysToExpiry } from './csp-scan.mjs'
 
-export const spreadDefaults = Object.freeze({ minDte: 80, maxDte: 100, minIvr: 20, minBuffer: 25, minProfit: 50, maxLoss: 1000, minOtm: 70, maxQuoteSpread: 1 })
+export const spreadDefaults = Object.freeze({ minPrice: 0, maxPrice: 100000, minDte: 80, maxDte: 100, minIvr: 20, minBuffer: 25, minProfit: 50, maxLoss: 1000, minOtm: 70, maxQuoteSpread: 1 })
 export function spreadFilters(input = {}) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) throw Error('Ongeldige spreadfilters.')
   const filters = { ...spreadDefaults }
@@ -10,7 +10,7 @@ export function spreadFilters(input = {}) {
       filters[key] = input[key]
     }
   }
-  if (filters.minDte < 1 || filters.maxDte > 730 || filters.minDte > filters.maxDte || !Number.isInteger(filters.minDte) || !Number.isInteger(filters.maxDte)
+  if (filters.minPrice < 0 || filters.maxPrice <= 0 || filters.minPrice > filters.maxPrice || filters.minDte < 1 || filters.maxDte > 730 || filters.minDte > filters.maxDte || !Number.isInteger(filters.minDte) || !Number.isInteger(filters.maxDte)
     || filters.minIvr < 0 || filters.minIvr > 100 || filters.minBuffer < 0 || filters.minBuffer >= 100
     || filters.minProfit < 0 || filters.maxLoss <= 0 || filters.maxLoss > 100000 || filters.minOtm < 0 || filters.minOtm > 100 || filters.maxQuoteSpread < 0)
     throw Error('Controleer de filters: DTE 1–730, percentages 0–100 en een positief maximaal verlies (tot $100.000).')
@@ -34,7 +34,7 @@ export function bullPutSpread(short, long, today) {
     shortStrike: short.strike, longStrike: long.strike, shortBid: short.bid, shortAsk: short.ask, longBid: long.bid, longAsk: long.ask,
     credit, maxProfit, maxLoss, breakEven: short.strike - credit, returnOnRisk: maxProfit / maxLoss * 100,
     buffer: (1 - short.strike / short.underlyingPrice) * 100, otmProxy: (1 - Math.abs(short.delta)) * 100,
-    shortQuotedAt: short.quotedAt, longQuotedAt: long.quotedAt, shortDataType: short.marketDataType, longDataType: long.marketDataType }
+    cached: short.cached === true || long.cached === true, shortQuotedAt: short.quotedAt, longQuotedAt: long.quotedAt, shortDataType: short.marketDataType, longDataType: long.marketDataType }
 }
 export function selectSpreads(puts, today, input = {}) {
   const f = spreadFilters(input), groups = new Map(), rows = []
@@ -46,7 +46,7 @@ export function selectSpreads(puts, today, input = {}) {
   for (const group of groups.values()) for (const short of group) for (const long of group) {
     if (short.strike <= long.strike) continue
     const row = bullPutSpread(short, long, today)
-    if (row && row.dte >= f.minDte && row.dte <= f.maxDte && row.ivr >= f.minIvr && row.buffer + 1e-8 >= f.minBuffer
+    if (row && row.underlyingPrice >= f.minPrice && row.underlyingPrice <= f.maxPrice && row.dte >= f.minDte && row.dte <= f.maxDte && row.ivr >= f.minIvr && row.buffer + 1e-8 >= f.minBuffer
       && row.maxProfit + 1e-8 >= f.minProfit && row.maxLoss <= f.maxLoss + 1e-8 && row.otmProxy + 1e-8 >= f.minOtm
       && short.ask - short.bid <= f.maxQuoteSpread + 1e-8 && long.ask - long.bid <= f.maxQuoteSpread + 1e-8) rows.push(row)
   }

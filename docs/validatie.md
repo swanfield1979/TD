@@ -1,5 +1,14 @@
 # Validatie
 
+## Trading Monitor 0.33.0 — breed universum, voorselectie en oude chains (24 oktober 2026)
+
+- Werkmap: `npm test` **161 geslaagd** (inclusief bestaande lokale TradingView-referentietests), `npm run test:frontend` **13 geslaagd**, TypeScript/Vite-productiebuild geslaagd. Geen dependencies toegevoegd.
+- Echte Nasdaq Trader-lijsten opgehaald: 3.322 Nasdaq en 2.293 overige gewone aandelen/ADR’s, samen 5.615 unieke namen; bronbestanden met creatietijd `1023202621:31`. Dit controleert het universum, niet de aanwezigheid van bruikbare opties voor elk aandeel. Geen echte brokerquotes of volledige marktbrede IBKR-scan uitgevoerd.
+- Brokertest bevestigt nul optiechainaanvragen voor koers- en IV-afwijzingen; koersafwijzing doet ook geen IV-historieverzoek. Bij passende aandelen worden ruwe quotes plus chainmetadata aangeboden aan de persistente cache.
+- Nieuwe tests: breed universum met 75 namen zonder shortlistlimiet; gesloten markt herfiltert cache zonder brokerverzoek; onbekende/onbereikbare broker verhindert latere cachehits niet; ontbrekende data blijft expliciet ontbrekend; verlopen puts vervallen, verruimde filters melden cachedekking; cursorstop/hervatten zonder dubbel beoordelen; raw-cacheherstel en gatewayisolatie; bronuitval gebruikt gedateerde universumcache; sessiegrenzen inclusief feestdag en verkorte sessie.
+- `npm run test:spreads` geslaagd: brede standaardmodus zonder tickers, eigen modus/IV-overname, zichtbare overslagreden en gesloten-marktstatus, cachelabel, sorteren, zoeken, CSV, start/stop, fouten, voorkeurherstel, paginering en 360–1600px. Donker/licht, 200% zoom en toetsenbordvolgorde gecontroleerd; screenshots lokaal in private validatiemap. Geen browserruntimefouten.
+- Geen serverinstallatie uitgevoerd. De eerste lokale chaincache moet nog met beschikbare IBKR-data worden opgebouwd; de scanner kan geen historische bid/ask-chain reconstrueren die nooit is opgehaald. Bron- en ophaaltijden blijven zichtbaar, ook bij hergebruik. Zie [gebruik en beperkingen](put-spreads.md).
+
 ## Trading Monitor 0.32.0 — bull-put-spreadscanner (24 oktober 2026)
 
 - `npm test`: **155 geslaagd**; `npm run test:frontend`: **13 geslaagd**; `npm run build`: TypeScript en Vite geslaagd. Geen nieuwe afhankelijkheden.

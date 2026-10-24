@@ -20,7 +20,7 @@ test('spread API validates inputs, enforces origin and scan lock, supports stop 
     throw Error('Test API did not start')
   }
   const stop = async () => { const done = once(child, 'exit'); child.kill(); await done }
-  const post = body => fetch(`${origin}/api/put-spreads`, { method: 'POST', headers, body: JSON.stringify(body) })
+  const post = body => fetch(`${origin}/api/put-spreads`, { method: 'POST', headers, body: JSON.stringify({ universeMode: 'custom', ...body }) })
   try {
     await start()
     assert.equal((await fetch(`${origin}/api/put-spreads`, { method: 'POST', body: '{}' })).status, 403)

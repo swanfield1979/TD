@@ -129,14 +129,18 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
     ib.reqMarketDataType(MarketDataType.DELAYED)
 
     async function scanSymbol(symbol, discovery = false, suppliedContract, universe) {
+      let spreadAssessment
+      const assess = (status, reason) => { spreadAssessment = { symbol, status, reason, source: 'broker', asOf: new Date().toISOString() } }
       state.progress = `${mode === 'leaps' ? 'Leaps' : discovery ? 'NASDAQ / S&P 500' : 'Portfolio'} · ${symbol}`
       try {
         const details = suppliedContract ? [{ contract: suppliedContract }] : await request((id) => ib.reqContractDetails(id, { symbol, secType: 'STK', exchange: 'SMART', currency: 'USD' }), 'contractDetailsEnd')
         if (details.length !== 1) throw new Error('Geen eenduidig USD-aandelencontract gevonden.')
         const contract = { ...details[0].contract, exchange: 'SMART' }
         const stock = await availableQuote(contract, '106')
+        const stockQuotedAt = new Date().toISOString()
         const price = stock.last > 0 ? stock.last : stock.bid > 0 && stock.ask >= stock.bid ? (stock.bid + stock.ask) / 2 : null
         if (!price) throw new Error('Actuele aandelenkoers ontbreekt.')
+        if (mode === 'spreads' && (price < filters.minPrice || price > filters.maxPrice)) { assess('filtered', `Koers $${price.toFixed(2)} buiten ${filters.minPrice}–${filters.maxPrice}; optiechain overgeslagen.`); return }
         if (!Number.isFinite(stock.iv) || stock.iv <= 0 || stock.iv >= 10) throw new Error('Actuele IV ontbreekt; historiedownload overgeslagen. Controleer optiedatarechten.')
         if (mode === 'csp' && discovery && (price < 10 || price > 50)) return
         const historyKey = `${contract.conId}:${symbol}:${today}`
@@ -154,7 +158,10 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
         const ivr = ivRank(stock.iv, bars, today)
         if (ivr === null) throw new Error('Actuele IV of voldoende recente jaarhistorie ontbreekt; IVR niet toetsbaar.')
         const metrics = ivMetrics(stock.iv, bars, today)
-        if (mode === 'spreads' ? ivr < filters.minIvr : ivr <= (mode === 'csp' ? 30 : 40)) return
+        if (mode === 'spreads' ? ivr < filters.minIvr : ivr <= (mode === 'csp' ? 30 : 40)) {
+          if (mode === 'spreads') assess('filtered', `IV-rank ${ivr.toFixed(2)} lager dan ${filters.minIvr}; optiechain overgeslagen.`)
+          return
+        }
         if (mode === 'iv') {
           state.rows.push({ symbol, underlyingPrice: price, iv: stock.iv * 100, ...metrics,
             marketDataType: stock.marketDataType, quotedAt: new Date().toISOString(), universe })
@@ -180,6 +187,7 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
         }
         if (mode === 'spreads') state.coverage = 'Maximaal 32 strikes per expiratie en handelsklasse, onder de gekozen buffergrens; geen volledige marktdekking.'
         if (!contracts.length) throw new Error(mode === 'spreads' ? 'Geen standaardputs binnen de gekozen looptijd en buffer beschikbaar.' : mode === 'leaps' ? 'Geen standaardputs binnen 30–50 of 300–700 DTE beschikbaar.' : 'Geen standaardputketen met 35–50 dagen looptijd beschikbaar.')
+        const symbolPuts = []
         let missing = 0
         for (let offset = 0; offset < contracts.length; offset += 1) {
           const batch = contracts.slice(offset, offset + 1)
@@ -193,6 +201,7 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
               state.puts.push({ ...item.value, symbol, right: 'P', currency: 'USD', multiplier: 100, strike: opt.strike,
                 underlyingPrice: price, expiry: opt.lastTradeDateOrContractMonth, tradingClass: opt.tradingClass, ivr,
                 quotedAt: new Date().toISOString(), marketDataType: item.value.marketDataType })
+              symbolPuts.push(state.puts.at(-1))
               state.rows = selectSpreads(state.puts, today, filters)
               continue
             }
@@ -216,9 +225,14 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
           }
           ensureActive()
         }
+        if (mode === 'spreads') {
+          if (symbolPuts.length) await config.onSpreadSnapshot?.({ symbol, underlyingPrice: price, ivr, quotedAt: stockQuotedAt, puts: symbolPuts, chains, filters, coverage: state.coverage })
+          const count = state.rows.filter(row => row.symbol === symbol).length
+          assess(missing ? 'partial' : count ? 'match' : 'no-match', `${count} passende spreads; ${symbolPuts.length} putquotes; ${missing} contracten zonder volledige data.`)
+        }
         if (missing) state.warnings.push(`${symbol}: ${missing} contracten zonder volledige bied/laat/greeks; overgeslagen.`)
-      } catch (error) { ensureActive(); warn(symbol, error) }
-      finally { state.symbolsChecked++ }
+      } catch (error) { ensureActive(); warn(symbol, error); if (mode === 'spreads') assess('missing', error.message) }
+      finally { state.symbolsChecked++; if (mode === 'spreads' && spreadAssessment) { state.assessments ??= []; state.assessments.push(spreadAssessment) } }
     }
 
     if (mode === 'iv' && !config.ivUseBrokerScanner) {

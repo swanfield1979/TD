@@ -1,5 +1,9 @@
 # Releases
 
+## Trading Monitor 0.33.0 — broncode-update
+
+Breed Amerikaans universum voor Put spreads, voorselectie vóór chainaanvragen, persistente ruwe optiecache en stoppen/hervatten. Geen nieuw installatiepakket; [updatehandleiding](../docs/put-spreads.md#installatie-en-serverupdate). Serverinstallatie nog niet uitgevoerd.
+
 ## Trading Monitor 0.32.0 — lokaal voorbereid
 
 Bull-put-spreadscanner in de bestaande app, met frontend, Node-API en LAN-proxy. Er is geen nieuw installatiepakket beschikbaar; tijdelijke build staat in `source/dist/`. [Handleiding en serverupdate](../docs/put-spreads.md). Nog niet op de server geïnstalleerd; geen nieuwe controlesom voor een distributiepakket.

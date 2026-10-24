@@ -2,7 +2,7 @@
 
 Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voortgang op basis van Interactive Brokers Flex-rapporten.
 
-**Versie/status:** 0.32.0. Bull-put-spreadscanner toegevoegd aan de bestaande Trading Monitor, met IBKR-quotes, instelbare criteria, sortering, CSV en opgeslagen scanresultaten. Lokale tests en productiebuild geslaagd; echte brokerdata voor deze uitbreiding en serverinstallatie nog niet geverifieerd.
+**Versie/status:** 0.33.0. Put-spreadscanner gebruikt standaard het brede Amerikaanse aandelenuniversum, toetst koers/IV vóór de optiechain en hergebruikt opgeslagen chains bij gesloten markt. Voortgang, aandelenbeoordelingen en stoppen/hervatten toegevoegd. Lokale tests en productiebuild geslaagd; echte IBKR-proef en serverinstallatie voor deze uitbreiding nog niet geverifieerd.
 
 | Map | Inhoud |
 | --- | --- |

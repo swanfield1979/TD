@@ -1,16 +1,26 @@
 # Bull-put-spreadscanner
 
-Trading Monitor **0.32.0**, lokaal voorbereid op 24 oktober 2026. Open **Put spreads** in het menu of gebruik `/#put-spreads`. Deze uitbreiding blijft binnen de bestaande lokale app; geen nieuwe externe Site of publicatie.
+Trading Monitor **0.33.0**, bijgewerkt op 24 oktober 2026. Open **Put spreads** in het menu of gebruik `/#put-spreads`. Deze uitbreiding blijft binnen de bestaande lokale app.
 
 ## Gebruik
 
-1. Vul maximaal 50 USD-aandelentickers in, gescheiden door komma’s of spaties. Met **IV-resultaten overnemen** neem je maximaal de eerste 50 unieke tickers uit de opgeslagen IV Scan over; de optiequotes worden opnieuw opgehaald na de scanstart.
-2. Stel de criteria links in. Standaard: 80–100 kalenderdagen, IV-rank minimaal 20, short-strike minstens 25% onder de koers, maximale winst minimaal $50, maximaal verlies hoogstens $1.000, OTM-proxy minimaal 70% en bied-laatverschil per put hoogstens $1 per aandeel. Dit zijn aanpasbare startwaarden naar het voorbeeld, geen strategieadvies.
+1. Standaard staat **Alle Amerikaanse aandelen** geselecteerd: alle gewone aandelen en ADR’s uit de officiële Nasdaq- en overige Amerikaanse beurslijsten, zonder 50-aandelenlimiet. Alle noteringen worden beoordeeld; optiegeschiktheid wordt via IBKR vastgesteld. Het universum bevat ook namen zonder bruikbare optiedata. Geen wereldwijde dekking, ETF’s, preferente aandelen of warrants. Optioneel kun je **Eigen tickers** kiezen (maximaal 50 USD-tickers). **IV-resultaten overnemen** kiest die eigen modus met maximaal 50 tickers.
+2. Stel de criteria links in. Koers standaard $0–$100.000, 80–100 kalenderdagen, IV-rank minimaal 20, short-strike minstens 25% onder de koers, maximale winst minimaal $50, maximaal verlies hoogstens $1.000, OTM-proxy minimaal 70% en bied-laatverschil per put hoogstens $1 per aandeel. Dit zijn aanpasbare startwaarden naar het voorbeeld, geen strategieadvies.
 3. Klik **Scan starten**. Er wordt één quote tegelijk opgehaald met de bestaande IBKR-pacing en IV-historiecache. IV-rank vereist voldoende recente jaarhistorie. De scan kan lang duren; **Scan stoppen** behoudt reeds gevonden resultaten. Er kan één optiescan tegelijk lopen.
 4. Zoek op ticker en sorteer op IV-rank, winst, verlies of rendement op risico. De tabel toont maximaal 50 spreads per pagina. Open een ticker voor beide bied-/laatprijzen, bronstatussen, ophaaltijden en handelsklasse. De brede tabel schuift binnen het resultatenpaneel.
 5. **CSV exporteren** exporteert alle zichtbare zoekresultaten, over alle pagina’s, inclusief quote-tijden en bronstatuscodes (1 live, 2 bevroren, 3 vertraagd, 4 vertraagd/bevroren). Bedragen in USD; punt als decimaalteken, puntkomma als kolomscheiding.
 
-Criteria en tickers worden na een geslaagde scanstart in de browser onthouden. De tabel vermeldt de werkelijk gebruikte scancriteria; wijzigingen links worden pas bij een nieuwe scan toegepast. De server bewaart resultaten en scancriteria in het bestaande private scanbestand. Na een serverherstart wordt een actieve scan als onderbroken hersteld; de uitbreiding hervat niet automatisch. Eerdere resultaten na een mislukte of gestopte nieuwe scan behouden hun eigen criteria en quote-tijden.
+Criteria, universumkeuze en tickers worden na een geslaagde scanstart in de browser onthouden. De tabel vermeldt de werkelijk gebruikte scancriteria; wijzigingen links worden pas bij een nieuwe scan toegepast. De server bewaart resultaten, aandelenbeoordelingen, universum en cursor in het bestaande private scanbestand. Na een serverherstart wordt een actieve scan als onderbroken hersteld. **Scan hervatten** gaat met dezelfde filters en hetzelfde universum verder na het laatst volledig beoordeelde aandeel; bij een onderbreking tijdens een aandeel wordt dat aandeel opnieuw bekeken. Bij gewijzigde criteria kies je **Scan starten**. Oude resultaten worden bij hervatten op actuele resterende dagen gecontroleerd.
+
+## Voorselectie en oude chains
+
+De koers wordt eerst gecontroleerd: buiten de grenzen worden IV-historie en chain niet opgehaald. Daarna wordt IV-rank getoetst; bij een te lage IV-rank wordt geen chain aangevraagd. Looptijd en buffer beperken vervolgens de contractselectie. Premie, risico, bied-laatverschil en delta zijn pas met optiegegevens toetsbaar. In **Aandelenbeoordeling** zie je de laatste 50 beoordelingen en per aandeel de reden voor overslaan, ontbrekende data of geen passende spread. Het tickerzoekveld doorzoekt ook die beoordelingen.
+
+Een brede eerste run kan vele uren duren door IBKR-pacing en IV-historie. De scan loopt door het volledige geladen universum; voortgang toont hoeveel namen daadwerkelijk zijn gecontroleerd. De bronlijst wordt lokaal bewaard en bij bronuitval met datum hergebruikt. De bronnen zijn [Nasdaq-noteringen](https://www.nasdaqtrader.com/dynamic/SymDir/nasdaqlisted.txt) en [overige Amerikaanse noteringen](https://www.nasdaqtrader.com/dynamic/SymDir/otherlisted.txt).
+
+Na een geslaagde chainbeoordeling bewaart de server de ruwe opgevraagde putquotes, chainmetadata, koers, IV-rank en selectiecriteria per aandeel. Het gaat om de geselecteerde contracten, niet alle contracten van de volledige chain. Bij gesloten reguliere optiemarkt wordt deze opgeslagen selectie opnieuw met je huidige filters beoordeeld, zonder brokerverzoeken voor dat aandeel. De oude koers/IV-rank en beide originele ophaaltijden blijven behouden. Cachelabels staan bij de spread en in CSV. Resterende dagen worden opnieuw berekend; verlopen puts tellen niet mee. Een ruimere looptijd of lagere buffer dan de opgeslagen selectie geeft een melding van onvolledige dekking.
+
+Zonder lokale chain probeert de scanner de bestaande bevroren/vertraagde IBKR-data. Bij een ontbrekende brokerverbinding worden andere aandelen met cache wel beoordeeld; ontbrekende chains krijgen de status **Data ontbreekt**. Tijdens een open markt worden brokerquotes opnieuw geprobeerd, met terugval op cache bij data-uitval. Zonder eerder opgehaalde of via IBKR beschikbare quotes kan geen oude chain worden verzonnen. De eerste cache moet dus worden opgebouwd. Weekenden, NYSE-feestdagen en verkorte handelsdagen gebruiken de bestaande sessiekalender; pre-/post-market telt als gesloten voor deze optiescan. De kalender is gevuld voor 2026–2028.
 
 ## Berekeningen en beperkingen
 
@@ -30,13 +40,14 @@ Voorbeeld: verkoop de 75-put met bied $1,20 en koop de 65-put met laat $0,60. Cr
 
 De delta-proxy is geen exacte kans op maximale winst, winst of maximaal verlies. De scanner toont geen externe Samurai-scores of totaal optievolume: die zijn niet beschikbaar in deze datastroom. Quotes worden na elkaar opgehaald, mogelijk vertraagd/bevroren, en vormen geen gegarandeerd uitvoerbare combinatieprijs.
 
-De scan gebruikt het opgegeven universum, geen automatische volledige markt. Per ticker, expiratie en handelsklasse worden maximaal de 32 hoogste strikes onder de gekozen buffergrens gecontroleerd, binnen de opgegeven looptijd. Beide legs komen uit deze selectie. Er kunnen betere spreads buiten deze selectie bestaan. Ontbrekende brokerdata wordt gemeld; de app vult deze niet met voorbeeldkoersen aan.
+De scan gebruikt standaard het brede Amerikaanse aandelenuniversum. Per passend aandeel, expiratie en handelsklasse worden maximaal de 32 hoogste strikes onder de gekozen buffergrens gecontroleerd, binnen de opgegeven looptijd. Beide legs komen uit deze selectie. Er kunnen betere spreads buiten deze selectie bestaan. Ontbrekende brokerdata wordt gemeld; de app vult deze niet met voorbeeldkoersen aan. Ophaaltijden beschrijven wanneer de app de brokerdata ontving, niet een gegarandeerde beursquotetijd.
 
 ## Architectuur
 
 - `source/shared/put-spread.mjs`: filtervalidatie, putparen en financiële berekeningen; gedeelde TypeScript-declaraties ernaast.
 - `source/server/csp-scanner.mjs`: aanvullende modus `spreads`, bestaande read-only IBKR-verbinding, pacing en cleanup.
-- `GET /api/put-spreads`: status/resultaten. `POST /api/put-spreads`: `{ symbols: string[], filters: {...} }`. `POST /api/put-spreads/stop`: annuleren. Bestaande origin- en aanvraagheadercontrole geldt.
+- `source/server/spread-scan.mjs`: breed universum, voorselectieresultaten, cachekeuze, voortgang en cursor. `spread-cache.mjs`: per-aandeel atomaire JSON-opslag met gatewaycontrole, standaard in `put-spread-cache/` naast de private IBKR-snapshot. Deze map staat buiten de publieke webroot. Geen extra dependencies.
+- `GET /api/put-spreads`: status/resultaten. `POST /api/put-spreads`: `{ universeMode: "us" | "custom", symbols?: string[], filters: {...}, resume?: boolean }`; standaard brede modus zonder tickers, eigen modus maximaal 50. `POST /api/put-spreads/stop`: annuleren. Bestaande origin- en aanvraagheadercontrole geldt.
 - `source/server/scan-store.mjs`: opslag en herstel via dezelfde atomaire scanopslag. Oudere bestanden zonder spreads blijven geldig.
 - `source/backend/app/main.py`: LAN-proxy naar Node voor `put-spreads` en `put-spreads/stop`.
 - `source/src/pages/PutSpreadPage.tsx`: geïntegreerde pagina met bestaande donkere/lichte thema’s; geen nieuwe afhankelijkheden.
@@ -55,8 +66,8 @@ npm run dev:lan
 
 Gebruik de bestaande IB Gateway-configuratie en datarechten; zie [IBKR](IBKR.md). Zonder bereikbare API/broker zijn geen actuele scanresultaten te verifiëren. Lokale frontend apart: `npm run dev -- --host 127.0.0.1 --port 5197`; Node-API apart: `npm run start:api`. Zorg dat die frontend-origin toegestaan is voor de Node-API. De gebruikelijke LAN-launcher regelt dit voor zijn eigen origin.
 
-Serverupdate vereist frontend (`dist/`), Node (`server/`, `shared/`) én de bijgewerkte Python-LAN-proxy. Het bestaande script `bash deploy/update-options.sh` controleert nu versie 0.32.0, bouwt/test, publiceert en herstart de bestaande services. Gebruik dat pas op de bedoelde server na beschikbaar maken van deze bronwijzigingen; in deze taak is geen push of serverinstallatie uitgevoerd. Het script voert een aanvullende GET-controle op `/api/put-spreads` uit. Volg de [bestaande installatiehandleiding](installatie.md) voor een nieuwe installatie.
+Serverupdate vereist frontend (`dist/`), Node (`server/`, `shared/`) en de bestaande bijgewerkte Python-LAN-proxy. Het bestaande script `bash deploy/update-options.sh` controleert nu versie 0.33.0, bouwt/test, publiceert en herstart de bestaande services. Er is geen serverinstallatie vanuit deze ontwikkelomgeving uitgevoerd. Het script voert een aanvullende GET-controle op `/api/put-spreads` uit. Volg de [bestaande installatiehandleiding](installatie.md) voor een nieuwe installatie.
 
 ## Validatie
 
-Gericht: `node --test tests/put-spread.test.mjs tests/put-spread-api.test.mjs`. Browser met expliciete testquotes: start de frontend op poort 5197 en voer `npm run test:spreads` uit. Screenshots staan uitsluitend lokaal in de genegeerde map `source/data/private/spread-validation/`. Dit zijn testgegevens, geen echte gevonden handelsmogelijkheden. Zie [validatie](validatie.md) voor de uitgevoerde controles.
+Gericht: `node --test tests/put-spread.test.mjs tests/put-spread-api.test.mjs tests/spread-universe-cache.test.mjs`. Browser met expliciete testquotes: start de frontend op poort 5197 en voer `npm run test:spreads` uit. Screenshots staan uitsluitend lokaal in de genegeerde map `source/data/private/spread-validation/`. Dit zijn testgegevens, geen echte gevonden handelsmogelijkheden. Zie [validatie](validatie.md) voor de uitgevoerde controles.

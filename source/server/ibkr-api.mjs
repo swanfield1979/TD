@@ -11,6 +11,8 @@ import { normalizeShortlist } from '../shared/leaps-scan.mjs'
 import { createScanStore } from './scan-store.mjs'
 import { scanGuard } from './scan-guard.mjs'
 import { runIvSequence } from './iv-sequence.mjs'
+import { createSpreadCache } from './spread-cache.mjs'
+import { runSpreadScan } from './spread-scan.mjs'
 import { createMartinScan } from './martin-scan.mjs'
 
 const scanControllers = {}
@@ -167,6 +169,7 @@ const optionScans = {
   leaps: { state: 'idle', rows: [], warnings: [], assessments: [], symbolsChecked: 0, contractsChecked: 0 },
 }
 const scanResultsPath = resolve(process.env.SCAN_RESULTS_PATH || dirname(config.snapshotPath) + '/scan-results.json')
+const spreadCache = createSpreadCache(resolve(dirname(config.snapshotPath), 'put-spread-cache'), `${config.gatewayHost}:${config.gatewayPort}`)
 const scanStore = createScanStore(scanResultsPath, `${config.gatewayHost}:${config.gatewayPort}`)
 let scanStorageError = null
 try {
@@ -190,13 +193,13 @@ async function runOptionScan(mode, symbols, state, previous) {
   try {
     const signal = scanControllers[mode].signal
     const runBatch = () => runCspScan({ ...config, scanSignal: signal, ivContinueRound: mode === 'iv' && state.batchesCompleted > 0, onScanCheckpoint: saveScanResults }, symbols, state, undefined, mode)
-    if (mode === 'iv') await runIvSequence(state, { signal, runBatch, checkpoint: saveScanResults })
+    if (mode === 'spreads') await runSpreadScan({ ...config, scanSignal: signal }, state, { cache: spreadCache, checkpoint: saveScanResults })
+    else if (mode === 'iv') await runIvSequence(state, { signal, runBatch, checkpoint: saveScanResults })
     else await runBatch()
-    if (state.rows.length === 0 && ['error', 'cancelled'].includes(state.state) && previous.rows.length) {
+    if (mode !== 'spreads' && state.rows.length === 0 && ['error', 'cancelled'].includes(state.state) && previous.rows.length) {
       state.rows = previous.rows
       state.showingPreviousResults = true
       state.previousFinishedAt = previous.previousFinishedAt || previous.finishedAt || previous.savedAt
-      if (mode === 'spreads') { state.filters = previous.filters; state.symbols = previous.symbols; state.coverage = previous.coverage }
     }
   } finally { await saveScanResults() }
 }
@@ -280,18 +283,26 @@ const server = createServer(async (request, response) => {
           return sendJson(response, 409, { message: 'Er loopt al een optiescan. Wacht tot deze klaar is.' })
         if (mode === 'leaps' && (shortlistError || !shortlist.length)) return sendJson(response, 400, { message: shortlistError || 'Voeg eerst aandelen toe aan de shortlist.' })
         let symbols = mode === 'leaps' ? [...shortlist] : []
-        let filters
+        let filters, universeMode, resume = false
         if (mode === 'spreads') {
           try {
             const body = await readJsonBody(request)
-            symbols = normalizeShortlist(body.symbols)
-            if (!symbols.length) throw Error('Vul minstens één ticker in.')
+            universeMode = body.universeMode ?? (Array.isArray(body.symbols) && body.symbols.length ? 'custom' : 'us')
+            if (!['us', 'custom'].includes(universeMode)) throw Error('Ongeldig aandelenuniversum.')
+            symbols = universeMode === 'custom' ? normalizeShortlist(body.symbols) : []
+            if (universeMode === 'custom' && !symbols.length) throw Error('Vul minstens één ticker in voor een eigen lijst.')
             filters = spreadFilters(body.filters)
+            resume = body.resume === true
+            if (resume) {
+              const previous = optionScans.spreads
+              if (!previous.entries || previous.universeChecked >= previous.entries.length || JSON.stringify(spreadFilters(previous.filters)) !== JSON.stringify(filters) || previous.universeMode !== universeMode || (universeMode === 'custom' && JSON.stringify(previous.symbols) !== JSON.stringify(symbols)))
+                throw Error('Hervatten kan alleen met dezelfde criteria en hetzelfde universum van een onvoltooide scan.')
+            }
           } catch (error) { return sendJson(response, 400, { message: error.message }) }
         }
         if (mode === 'spreads' && (scanState.state === 'running' || Object.values(optionScans).some(scan => scan.state === 'running')))
           return sendJson(response, 409, { message: 'Er loopt al een optiescan. Wacht tot deze klaar is.' })
-        const state = { state: 'running', filters, rows: [], puts: [], portfolio: [], market: [], assessments: [], warnings: [], symbols,
+        const state = resume ? { ...optionScans.spreads, state: 'running', message: undefined, finishedAt: undefined } : { state: 'running', filters, universeMode, rows: [], puts: [], portfolio: [], market: [], assessments: [], warnings: [], symbols,
           symbolsChecked: 0, contractsChecked: 0, startedAt: new Date().toISOString(), progress: 'Verbinding met IBKR maken' }
         const previous = optionScans[mode]
         optionScans[mode] = state

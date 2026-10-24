@@ -45,7 +45,7 @@ test('spread rows, filters and quote timestamps survive restart; active scans be
 })
 test('broker scan pairs only matching puts, checkpoints, stays read-only and cancels data subscriptions', async () => {
   resetScanGuards()
-  let disconnected = false, maxActive = 0, checkpoints = 0
+  let disconnected = false, maxActive = 0, checkpoints = 0, chainCalls = 0, historyCalls = 0, saved
   const active = new Set()
   class Fake extends EventEmitter {
     connect() { queueMicrotask(() => this.emit(EventName.connected)) }
@@ -61,15 +61,27 @@ test('broker scan pairs only matching puts, checkpoints, stays read-only and can
     }
     cancelMktData(id) { active.delete(id) }
     reqHistoricalData(id) {
+      historyCalls++
       for (let i = 0; i < 365; i++) this.emit(EventName.historicalData, id, new Date(Date.parse(`${today}T00:00:00Z`) - i * 86400000).toISOString().slice(0, 10), 0, 0, 0, i === 0 ? .6 : .2)
       this.emit(EventName.historicalData, id, 'finished')
     }
     cancelHistoricalData() {}
-    reqSecDefOptParams(id) { this.emit(EventName.securityDefinitionOptionParameter, id, 'SMART', 1, 'TEST', '100', [expiry], [65, 75, 105]); this.emit(EventName.securityDefinitionOptionParameterEnd, id) }
+    reqSecDefOptParams(id) { chainCalls++; this.emit(EventName.securityDefinitionOptionParameter, id, 'SMART', 1, 'TEST', '100', [expiry], [65, 75, 105]); this.emit(EventName.securityDefinitionOptionParameterEnd, id) }
   }
   const state = { state: 'running', filters: spreadFilters(), rows: [], puts: [], warnings: [], symbolsChecked: 0, contractsChecked: 0 }
-  await runCspScan({ clientId: 77, scanPacer: { acquire: async () => {} }, onScanCheckpoint: async () => { checkpoints++ } }, ['TEST'], state, Fake, 'spreads')
+  await runCspScan({ clientId: 77, scanPacer: { acquire: async () => {} }, onSpreadSnapshot: async snapshot => { saved = snapshot }, onScanCheckpoint: async () => { checkpoints++ } }, ['TEST'], state, Fake, 'spreads')
   assert.equal(state.state, 'complete'); assert.equal(state.rows.length, 1); assert.equal(state.contractsChecked, 2)
   assert.equal(state.rows[0].maxLoss, 940); assert.equal(state.symbolsChecked, 1)
   assert.equal(disconnected, true); assert.equal(active.size, 0); assert.equal(maxActive, 1); assert.equal(checkpoints, 2)
+  assert.equal(saved.puts.length, 2); assert.equal(saved.chains.length, 1)
+  assert.equal(chainCalls, 1)
+  const before = historyCalls
+  for (const filters of [{ maxPrice: 100 }, { minIvr: 80 }]) {
+    resetScanGuards()
+    const filtered = { state: 'running', filters: spreadFilters(filters), rows: [], puts: [], warnings: [], symbolsChecked: 0, contractsChecked: 0 }
+    await runCspScan({ clientId: 77, scanPacer: { acquire: async () => {} } }, ['TEST'], filtered, Fake, 'spreads')
+    assert.equal(chainCalls, 1, 'No option-chain request for a rejected stock')
+    assert.equal(filtered.contractsChecked, 0); assert.equal(filtered.assessments[0].status, 'filtered')
+    if (filters.maxPrice) assert.equal(historyCalls, before, 'Price filter also skips IV history')
+  }
 })
