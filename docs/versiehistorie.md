@@ -1,5 +1,11 @@
 # Versiehistorie
 
+## 0.34.1 — alleen voortgang en passende spreads (24 oktober 2026)
+
+- Scanpagina beperkt tot instelbare criteria, bediening, aantal gescande aandelen, korte scanstatus en passende spreads. Afgewezen aandelen, redenen, bron-/cachetellingen, technische meldingen en uitlegpanelen verwijderd uit de pagina.
+- Backenddiagnostiek, filtering, opslag, pacing, pauze en hervatten blijven werken. Alleen noodzakelijke actie-/invoerfouten blijven zichtbaar.
+- Frontendtests, productiebuild en browserworkflow geslaagd; geen serverinstallatie uitgevoerd.
+
 ## 0.34.0 — optievolumevoorfilter (24 oktober 2026)
 
 - IBKR generic ticks 100/105 bij de aandelenquote: gemiddeld optievolume (tickSize 87) en dagvolume (call 29 + put 30), vóór IV-historie en optiechain. Geen extra verzoek per optiecontract voor deze aandelenstatistiek.

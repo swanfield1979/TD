@@ -2,7 +2,7 @@
 
 Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voortgang op basis van Interactive Brokers Flex-rapporten.
 
-**Versie/status:** 0.34.0. Put spreads heeft een voorfilter voor gemiddeld optievolume, apart laatst ontvangen dagvolume, gedateerde volumecache en expliciete onbekende waarden. Nieuw zoekprofiel: koers $5–$150, IVR 20, 40–100 DTE, buffer 25%, winst $15, verlies $1.000 en gemiddeld optievolume 5.000. Lokale tests/build/browsercontrole geslaagd; echte volumerechten en serverinstallatie nog niet geverifieerd.
+**Versie/status:** 0.34.1. Put spreads toont alleen een compacte scanteller/status en de passende spreads; afwijzingsredenen, aandelenbeoordelingen en technische scanmeldingen zijn uit de pagina verwijderd. Criteria en scanbeveiliging behouden. Build, frontendtests en browsercontrole geslaagd; serverinstallatie nog niet uitgevoerd.
 
 | Map | Inhoud |
 | --- | --- |

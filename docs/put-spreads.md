@@ -1,8 +1,10 @@
 # Bull-put-spreadscanner
 
-Trading Monitor **0.34.0**, bijgewerkt op 24 oktober 2026. Open **Put spreads** in het menu of gebruik `/#put-spreads`. Deze uitbreiding blijft binnen de bestaande lokale app.
+Trading Monitor **0.34.1**, bijgewerkt op 24 oktober 2026. Open **Put spreads** in het menu of gebruik `/#put-spreads`. Deze uitbreiding blijft binnen de bestaande lokale app.
 
 ## Gebruik
+
+Vanaf 0.34.1 toont de pagina alleen de criteria/bediening, het aantal gescande aandelen met korte status en de passende spreads. Afwijzingsredenen, per-aandeelbeoordelingen, technische meldingen en uitlegpanelen zijn niet zichtbaar. De diagnostiek wordt intern behouden voor opslag, beveiliging en hervatten. Onderstaande technische uitleg staat uitsluitend in deze handleiding.
 
 1. Standaard staat **Alle Amerikaanse aandelen** geselecteerd: alle gewone aandelen en ADR’s uit de officiële Nasdaq- en overige Amerikaanse beurslijsten, zonder 50-aandelenlimiet. Alle noteringen worden beoordeeld; optiegeschiktheid wordt via IBKR vastgesteld. Het universum bevat ook namen zonder bruikbare optiedata. Geen wereldwijde dekking, ETF’s, preferente aandelen of warrants. Optioneel kun je **Eigen tickers** kiezen (maximaal 50 USD-tickers). **IV-resultaten overnemen** kiest die eigen modus met maximaal 50 tickers.
 2. Stel de criteria links in. Standaard minimaal 5.000 gemiddeld verhandelde optiecontracten volgens IBKR, koers $5–$150, 40–100 kalenderdagen, IV-rank minimaal 20, short-strike minstens 25% onder de koers, maximale winst minimaal $15, maximaal verlies hoogstens $1.000, OTM-proxy minimaal 70% en bied-laatverschil per put hoogstens $1 per aandeel. Dit is een aanpasbaar zoekprofiel naar de opgegeven waarden, geen gevalideerd optimaal handelsprofiel. Nieuwe waarden gelden bij nieuwe browservoorkeuren of **Criteria herstellen**; bestaande eigen waarden blijven bewaard.
@@ -22,7 +24,7 @@ Beide dagvolumecomponenten moeten bekend zijn om een totaal te tonen; één ontb
 
 Beschikbare waarden worden onafhankelijk van een succesvolle chain in `volume-<hash>.json` in de private cache bewaard. Cachewaarden ouder dan zeven kalenderdagen of met een toekomstige/ontbrekende ophaaltijd gelden als onbekend. De bronophaaltijd schuift bij hergebruik niet mee. Op een nieuwe open handelsdag wordt een nieuwe volumewaarde geprobeerd; bij uitval kan een nog geldige cachewaarde worden gebruikt, zichtbaar met de oorspronkelijke datum. Ook cached chains moeten aan het actieve volumefilter voldoen. Legacy chains zonder volume worden dus niet automatisch goedgekeurd. Onbekend volume geeft **Data ontbreekt**; vijf opeenvolgende vereiste IV-/volumefouten pauzeren de job. Verzamel eerst beschikbare gegevens tijdens beursuren, of zet het minimum bewust op 0 en start een nieuwe scan. Geen claims dat een nulinstelling de liquiditeit bevestigt.
 
-Na het volumefilter wordt de koers gecontroleerd: buiten de grenzen worden IV-historie en chain niet opgehaald. Daarna wordt IV-rank getoetst; bij een te lage IV-rank wordt geen chain aangevraagd. Looptijd en buffer beperken vervolgens de contractselectie. Premie, risico, bied-laatverschil en delta zijn pas met optiegegevens toetsbaar. In **Aandelenbeoordeling** zie je de laatste 50 beoordelingen en per aandeel de reden voor overslaan, ontbrekende data of geen passende spread. Het tickerzoekveld doorzoekt ook die beoordelingen.
+Na het volumefilter wordt de koers gecontroleerd: buiten de grenzen worden IV-historie en chain niet opgehaald. Daarna wordt IV-rank getoetst; bij een te lage IV-rank wordt geen chain aangevraagd. Looptijd en buffer beperken vervolgens de contractselectie. Premie, risico, bied-laatverschil en delta zijn pas met optiegegevens toetsbaar. De afzonderlijke aandelenbeoordelingen worden intern bewaard, maar staan niet op de pagina. Het tickerzoekveld doorzoekt alleen de passende spreads.
 
 Bij de opgegeven grenswaarden is $15 maximale winst tegenover $1.000 maximaal verlies slechts 1,5% bruto op risico; dit is geen verwacht rendement en kosten zijn niet inbegrepen. De 25%-buffer kan veel puts met lage premie opleveren, zeker dichter bij 40 DTE. Een bied-laatgrens van $1 per aandeel is relatief ruim bij goedkope opties. Dit zoekprofiel is dus breed op IV/premie, maar streng op afstand tot de aandelenkoers. Bekijk bij concrete resultaten ook rendement op risico en beide bied-/laatprijzen; de filters betekenen niet dat een gevonden spread aantrekkelijk of uitvoerbaar is.
 
@@ -99,7 +101,7 @@ npm run dev:lan
 
 Gebruik de bestaande IB Gateway-configuratie en datarechten; zie [IBKR](IBKR.md). Zonder bereikbare API/broker zijn geen actuele scanresultaten te verifiëren. Lokale frontend apart: `npm run dev -- --host 127.0.0.1 --port 5197`; Node-API apart: `npm run start:api`. Zorg dat die frontend-origin toegestaan is voor de Node-API. De gebruikelijke LAN-launcher regelt dit voor zijn eigen origin.
 
-Serverupdate vereist frontend (`dist/`), Node (`server/`, `shared/`) en de bestaande bijgewerkte Python-LAN-proxy. Het bestaande script `bash deploy/update-options.sh` controleert nu versie 0.34.0, bouwt/test, publiceert en herstart de bestaande services. Er is geen serverinstallatie vanuit deze ontwikkelomgeving uitgevoerd. Het script voert een aanvullende GET-controle op `/api/put-spreads` uit. Volg de [bestaande installatiehandleiding](installatie.md) voor een nieuwe installatie.
+Serverupdate vereist frontend (`dist/`), Node (`server/`, `shared/`) en de bestaande bijgewerkte Python-LAN-proxy. Het bestaande script `bash deploy/update-options.sh` controleert nu versie 0.34.1, bouwt/test, publiceert en herstart de bestaande services. Er is geen serverinstallatie vanuit deze ontwikkelomgeving uitgevoerd. Het script voert een aanvullende GET-controle op `/api/put-spreads` uit. Volg de [bestaande installatiehandleiding](installatie.md) voor een nieuwe installatie.
 
 ## Validatie
 

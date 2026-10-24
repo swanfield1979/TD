@@ -1,5 +1,11 @@
 # Validatie
 
+## Trading Monitor 0.34.1 — rustige scanweergave (24 oktober 2026)
+
+- `npm run test:frontend`: 13 geslaagd; TypeScript/Vite-build geslaagd. Geen wijziging aan berekeningen, API of scanbeveiliging.
+- Bestaande browserworkflow bijgewerkt en geslaagd: scanteller zichtbaar; meegeleverde afwijzing, beoordelingsregio en individuele waarschuwing ontbreken in de pagina. Pauze toont alleen een korte status, zonder technische reden. Passende spreads, CSV, start/stop/hervatten, voorkeuren, paginering, 360–1600px, licht/donker, toetsenbord en 200% zoom blijven werken. Geen browserruntimefouten.
+- Screenshots blijven lokaal in de private validatiemap. Geen serverinstallatie uitgevoerd.
+
 ## Trading Monitor 0.34.0 — optievolume en standaardcriteria (24 oktober 2026)
 
 - Werkmap: **172 Node-tests** geslaagd (inclusief bestaande lokale referentietests), **13 frontendtests** en TypeScript/Vite-build geslaagd. Geen nieuwe dependencies.

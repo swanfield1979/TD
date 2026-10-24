@@ -1,5 +1,9 @@
 # Releases
 
+## Trading Monitor 0.34.1 — rustige scanweergave
+
+Compacte scanteller/status en alleen passende spreads. Afwijzingsredenen, per-aandeelbeoordelingen en technische scanmeldingen worden niet meer getoond. Criteria en scanbeveiliging behouden. Geen nieuw installatiepakket; [serverupdate](../docs/put-spreads.md#installatie-en-serverupdate). Serverinstallatie niet uitgevoerd.
+
 ## Trading Monitor 0.34.0 — optievolume en zoekprofiel
 
 Gemiddeld optievolume als voorfilter, laatst ontvangen dagvolume apart, bronophaaltijden, private volumecache en onbekende waarden zonder nulvervanging. Nieuwe standaardcriteria volgens het opgegeven zoekprofiel. Geen nieuw installatiepakket; [serverupdate](../docs/put-spreads.md#installatie-en-serverupdate). Geen serverinstallatie uitgevoerd.
