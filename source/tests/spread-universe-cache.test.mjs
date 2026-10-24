@@ -11,7 +11,7 @@ const open = () => new Date('2026-10-23T14:00:00Z')
 const state = () => ({ state: 'running', universeMode: 'us', symbols: [], filters: spreadFilters(), rows: [], warnings: [], symbolsChecked: 0, contractsChecked: 0 })
 const snapshot = (symbol, ivr = 50) => {
   const short = { symbol, expiry: '20270122', tradingClass: symbol, right: 'P', currency: 'USD', multiplier: 100, strike: 75, bid: 1.2, ask: 1.4, delta: -.12, underlyingPrice: 110, ivr, marketDataType: 2, quotedAt: '2026-10-23T19:55:00Z' }
-  return { symbol, ivr, underlyingPrice: 110, quotedAt: short.quotedAt, filters: spreadFilters(), puts: [short, { ...short, strike: 65, bid: .5, ask: .6, delta: -.08 }] }
+  return { symbol, ivr, avgOptionVolume: 10000, avgOptionVolumeAt: short.quotedAt, underlyingPrice: 110, quotedAt: short.quotedAt, filters: spreadFilters(), puts: [short, { ...short, strike: 65, bid: .5, ask: .6, delta: -.08 }] }
 }
 test('option session excludes weekends, premarket, exact close, holidays and early closes', () => {
   assert.equal(optionsSession(closed()).open, false)

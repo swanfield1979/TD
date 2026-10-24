@@ -7,7 +7,7 @@ const page = await browser.newPage({ viewport: { width: 1600, height: 1100 } })
 const errors = []; page.on('pageerror', error => errors.push(error.message))
 const today = '2026-10-24'
 const short = { symbol: 'HOOD', expiry: '20270122', tradingClass: 'HOOD', right: 'P', currency: 'USD', multiplier: 100, strike: 75, bid: 1.2, ask: 1.4, delta: -.12, underlyingPrice: 110, ivr: 45, marketDataType: 3, quotedAt: '2026-10-24T10:00:00Z' }
-const row = { ...bullPutSpread(short, { ...short, strike: 65, bid: .5, ask: .6, delta: -.08 }, today), ivSource: 'historical-close', ivAsOf: '2026-10-23' }
+const row = { ...bullPutSpread(short, { ...short, strike: 65, bid: .5, ask: .6, delta: -.08 }, today), ivSource: 'historical-close', ivAsOf: '2026-10-23', avgOptionVolume: 10000, avgOptionVolumeAt: '2026-10-23T19:55:00Z', dayOptionVolume: 12000, dayOptionVolumeAt: '2026-10-23T19:55:00Z' }
 let scan = { state: 'idle', rows: [], warnings: [], symbolsChecked: 0, contractsChecked: 0 }
 let failure = false, running = false, posts = 0, resumePosted = false
 await page.route('**/api/**', async route => {
@@ -19,7 +19,8 @@ await page.route('**/api/**', async route => {
       const input = req.postDataJSON()
       if (input.resume) resumePosted = true
       assert.deepEqual(input.symbols, input.universeMode === 'us' ? [] : ['HOOD', 'AMD'])
-      assert.equal(input.filters.minDte, 80)
+      assert.equal(input.filters.minDte, 40)
+      assert.equal(input.filters.minAvgOptionVolume, 5000)
       if (failure) { status = 503; body = { message: 'Test: broker niet beschikbaar.' } }
       else scan = { state: running ? 'running' : 'partial', progress: 'Put spreads · HOOD', universeMode: input.universeMode, universeCount: 75, universeChecked: 2, remainingSymbols: 73, cacheHits: 1, chainsSkipped: 1, marketOpen: false, assessments: [{ symbol: 'LOW', status: 'filtered', reason: 'IV-rank te laag; optiechain overgeslagen.', source: 'cache', asOf: '2026-10-23T19:55:00Z' }], filters: spreadFilters(input.filters), rows: running ? [] : [{ ...row, cached: true }, { ...row, id: 'AMD:1', symbol: 'AMD', maxLoss: 500, returnOnRisk: 12 }], symbols: input.symbols, warnings: ['TEST: ontbrekende optiedata; overgeslagen.'], symbolsChecked: 2, contractsChecked: 4, finishedAt: running ? undefined : '2026-10-24T10:01:00Z' }
     }
@@ -45,6 +46,8 @@ try {
   await page.locator('.spreads-table tbody tr').first().waitFor()
   await page.getByText('Dag-IV 2026-10-23', { exact: true }).first().waitFor()
   assert.equal(await page.locator('.spreads-table tbody tr').count(), 2)
+  await page.getByRole('columnheader', { name: 'Gem. optievolume', exact: true }).waitFor()
+  await page.getByRole('columnheader', { name: 'Laatste dagvolume', exact: true }).waitFor()
   assert.match(await page.locator('.spreads-table tbody tr').first().innerText(), /AMD/)
   await page.getByLabel('Sorteren op', { exact: true }).selectOption('maxLoss')
   assert.match(await page.locator('.spreads-table tbody tr').first().innerText(), /HOOD/)

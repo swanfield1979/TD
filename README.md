@@ -2,7 +2,7 @@
 
 Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voortgang op basis van Interactive Brokers Flex-rapporten.
 
-**Versie/status:** 0.33.1. Put-spreadscanner gebruikt één hergebruikte scanverbinding, persistente IV-historie, gedateerde dag-IV als actuele IV ontbreekt en automatische pauze bij vijf opeenvolgende IV-fouten. Breed universum en chaincache blijven beschikbaar. Lokale tests, build en browsercontrole geslaagd; datarechten en echte IBKR-scan op de server nog niet geverifieerd.
+**Versie/status:** 0.34.0. Put spreads heeft een voorfilter voor gemiddeld optievolume, apart laatst ontvangen dagvolume, gedateerde volumecache en expliciete onbekende waarden. Nieuw zoekprofiel: koers $5–$150, IVR 20, 40–100 DTE, buffer 25%, winst $15, verlies $1.000 en gemiddeld optievolume 5.000. Lokale tests/build/browsercontrole geslaagd; echte volumerechten en serverinstallatie nog niet geverifieerd.
 
 | Map | Inhoud |
 | --- | --- |

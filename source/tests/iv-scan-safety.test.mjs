@@ -11,7 +11,7 @@ import { scanDate } from '../shared/csp-scan.mjs'
 import { resetScanGuards } from '../server/scan-guard.mjs'
 const today = scanDate()
 const bars = Array.from({ length: 366 }, (_, i) => ({ date: new Date(Date.parse(`${today}T00:00:00Z`) - i * 86400000).toISOString().slice(0, 10), close: i === 0 ? .4 : i === 1 ? .35 : i === 2 ? .6 : .2 }))
-const report = () => ({ state: 'running', universeMode: 'custom', symbols: [], filters: spreadFilters(), rows: [], puts: [], assessments: [], warnings: [], symbolsChecked: 0, contractsChecked: 0 })
+const report = () => ({ state: 'running', universeMode: 'custom', symbols: [], filters: spreadFilters({ minAvgOptionVolume: 0 }), rows: [], puts: [], assessments: [], warnings: [], symbolsChecked: 0, contractsChecked: 0 })
 test('historical IV fallback requires recent, genuine year history and identifies its date', () => {
   assert.equal(ivReference(undefined, bars, today).source, 'historical-close')
   assert.equal(ivReference(undefined, bars, today).asOf, today)

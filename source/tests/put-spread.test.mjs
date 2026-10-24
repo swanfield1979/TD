@@ -56,6 +56,7 @@ test('broker scan pairs only matching puts, checkpoints, stays read-only and can
       active.add(id); maxActive = Math.max(maxActive, active.size)
       const stock = contract.secType === 'STK', q = contract.strike === 75 ? short : long
       this.emit(EventName.tickPrice, id, 1, stock ? 110 : q.bid); this.emit(EventName.tickPrice, id, 2, stock ? 110.1 : q.ask)
+      if (stock) { this.emit(EventName.tickSize, id, 87, 10000); this.emit(EventName.tickSize, id, 29, 400); this.emit(EventName.tickSize, id, 30, 600) }
       if (stock) this.emit(EventName.tickGeneric, id, 24, .4)
       else this.emit(EventName.tickOptionComputation, id, 13, 0, .4, q.delta, 0, 0, 0, 0, 0, 110)
     }

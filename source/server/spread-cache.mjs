@@ -5,6 +5,19 @@ import { createHash } from 'node:crypto'
 export function createSpreadCache(directory, gateway) {
   const file = symbol => join(directory, createHash('sha256').update(symbol).digest('hex') + '.json')
   return {
+    async getLiquidity(symbol) {
+      try {
+        const data = JSON.parse(await readFile(join(directory, 'volume-' + createHash('sha256').update(symbol).digest('hex') + '.json'), 'utf8'))
+        if (data.gateway !== gateway || data.symbol !== symbol) throw Error('Ongeldige optievolumecache.')
+        return data
+      } catch (error) { if (error.code === 'ENOENT') return null; throw error }
+    },
+    async saveLiquidity(symbol, snapshot) {
+      await mkdir(directory, { recursive: true })
+      const path = join(directory, 'volume-' + createHash('sha256').update(symbol).digest('hex') + '.json')
+      await writeFile(path + '.tmp', JSON.stringify({ ...snapshot, symbol, gateway }), { mode: 0o600 })
+      await rename(path + '.tmp', path)
+    },
     async getIv(symbol) {
       try {
         const data = JSON.parse(await readFile(join(directory, 'iv-' + createHash('sha256').update(symbol).digest('hex') + '.json'), 'utf8'))

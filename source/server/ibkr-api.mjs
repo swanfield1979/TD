@@ -295,6 +295,7 @@ const server = createServer(async (request, response) => {
             resume = body.resume === true
             if (resume) {
               const previous = optionScans.spreads
+              if (filters.minAvgOptionVolume > 0 && previous.filters?.minAvgOptionVolume === undefined) throw Error('Start een nieuwe scan om het nieuwe volumefilter ook op eerdere aandelen toe te passen.')
               if (!previous.entries || previous.universeChecked >= previous.entries.length && !Number.isInteger(previous.retryFrom) || JSON.stringify(spreadFilters(previous.filters)) !== JSON.stringify(filters) || previous.universeMode !== universeMode || (universeMode === 'custom' && JSON.stringify(previous.symbols) !== JSON.stringify(symbols)))
                 throw Error('Hervatten kan alleen met dezelfde criteria en hetzelfde universum van een onvoltooide scan.')
             }

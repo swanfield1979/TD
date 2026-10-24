@@ -6,6 +6,7 @@ import { ivMetrics, leapPut, compareLeaps } from '../shared/leaps-scan.mjs'
 import { scanGuard, pacingError, disabledScanner } from './scan-guard.mjs'
 import { loadIvUniverse, SP500_URL } from './iv-universe.mjs'
 import { ivReference } from '../shared/iv-reference.mjs'
+import { volumeSnapshot, volumeGate } from '../shared/option-volume.mjs'
 export { SP500_URL } from './iv-universe.mjs'
 
 
@@ -54,7 +55,10 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
   const maybeCompleteQuote = (id) => queueMicrotask(() => {
     const task = pending.get(id)
     if (!task?.contract) return
-    if (completeQuote(task.contract, task.quote) && (task.generic !== '106' || Number.isFinite(task.quote.iv) && task.quote.iv > 0 && task.quote.iv < 10)) task.finish()
+    const hasIv = !task.generic.split(',').includes('106') || Number.isFinite(task.quote.iv) && task.quote.iv > 0 && task.quote.iv < 10
+    const hasVolume = !task.generic.split(',').includes('105') || Number.isFinite(task.quote.avgOptionVolume)
+    const hasDaily = !task.generic.split(',').includes('100') || Number.isFinite(task.quote.callOptionVolume) && Number.isFinite(task.quote.putOptionVolume)
+    if (completeQuote(task.contract, task.quote) && hasIv && hasVolume && hasDaily) task.finish()
   })
   ib.on(EventName.error, (error, code, id) => {
     if ([2104, 2106, 2107, 2108, 2158, 2176, 10167, 10090].includes(code)) return
@@ -90,6 +94,11 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
     if (type === 24 && pending.has(id)) pending.get(id).quote.iv = value
     maybeCompleteQuote(id)
   })
+  ib.on(EventName.tickSize, (id, type, value) => {
+    if (!pending.has(id) || !Number.isFinite(value) || value < 0) return
+    const field = ({ 29: 'callOptionVolume', 30: 'putOptionVolume', 87: 'avgOptionVolume' })[type]
+    if (field) { pending.get(id).quote[field] = value; maybeCompleteQuote(id) }
+  })
   ib.on(EventName.tickOptionComputation, (id, type, attributes, iv, delta, price, dividend, gamma, vega, theta, underlyingPrice) => {
     if ([13, 83].includes(type) && pending.has(id)) Object.assign(pending.get(id).quote, { delta, underlyingPrice, vega, theta })
     maybeCompleteQuote(id)
@@ -105,7 +114,7 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
   async function availableQuote(contract, generic = '') {
     let lastQuote = {}, lastError
     const types = mode === 'spreads' && contract.secType === 'STK'
-      ? [config.marketClosed ? MarketDataType.DELAYED_FROZEN : MarketDataType.DELAYED]
+      ? [generic.split(',').includes('105') ? MarketDataType.REALTIME : config.marketClosed ? MarketDataType.DELAYED_FROZEN : MarketDataType.DELAYED]
       : [MarketDataType.DELAYED, MarketDataType.FROZEN, MarketDataType.DELAYED_FROZEN]
     for (const type of types) {
       try {
@@ -113,7 +122,7 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
         lastQuote = await quote(contract, generic)
         // Data type is supplied by IBKR; never label an unspecified quote as live.
         lastQuote.marketDataType ??= type
-        if (completeQuote(contract, lastQuote) && (mode === 'spreads' && contract.secType === 'STK' || generic !== '106' || Number.isFinite(lastQuote.iv) && lastQuote.iv > 0 && lastQuote.iv < 10)) return lastQuote
+        if (completeQuote(contract, lastQuote) && (mode === 'spreads' && contract.secType === 'STK' || !generic.split(',').includes('106') || Number.isFinite(lastQuote.iv) && lastQuote.iv > 0 && lastQuote.iv < 10)) return lastQuote
       } catch (error) { ensureActive(); lastError = error }
     }
     if (lastError && !Object.keys(lastQuote).length) throw lastError
@@ -140,11 +149,23 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
         const details = suppliedContract ? [{ contract: suppliedContract }] : await request((id) => ib.reqContractDetails(id, { symbol, secType: 'STK', exchange: 'SMART', currency: 'USD' }), 'contractDetailsEnd')
         if (details.length !== 1) throw new Error('Geen eenduidig USD-aandelencontract gevonden.')
         const contract = { ...details[0].contract, exchange: 'SMART' }
-        const stock = await availableQuote(contract, '106')
+        const cachedVolume = mode === 'spreads' ? await config.getSpreadLiquidity?.(symbol) : null
+        const hasCachedVolume = volumeGate(volumeSnapshot({}, cachedVolume), filters?.minAvgOptionVolume ?? 0) !== 'unknown'
+          && (config.marketClosed || cachedVolume?.avgOptionVolumeAt && scanDate(new Date(cachedVolume.avgOptionVolumeAt)) === today || filters?.minAvgOptionVolume === 0)
+        const generic = mode === 'spreads' && filters.minAvgOptionVolume > 0 && !hasCachedVolume ? '100,105,106' : '106'
+        const stock = await availableQuote(contract, generic).catch(error => { if (generic.includes('105')) error.code = 'VOLUME_UNAVAILABLE'; throw error })
         const stockQuotedAt = new Date().toISOString()
+        const liquidity = mode === 'spreads' ? volumeSnapshot(stock, cachedVolume) : {}
         const price = stock.last > 0 ? stock.last : stock.bid > 0 && stock.ask >= stock.bid ? (stock.bid + stock.ask) / 2 : mode === 'spreads' && stock.close > 0 ? stock.close : null
+        if (mode === 'spreads') {
+          state.liquidity = { symbol, ...liquidity }
+          if (liquidity.avgOptionVolume !== undefined || liquidity.dayOptionVolume !== undefined) await config.saveSpreadLiquidity?.(symbol, liquidity)
+          if (price && (price < filters.minPrice || price > filters.maxPrice)) { assess('filtered', `Koers $${price.toFixed(2)} buiten ${filters.minPrice}–${filters.maxPrice}; IV-historie en optiechain overgeslagen.`); return }
+          const gate = volumeGate(liquidity, filters.minAvgOptionVolume)
+          if (gate === 'unknown') throw Object.assign(new Error('Gemiddeld optievolume onbekend; IV-historie en optiechain overgeslagen. Vereist beschikbare live generieke marktdata of recente volumecache. Zet het volumeminimum op 0 om dit filter bewust uit te schakelen.'), { code: 'VOLUME_UNAVAILABLE' })
+          if (gate === 'below') { assess('filtered', `Gemiddeld optievolume ${liquidity.avgOptionVolume} lager dan ${filters.minAvgOptionVolume}; IV-historie en optiechain overgeslagen.`); return }
+        }
         if (!price) throw new Error('Actuele aandelenkoers ontbreekt.')
-        if (mode === 'spreads' && (price < filters.minPrice || price > filters.maxPrice)) { assess('filtered', `Koers $${price.toFixed(2)} buiten ${filters.minPrice}–${filters.maxPrice}; optiechain overgeslagen.`); return }
         if (mode !== 'spreads' && (!Number.isFinite(stock.iv) || stock.iv <= 0 || stock.iv >= 10)) throw new Error('Actuele IV ontbreekt; historiedownload overgeslagen. Controleer optiedatarechten.')
         if (mode === 'csp' && discovery && (price < 10 || price > 50)) return
         const historyKey = `${contract.conId}:${symbol}:${today}`
@@ -217,7 +238,7 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
             if (item.status !== 'fulfilled' || !Number.isFinite(item.value.delta) || !(item.value.bid > 0) || !Number.isFinite(item.value.ask)) { missing++; continue }
             if (mode === 'spreads') {
               state.puts.push({ ...item.value, symbol, right: 'P', currency: 'USD', multiplier: 100, strike: opt.strike,
-                underlyingPrice: price, expiry: opt.lastTradeDateOrContractMonth, tradingClass: opt.tradingClass, ivr, ...ivMetadata,
+                underlyingPrice: price, expiry: opt.lastTradeDateOrContractMonth, tradingClass: opt.tradingClass, ivr, ...ivMetadata, ...liquidity,
                 quotedAt: new Date().toISOString(), marketDataType: item.value.marketDataType })
               symbolPuts.push(state.puts.at(-1))
               state.rows = selectSpreads(state.puts, today, filters)
@@ -244,13 +265,13 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
           ensureActive()
         }
         if (mode === 'spreads') {
-          if (symbolPuts.length) await config.onSpreadSnapshot?.({ symbol, underlyingPrice: price, ivr, ...ivMetadata, quotedAt: stockQuotedAt, puts: symbolPuts, chains, filters, coverage: state.coverage })
+          if (symbolPuts.length) await config.onSpreadSnapshot?.({ symbol, underlyingPrice: price, ivr, ...ivMetadata, ...liquidity, quotedAt: stockQuotedAt, puts: symbolPuts, chains, filters, coverage: state.coverage })
           const count = state.rows.filter(row => row.symbol === symbol).length
           assess(missing ? 'partial' : count ? 'match' : 'no-match', `${count} passende spreads; ${symbolPuts.length} putquotes; ${missing} contracten zonder volledige data.`)
         }
         if (missing) state.warnings.push(`${symbol}: ${missing} contracten zonder volledige bied/laat/greeks; overgeslagen.`)
       } catch (error) { ensureActive(); warn(symbol, error); if (mode === 'spreads') { assess('missing', error.message); spreadAssessment.code = error.code; spreadAssessment.ibCode = error.ibCode } }
-      finally { state.symbolsChecked++; if (mode === 'spreads' && spreadAssessment) { Object.assign(spreadAssessment, state.ivReference?.symbol === symbol ? state.ivReference : {}); state.assessments ??= []; state.assessments.push(spreadAssessment) } }
+      finally { state.symbolsChecked++; if (mode === 'spreads' && spreadAssessment) { Object.assign(spreadAssessment, state.ivReference?.symbol === symbol ? state.ivReference : {}, state.liquidity?.symbol === symbol ? state.liquidity : {}); state.assessments ??= []; state.assessments.push(spreadAssessment) } }
     }
 
     if (mode === 'iv' && !config.ivUseBrokerScanner) {

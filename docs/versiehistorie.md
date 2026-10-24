@@ -1,5 +1,13 @@
 # Versiehistorie
 
+## 0.34.0 — optievolumevoorfilter (24 oktober 2026)
+
+- IBKR generic ticks 100/105 bij de aandelenquote: gemiddeld optievolume (tickSize 87) en dagvolume (call 29 + put 30), vóór IV-historie en optiechain. Geen extra verzoek per optiecontract voor deze aandelenstatistiek.
+- Minimum gemiddeld optievolume 5.000 contracten, aanpasbaar; 0 schakelt dit filter expliciet uit. Onbekend blijft onbekend, echt nul blijft nul. Ontbrekende volumerechten geven geen goedgekeurde chain; vijf opeenvolgende IV-/volumefouten pauzeren de job.
+- Aparte persistente volumecache, maximaal zeven dagen oud, met oorspronkelijke ophaaltijden. Gemiddelde en dagvolume krijgen afzonderlijke kolommen/tijdstempels en CSV-velden.
+- Zoekprofiel volgens opgegeven waarden: koers 5–150, IVR 20, DTE 40–100, buffer 25%, minimale maximale winst 15, maximaal verlies 1.000, OTM-proxy 70%, bied-laat maximaal 1. Bestaande browservoorkeuren behouden; geen claim van een optimaal handelsprofiel.
+- Lokale tests/build en browsercontrole geslaagd; geen bevestiging van echte live-volumerechten of serverinstallatie.
+
 ## 0.33.1 — ontbrekende IV en veilige scanverbinding (24 oktober 2026)
 
 - Ontbrekende actuele tick-106-IV blokkeert de IV-daghistorie niet meer voor Put spreads. Recente dag-IV wordt als gedateerde referentie gebruikt, met minimaal 200 waarnemingen, jaar- en recentedekking. Actuele IV en historische referentie blijven onderscheiden in tabel, beoordeling en CSV.

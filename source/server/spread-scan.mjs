@@ -5,6 +5,7 @@ import { selectSpreads, spreadFilters } from '../shared/put-spread.mjs'
 import { nyseSyncWindow } from '../shared/nyse-session.mjs'
 import { createScanConnection } from './scan-connection.mjs'
 import { setTimeout as sleep } from 'node:timers/promises'
+import { volumeSnapshot, volumeGate } from '../shared/option-volume.mjs'
 
 // Options regular session: pre/post-market is closed for these equity-option quotes.
 export function optionsSession(date = new Date()) {
@@ -17,7 +18,7 @@ export async function runSpreadScan(config, state, { cache, checkpoint = async (
   const signal = config.scanSignal, filters = spreadFilters(state.filters)
   state.filters = filters
   state.rows = state.rows.map(row => ({ ...row, dte: daysToExpiry(row.expiry, scanDate(now())), cached: true }))
-    .filter(row => row.dte >= filters.minDte && row.dte <= filters.maxDte)
+    .filter(row => row.dte >= filters.minDte && row.dte <= filters.maxDte && ['pass', 'disabled'].includes(volumeGate(volumeSnapshot({}, row, now()), filters.minAvgOptionVolume)))
   state.assessments ??= []; state.cacheHits ??= 0; state.chainsSkipped ??= 0
   if (Number.isInteger(state.retryFrom)) {
     state.universeChecked = state.retryFrom
@@ -46,16 +47,19 @@ export async function runSpreadScan(config, state, { cache, checkpoint = async (
       const session = optionsSession(now()); state.marketOpen = session.open
       let stored = null, assessment, rows = []
       try { stored = await cache.get(symbol) } catch (error) { state.warnings.push(`${symbol}: ${error.message}`) }
+      const storedLiquidity = await cache.getLiquidity?.(symbol)
       const useStored = () => {
         state.cacheHits++
-        const passes = stored.underlyingPrice >= filters.minPrice && stored.underlyingPrice <= filters.maxPrice && stored.ivr >= filters.minIvr
-        rows = passes ? selectSpreads(stored.puts.map(put => ({ ...put, cached: true })), scanDate(now()), filters) : []
+        const liquidity = volumeSnapshot({}, storedLiquidity || stored, now())
+        const gate = volumeGate(liquidity, filters.minAvgOptionVolume)
+        const passes = gate !== 'unknown' && gate !== 'below' && stored.underlyingPrice >= filters.minPrice && stored.underlyingPrice <= filters.maxPrice && stored.ivr >= filters.minIvr
+        rows = passes ? selectSpreads(stored.puts.map(put => ({ ...put, ...liquidity, cached: true })), scanDate(now()), filters) : []
         if (!passes) state.chainsSkipped++
         const coverage = stored.filters || {}
         const incomplete = passes && (!stored.puts.length || !stored.filters || filters.minDte < coverage.minDte || filters.maxDte > coverage.maxDte || filters.minBuffer < coverage.minBuffer)
         if (incomplete) state.warnings.push(`${symbol}: opgeslagen chain dekt de verruimde looptijd/buffer niet volledig; alleen beschikbare quotes getoetst.`)
-        assessment = { symbol, status: passes ? incomplete ? 'partial' : rows.length ? 'match' : 'no-match' : 'filtered', source: 'cache', asOf: stored.quotedAt, ivSource: stored.ivSource, ivAsOf: stored.ivAsOf,
-          reason: !passes ? 'Opgeslagen koers/IV-rank voldoet niet; chain overgeslagen.' : incomplete ? 'Beschikbare oude chain gefilterd; onvolledige dekking.' : `${rows.length} spreads in opgeslagen chain; oude koers en IV-rank gebruikt.` }
+        assessment = { symbol, ...liquidity, code: gate === 'unknown' ? 'VOLUME_UNAVAILABLE' : undefined, status: gate === 'unknown' ? 'missing' : passes ? incomplete ? 'partial' : rows.length ? 'match' : 'no-match' : 'filtered', source: 'cache', asOf: stored.quotedAt, ivSource: stored.ivSource, ivAsOf: stored.ivAsOf,
+          reason: gate === 'unknown' ? 'Gemiddeld optievolume onbekend; geen goedgekeurde spread. Verzamel volume tijdens beursuren of schakel het volumefilter bewust uit (0).' : gate === 'below' ? `Gemiddeld optievolume ${liquidity.avgOptionVolume} onder ${filters.minAvgOptionVolume}; chain overgeslagen.` : !passes ? 'Opgeslagen koers/IV-rank voldoet niet; chain overgeslagen.' : incomplete ? 'Beschikbare oude chain gefilterd; onvolledige dekking.' : `${rows.length} spreads in opgeslagen chain; oude koers en IV-rank gebruikt.` }
       }
       if ((!session.open || brokerUnavailable) && stored) useStored()
       else if (brokerUnavailable) {
@@ -70,6 +74,7 @@ export async function runSpreadScan(config, state, { cache, checkpoint = async (
         state.phase = 'scanning'
         await scan({ ...config, marketClosed: !session.open, nextScanRequestId: connection.nextRequestId,
           getSpreadIv: cache.getIv?.bind(cache), saveSpreadIv: cache.saveIv?.bind(cache),
+          getSpreadLiquidity: cache.getLiquidity?.bind(cache), saveSpreadLiquidity: cache.saveLiquidity?.bind(cache),
           onScanCheckpoint: async () => { merge(); await checkpoint() },
           onSpreadSnapshot: async snapshot => { await cache.save(symbol, snapshot) },
         }, [symbol], part, connection.Api, 'spreads')
@@ -91,13 +96,13 @@ export async function runSpreadScan(config, state, { cache, checkpoint = async (
       state.rows = [...state.rows.filter(row => row.symbol !== symbol), ...rows].sort((a,b) => b.returnOnRisk - a.returnOnRisk)
       state.assessments.push(assessment); state.universeChecked++; state.symbolsChecked = state.universeChecked
       state.remainingSymbols = state.entries.length - state.universeChecked
-      ivFailures = assessment.code === 'IV_UNAVAILABLE' && assessment.source !== 'cache' ? ivFailures + 1 : 0
+      ivFailures = ['IV_UNAVAILABLE', 'VOLUME_UNAVAILABLE'].includes(assessment.code) ? ivFailures + 1 : 0
       state.warnings = [...new Set(state.warnings)]
       await checkpoint()
       if (state.storageError) throw Error('Scan gestopt: voortgang kon niet worden opgeslagen.')
       if (ivFailures >= 5) {
         state.state = 'paused'; state.retryFrom = state.universeChecked - ivFailures
-        state.message = 'Scan gepauzeerd: vijf aandelen achter elkaar zonder bruikbare IV/IV-historie. Controleer IV in TWS en API-datarechten. Hervatten probeert deze aandelen opnieuw; de Gateway krijgt nu geen nieuwe scanverzoeken.'
+        state.message = 'Scan gepauzeerd: vijf aandelen achter elkaar zonder vereiste IV- of optievolumedata. Controleer beschikbaarheid in TWS en API-datarechten. Hervatten probeert deze aandelen opnieuw. Bij ontbrekend volume kun je het volumeminimum bewust op 0 zetten en een nieuwe scan starten.'
         state.progress = state.message
         return
       }

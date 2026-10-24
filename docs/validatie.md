@@ -1,5 +1,13 @@
 # Validatie
 
+## Trading Monitor 0.34.0 — optievolume en standaardcriteria (24 oktober 2026)
+
+- Werkmap: **172 Node-tests** geslaagd (inclusief bestaande lokale referentietests), **13 frontendtests** en TypeScript/Vite-build geslaagd. Geen nieuwe dependencies.
+- Nieuwe tests: opgegeven standaardprofiel, configureerbaar minimum gemiddeld optievolume; exacte contracteenheden zonder aandelenmultiplier; echte nul tegenover onbekend; geen gedeeltelijk dagtotaal als call of put ontbreekt; oorspronkelijke cacheophaaltijden en zeven-dagenverval; aparte persistente volumecache en gatewayisolatie.
+- Brokermocks verifiëren generic ticks `100,105,106` in één aandelenquote en geen historiedownload/chainaanvraag bij laag, nul of onbekend gemiddeld volume. Bestaande passende-brokertest ontvangt volume en blijft spreads genereren. Historische-IV-tests schakelen het onafhankelijke volumefilter expliciet uit.
+- Browsercontrole geslaagd voor nieuwe gemiddelde-/dagvolumekolommen, standaardminimum 5.000 en 40 DTE, naast de bestaande workflow voor brede/eigen modus, CSV, fout/pauze/hervatten, voorkeurherstel, 360–1600px, licht/donker en 200% zoom. Geen browserruntimefouten. Screenshots uitsluitend in private validatiemap.
+- Echte live-volumeontvangst/API-abonnementen niet vastgesteld. Geen nulwaarden verzonnen bij ontbrekende data en geen legacy chain zonder volume goedgekeurd bij een actief minimum. Geen serverinstallatie uitgevoerd. Standaardwaarden zijn zoekcriteria, geen bewijs van handelskwaliteit of gerealiseerd rendement.
+
 ## Trading Monitor 0.33.1 — ontbrekende IV en Gateway-belasting (24 oktober 2026)
 
 - Werkmap: **166 Node-tests** geslaagd, inclusief bestaande lokale referentietests; **13 frontendtests** en TypeScript/Vite-build geslaagd. Bestaande IV-, Leaps- en CSP-tests behouden. Geen extra dependencies.

@@ -1,5 +1,9 @@
 # Releases
 
+## Trading Monitor 0.34.0 — optievolume en zoekprofiel
+
+Gemiddeld optievolume als voorfilter, laatst ontvangen dagvolume apart, bronophaaltijden, private volumecache en onbekende waarden zonder nulvervanging. Nieuwe standaardcriteria volgens het opgegeven zoekprofiel. Geen nieuw installatiepakket; [serverupdate](../docs/put-spreads.md#installatie-en-serverupdate). Geen serverinstallatie uitgevoerd.
+
 ## Trading Monitor 0.33.1 — IV en Gateway-belasting
 
 Eén scanverbinding per run, één eerste IV-quoteverzoek, gedateerde historische IV-fallback en persistente/incrementele IV-cache. Wachtrij met pauzes en beveiliging na vijf opeenvolgende IV-fouten. Geen nieuw installatiepakket; [updatehandleiding](../docs/put-spreads.md#installatie-en-serverupdate). Serverinstallatie niet uitgevoerd.
