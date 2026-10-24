@@ -5,6 +5,19 @@ import { createHash } from 'node:crypto'
 export function createSpreadCache(directory, gateway) {
   const file = symbol => join(directory, createHash('sha256').update(symbol).digest('hex') + '.json')
   return {
+    async getIv(symbol) {
+      try {
+        const data = JSON.parse(await readFile(join(directory, 'iv-' + createHash('sha256').update(symbol).digest('hex') + '.json'), 'utf8'))
+        if (data.gateway !== gateway || data.symbol !== symbol || !Array.isArray(data.bars) || !data.day) throw Error('Ongeldige IV-historiecache.')
+        return data
+      } catch (error) { if (error.code === 'ENOENT') return null; throw error }
+    },
+    async saveIv(symbol, snapshot) {
+      await mkdir(directory, { recursive: true })
+      const path = join(directory, 'iv-' + createHash('sha256').update(symbol).digest('hex') + '.json')
+      await writeFile(path + '.tmp', JSON.stringify({ ...snapshot, symbol, gateway, savedAt: new Date().toISOString() }), { mode: 0o600 })
+      await rename(path + '.tmp', path)
+    },
     async get(symbol) {
       try {
         const data = JSON.parse(await readFile(file(symbol), 'utf8'))

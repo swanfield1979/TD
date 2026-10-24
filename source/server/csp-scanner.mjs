@@ -5,6 +5,7 @@ import { selectSpreads, spreadFilters } from '../shared/put-spread.mjs'
 import { ivMetrics, leapPut, compareLeaps } from '../shared/leaps-scan.mjs'
 import { scanGuard, pacingError, disabledScanner } from './scan-guard.mjs'
 import { loadIvUniverse, SP500_URL } from './iv-universe.mjs'
+import { ivReference } from '../shared/iv-reference.mjs'
 export { SP500_URL } from './iv-universe.mjs'
 
 
@@ -32,7 +33,7 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
     } })
     ensureActive()
     return new Promise((resolve, reject) => {
-    const id = nextId++
+    const id = config.nextScanRequestId ? config.nextScanRequestId() : nextId++
     const task = { rows: [], quote: {}, endEvent, finish(error) {
       if (!pending.has(id)) return
       clearTimeout(task.timer)
@@ -64,7 +65,7 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
       return
     }
     // Errors such as missing market-data permissions must never become valid candidates.
-    if (pending.has(id)) pending.get(id).finish(new Error(`IBKR ${code}: ${error.message}`))
+    if (pending.has(id)) pending.get(id).finish(Object.assign(new Error(`IBKR ${code}: ${error.message}`), { ibCode: code }))
   })
   ib.on(EventName.contractDetails, (id, details) => pending.get(id)?.rows.push(details))
   ib.on(EventName.contractDetailsEnd, (id) => pending.get(id)?.finish())
@@ -81,7 +82,7 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
   ib.on(EventName.marketDataType, (id, type) => { if (pending.has(id)) pending.get(id).quote.marketDataType = type })
   ib.on(EventName.tickPrice, (id, type, value) => {
     if (!pending.has(id) || value < 0 || !Number.isFinite(value)) return
-    const field = ({ 1: 'bid', 2: 'ask', 4: 'last', 66: 'bid', 67: 'ask', 68: 'last' })[type]
+    const field = ({ 1: 'bid', 2: 'ask', 4: 'last', 9: 'close', 66: 'bid', 67: 'ask', 68: 'last', 75: 'close' })[type]
     if (field) pending.get(id).quote[field] = value
     maybeCompleteQuote(id)
   })
@@ -99,17 +100,20 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
     ib.reqMktData(id, contract, generic, false, false)
   }, 'quote', config.scanQuoteWaitMs ?? 5000, true)
   const completeQuote = (contract, value) => contract.secType === 'STK'
-    ? value.last > 0 || value.bid > 0 && value.ask >= value.bid
+    ? value.last > 0 || value.bid > 0 && value.ask >= value.bid || mode === 'spreads' && value.close > 0
     : value.bid > 0 && value.ask >= value.bid && Number.isFinite(value.delta) && Number.isFinite(value.underlyingPrice)
   async function availableQuote(contract, generic = '') {
     let lastQuote = {}, lastError
-    for (const type of [MarketDataType.DELAYED, MarketDataType.FROZEN, MarketDataType.DELAYED_FROZEN]) {
+    const types = mode === 'spreads' && contract.secType === 'STK'
+      ? [config.marketClosed ? MarketDataType.DELAYED_FROZEN : MarketDataType.DELAYED]
+      : [MarketDataType.DELAYED, MarketDataType.FROZEN, MarketDataType.DELAYED_FROZEN]
+    for (const type of types) {
       try {
         ib.reqMarketDataType(type)
         lastQuote = await quote(contract, generic)
         // Data type is supplied by IBKR; never label an unspecified quote as live.
         lastQuote.marketDataType ??= type
-        if (completeQuote(contract, lastQuote) && (generic !== '106' || Number.isFinite(lastQuote.iv) && lastQuote.iv > 0 && lastQuote.iv < 10)) return lastQuote
+        if (completeQuote(contract, lastQuote) && (mode === 'spreads' && contract.secType === 'STK' || generic !== '106' || Number.isFinite(lastQuote.iv) && lastQuote.iv > 0 && lastQuote.iv < 10)) return lastQuote
       } catch (error) { ensureActive(); lastError = error }
     }
     if (lastError && !Object.keys(lastQuote).length) throw lastError
@@ -138,26 +142,40 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
         const contract = { ...details[0].contract, exchange: 'SMART' }
         const stock = await availableQuote(contract, '106')
         const stockQuotedAt = new Date().toISOString()
-        const price = stock.last > 0 ? stock.last : stock.bid > 0 && stock.ask >= stock.bid ? (stock.bid + stock.ask) / 2 : null
+        const price = stock.last > 0 ? stock.last : stock.bid > 0 && stock.ask >= stock.bid ? (stock.bid + stock.ask) / 2 : mode === 'spreads' && stock.close > 0 ? stock.close : null
         if (!price) throw new Error('Actuele aandelenkoers ontbreekt.')
         if (mode === 'spreads' && (price < filters.minPrice || price > filters.maxPrice)) { assess('filtered', `Koers $${price.toFixed(2)} buiten ${filters.minPrice}–${filters.maxPrice}; optiechain overgeslagen.`); return }
-        if (!Number.isFinite(stock.iv) || stock.iv <= 0 || stock.iv >= 10) throw new Error('Actuele IV ontbreekt; historiedownload overgeslagen. Controleer optiedatarechten.')
+        if (mode !== 'spreads' && (!Number.isFinite(stock.iv) || stock.iv <= 0 || stock.iv >= 10)) throw new Error('Actuele IV ontbreekt; historiedownload overgeslagen. Controleer optiedatarechten.')
         if (mode === 'csp' && discovery && (price < 10 || price > 50)) return
         const historyKey = `${contract.conId}:${symbol}:${today}`
-        const cached = guard.history.get(historyKey)
+        const cached = guard.history.get(historyKey) ?? (mode === 'spreads' ? await config.getSpreadIv?.(symbol) : null)
         let bars
-        if (cached && Date.now() - cached.savedAt < 86400000) {
+        if (cached && (mode !== 'spreads' || ivReference(undefined, cached.bars, today)) && (cached.day === today || typeof cached.savedAt === 'number' && Date.now() - cached.savedAt < 86400000 || mode === 'spreads' && config.marketClosed && ivReference(undefined, cached.bars, today))) {
           bars = cached.bars; state.historyCacheHits = (state.historyCacheHits ?? 0) + 1
         } else {
-          bars = await request((id) => ib.reqHistoricalData(id, contract, '', '1 Y', '1 day', 'OPTION_IMPLIED_VOLATILITY', 1, 1, false), 'historicalData', 20000, false, historyKey)
-          if (ivRank(stock.iv, bars, today) !== null) {
+          let fresh
+          const incremental = mode === 'spreads' && cached?.bars?.length && ivReference(undefined, cached.bars, today)
+          try {
+            fresh = await request((id) => ib.reqHistoricalData(id, contract, '', incremental ? '10 D' : '1 Y', '1 day', 'OPTION_IMPLIED_VOLATILITY', 1, 1, false), 'historicalData', 20000, false, historyKey)
+          } catch (error) {
+            ensureActive()
+            if (mode === 'spreads') error.code = 'IV_UNAVAILABLE'
+            throw error
+          }
+          bars = incremental ? [...new Map([...cached.bars, ...fresh].map(bar => [bar.date.replaceAll('-', ''), bar])).values()].filter(bar => daysToExpiry(bar.date, today) >= -366) : fresh
+          if (ivRank(stock.iv, bars, today) !== null || mode === 'spreads' && ivReference(undefined, bars, today)) {
             if (guard.history.size >= 500) guard.history.delete(guard.history.keys().next().value)
-            guard.history.set(historyKey, { bars, savedAt: Date.now() })
+            guard.history.set(historyKey, { bars, day: today, savedAt: Date.now() })
+            if (mode === 'spreads') await config.saveSpreadIv?.(symbol, { bars, day: today })
           }
         }
-        const ivr = ivRank(stock.iv, bars, today)
-        if (ivr === null) throw new Error('Actuele IV of voldoende recente jaarhistorie ontbreekt; IVR niet toetsbaar.')
-        const metrics = ivMetrics(stock.iv, bars, today)
+        const reference = mode === 'spreads' ? ivReference(stock.iv, bars, today, { completedOnly: !config.marketClosed }) : null
+        const currentIv = reference?.value ?? stock.iv
+        const ivr = ivRank(currentIv, bars, today)
+        if (ivr === null) throw Object.assign(new Error('Geen bruikbare IV of recente volledige IV-jaarhistorie. Controleer beschikbaarheid in TWS en datarechten; er wordt geen IV verzonnen.'), { code: 'IV_UNAVAILABLE' })
+        const metrics = ivMetrics(currentIv, bars, today)
+        const ivMetadata = reference ? { ivSource: reference.source, ivAsOf: reference.asOf } : {}
+        if (mode === 'spreads') state.ivReference = { symbol, ...ivMetadata }
         if (mode === 'spreads' ? ivr < filters.minIvr : ivr <= (mode === 'csp' ? 30 : 40)) {
           if (mode === 'spreads') assess('filtered', `IV-rank ${ivr.toFixed(2)} lager dan ${filters.minIvr}; optiechain overgeslagen.`)
           return
@@ -199,7 +217,7 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
             if (item.status !== 'fulfilled' || !Number.isFinite(item.value.delta) || !(item.value.bid > 0) || !Number.isFinite(item.value.ask)) { missing++; continue }
             if (mode === 'spreads') {
               state.puts.push({ ...item.value, symbol, right: 'P', currency: 'USD', multiplier: 100, strike: opt.strike,
-                underlyingPrice: price, expiry: opt.lastTradeDateOrContractMonth, tradingClass: opt.tradingClass, ivr,
+                underlyingPrice: price, expiry: opt.lastTradeDateOrContractMonth, tradingClass: opt.tradingClass, ivr, ...ivMetadata,
                 quotedAt: new Date().toISOString(), marketDataType: item.value.marketDataType })
               symbolPuts.push(state.puts.at(-1))
               state.rows = selectSpreads(state.puts, today, filters)
@@ -226,13 +244,13 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
           ensureActive()
         }
         if (mode === 'spreads') {
-          if (symbolPuts.length) await config.onSpreadSnapshot?.({ symbol, underlyingPrice: price, ivr, quotedAt: stockQuotedAt, puts: symbolPuts, chains, filters, coverage: state.coverage })
+          if (symbolPuts.length) await config.onSpreadSnapshot?.({ symbol, underlyingPrice: price, ivr, ...ivMetadata, quotedAt: stockQuotedAt, puts: symbolPuts, chains, filters, coverage: state.coverage })
           const count = state.rows.filter(row => row.symbol === symbol).length
           assess(missing ? 'partial' : count ? 'match' : 'no-match', `${count} passende spreads; ${symbolPuts.length} putquotes; ${missing} contracten zonder volledige data.`)
         }
         if (missing) state.warnings.push(`${symbol}: ${missing} contracten zonder volledige bied/laat/greeks; overgeslagen.`)
-      } catch (error) { ensureActive(); warn(symbol, error); if (mode === 'spreads') assess('missing', error.message) }
-      finally { state.symbolsChecked++; if (mode === 'spreads' && spreadAssessment) { state.assessments ??= []; state.assessments.push(spreadAssessment) } }
+      } catch (error) { ensureActive(); warn(symbol, error); if (mode === 'spreads') { assess('missing', error.message); spreadAssessment.code = error.code; spreadAssessment.ibCode = error.ibCode } }
+      finally { state.symbolsChecked++; if (mode === 'spreads' && spreadAssessment) { Object.assign(spreadAssessment, state.ivReference?.symbol === symbol ? state.ivReference : {}); state.assessments ??= []; state.assessments.push(spreadAssessment) } }
     }
 
     if (mode === 'iv' && !config.ivUseBrokerScanner) {

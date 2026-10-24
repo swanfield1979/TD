@@ -2,7 +2,7 @@
 
 Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voortgang op basis van Interactive Brokers Flex-rapporten.
 
-**Versie/status:** 0.33.0. Put-spreadscanner gebruikt standaard het brede Amerikaanse aandelenuniversum, toetst koers/IV vóór de optiechain en hergebruikt opgeslagen chains bij gesloten markt. Voortgang, aandelenbeoordelingen en stoppen/hervatten toegevoegd. Lokale tests en productiebuild geslaagd; echte IBKR-proef en serverinstallatie voor deze uitbreiding nog niet geverifieerd.
+**Versie/status:** 0.33.1. Put-spreadscanner gebruikt één hergebruikte scanverbinding, persistente IV-historie, gedateerde dag-IV als actuele IV ontbreekt en automatische pauze bij vijf opeenvolgende IV-fouten. Breed universum en chaincache blijven beschikbaar. Lokale tests, build en browsercontrole geslaagd; datarechten en echte IBKR-scan op de server nog niet geverifieerd.
 
 | Map | Inhoud |
 | --- | --- |

@@ -1,6 +1,6 @@
 # Bull-put-spreadscanner
 
-Trading Monitor **0.33.0**, bijgewerkt op 24 oktober 2026. Open **Put spreads** in het menu of gebruik `/#put-spreads`. Deze uitbreiding blijft binnen de bestaande lokale app.
+Trading Monitor **0.33.1**, bijgewerkt op 24 oktober 2026. Open **Put spreads** in het menu of gebruik `/#put-spreads`. Deze uitbreiding blijft binnen de bestaande lokale app.
 
 ## Gebruik
 
@@ -17,6 +17,27 @@ Criteria, universumkeuze en tickers worden na een geslaagde scanstart in de brow
 De koers wordt eerst gecontroleerd: buiten de grenzen worden IV-historie en chain niet opgehaald. Daarna wordt IV-rank getoetst; bij een te lage IV-rank wordt geen chain aangevraagd. Looptijd en buffer beperken vervolgens de contractselectie. Premie, risico, bied-laatverschil en delta zijn pas met optiegegevens toetsbaar. In **Aandelenbeoordeling** zie je de laatste 50 beoordelingen en per aandeel de reden voor overslaan, ontbrekende data of geen passende spread. Het tickerzoekveld doorzoekt ook die beoordelingen.
 
 Een brede eerste run kan vele uren duren door IBKR-pacing en IV-historie. De scan loopt door het volledige geladen universum; voortgang toont hoeveel namen daadwerkelijk zijn gecontroleerd. De bronlijst wordt lokaal bewaard en bij bronuitval met datum hergebruikt. De bronnen zijn [Nasdaq-noteringen](https://www.nasdaqtrader.com/dynamic/SymDir/nasdaqlisted.txt) en [overige Amerikaanse noteringen](https://www.nasdaqtrader.com/dynamic/SymDir/otherlisted.txt).
+
+### IV-fouten en Gateway-belasting
+
+De melding uit 0.33.0 dat actuele IV ontbreekt bewijst niet dat de Gateway is overbelast of dat een abonnement ontbreekt. De app ontving geen bruikbare tick-106-IV en stopte daardoor ten onrechte vóór de aanvraag van IV-daghistorie. Volgens [IBKR zijn ticks niet altijd voor elk instrument beschikbaar](https://interactivebrokers.github.io/tws-api/tick_types.html); controle in TWS blijft nodig om beschikbaarheid en rechten vast te stellen.
+
+Vanaf 0.33.1 doet Put spreads één eerste aandelenquoteverzoek. Ontbreekt actuele IV, dan probeert de app één `OPTION_IMPLIED_VOLATILITY`-dagreeks, of gebruikt de geldige reeds opgeslagen reeks. Met voldoende jaarhistorie kan de laatste geldige dag-IV als referentie dienen. Maximaal zeven kalenderdagen oud, minimaal 200 waarnemingen en voldoende jaarspreiding; een vlakke of onvolledige reeks geeft geen IV-rank. Tijdens een open markt gebruikt de historische terugval uitsluitend een eerdere dag, geen nog onvoltooide dagbar. Deze referentie wordt zichtbaar als **Dag-IV met datum**, ook bij gefilterde aandelen en in CSV (`ivSource`, `ivAsOf`). Het is geen actuele IV-quote. Het IV-filter wordt niet uitgeschakeld en ontbrekende waarden worden niet verzonnen.
+
+De ruwe IV-dagreeks staat los van de chaincache in `iv-<hash>.json` naast de private chainbestanden en blijft na een herstart bewaard. Dezelfde beursdag wordt hergebruikt; bij gesloten markt mag een nog geldige reeks ouder zijn. Bij een nieuwe open handelsdag wordt een geldige bestaande reeks met een tien-dagenaanvraag aangevuld en ontdubbeld. Zonder bruikbare oudere reeks wordt één jaar gevraagd. De app gebruikt geen historische volatiliteit als vervanging voor impliciete volatiliteit.
+
+De belasting wordt begrensd door:
+
+- één fysieke read-only scanverbinding per run, hergebruikt voor volgende aandelen;
+- één quote/historieverzoek tegelijk en oplopende request-ID’s;
+- bestaande applicatiepacing: minimaal 0,5 seconde tussen aanvragen, 11 seconden tussen historieverzoeken, maximaal 55 historieverzoeken per tien minuten en 15 seconden tussen identieke historieverzoeken;
+- één seconde rust tussen brokerbeoordelingen en twintig seconden na 25 brokerbeoordelingen; cachebeoordelingen doen geen onnodige broker-wachtrondes;
+- annuleren van subscriptions en historieverzoeken, plus stoppen op IBKR-pacingmeldingen;
+- pauze na vijf opeenvolgende aandelen zonder bruikbare IV/historie. De scan bewaart waar die reeks begon. **Scan hervatten** probeert die aandelen opnieuw; ze worden niet stilzwijgend als afgehandeld overgeslagen. Er volgt geen automatische stroom retry’s.
+
+Dit zijn conservatieve applicatiegrenzen, geen garantie dat andere TWS/API-clients geen belasting veroorzaken. [IBKR beschrijft de harde 60/10-minutenregel voor kleine bars en ook zachte throttling bij grotere bars](https://interactivebrokers.github.io/tws-api/historical_limitations.html); de app houdt de bovengenoemde ruime marge ook voor dagbars aan. Een volledige eerste opbouw voor duizenden aandelen kan een lange sessie of meerdere sessies kosten. Stoppen en hervatten behoudt de voortgang.
+
+Als ook daghistorie ontbreekt, controleer in TWS bij een bekend optieaandeel of **Option Implied Volatility** en de IV-daggrafiek beschikbaar zijn, en controleer of marktdatarechten voor de ingelogde API-gebruiker gelden. [Vertraagde koersen betekenen niet automatisch toegang tot historische marktdata](https://interactivebrokers.github.io/tws-api/delayed_data.html). De software kan ontbrekende bronrechten niet omzeilen. De scanner pauzeert dan in plaats van een volledige, geslaagde beoordeling te suggereren.
 
 Na een geslaagde chainbeoordeling bewaart de server de ruwe opgevraagde putquotes, chainmetadata, koers, IV-rank en selectiecriteria per aandeel. Het gaat om de geselecteerde contracten, niet alle contracten van de volledige chain. Bij gesloten reguliere optiemarkt wordt deze opgeslagen selectie opnieuw met je huidige filters beoordeeld, zonder brokerverzoeken voor dat aandeel. De oude koers/IV-rank en beide originele ophaaltijden blijven behouden. Cachelabels staan bij de spread en in CSV. Resterende dagen worden opnieuw berekend; verlopen puts tellen niet mee. Een ruimere looptijd of lagere buffer dan de opgeslagen selectie geeft een melding van onvolledige dekking.
 
@@ -47,6 +68,7 @@ De scan gebruikt standaard het brede Amerikaanse aandelenuniversum. Per passend 
 - `source/shared/put-spread.mjs`: filtervalidatie, putparen en financiële berekeningen; gedeelde TypeScript-declaraties ernaast.
 - `source/server/csp-scanner.mjs`: aanvullende modus `spreads`, bestaande read-only IBKR-verbinding, pacing en cleanup.
 - `source/server/spread-scan.mjs`: breed universum, voorselectieresultaten, cachekeuze, voortgang en cursor. `spread-cache.mjs`: per-aandeel atomaire JSON-opslag met gatewaycontrole, standaard in `put-spread-cache/` naast de private IBKR-snapshot. Deze map staat buiten de publieke webroot. Geen extra dependencies.
+- `source/server/scan-connection.mjs`: fysieke verbinding per job, tijdelijke eventlisteners per aandeel en gedeelde request-ID-teller. `source/shared/iv-reference.mjs`: geldigheid en datum van actuele of historische IV-referentie.
 - `GET /api/put-spreads`: status/resultaten. `POST /api/put-spreads`: `{ universeMode: "us" | "custom", symbols?: string[], filters: {...}, resume?: boolean }`; standaard brede modus zonder tickers, eigen modus maximaal 50. `POST /api/put-spreads/stop`: annuleren. Bestaande origin- en aanvraagheadercontrole geldt.
 - `source/server/scan-store.mjs`: opslag en herstel via dezelfde atomaire scanopslag. Oudere bestanden zonder spreads blijven geldig.
 - `source/backend/app/main.py`: LAN-proxy naar Node voor `put-spreads` en `put-spreads/stop`.
@@ -66,7 +88,7 @@ npm run dev:lan
 
 Gebruik de bestaande IB Gateway-configuratie en datarechten; zie [IBKR](IBKR.md). Zonder bereikbare API/broker zijn geen actuele scanresultaten te verifiëren. Lokale frontend apart: `npm run dev -- --host 127.0.0.1 --port 5197`; Node-API apart: `npm run start:api`. Zorg dat die frontend-origin toegestaan is voor de Node-API. De gebruikelijke LAN-launcher regelt dit voor zijn eigen origin.
 
-Serverupdate vereist frontend (`dist/`), Node (`server/`, `shared/`) en de bestaande bijgewerkte Python-LAN-proxy. Het bestaande script `bash deploy/update-options.sh` controleert nu versie 0.33.0, bouwt/test, publiceert en herstart de bestaande services. Er is geen serverinstallatie vanuit deze ontwikkelomgeving uitgevoerd. Het script voert een aanvullende GET-controle op `/api/put-spreads` uit. Volg de [bestaande installatiehandleiding](installatie.md) voor een nieuwe installatie.
+Serverupdate vereist frontend (`dist/`), Node (`server/`, `shared/`) en de bestaande bijgewerkte Python-LAN-proxy. Het bestaande script `bash deploy/update-options.sh` controleert nu versie 0.33.1, bouwt/test, publiceert en herstart de bestaande services. Er is geen serverinstallatie vanuit deze ontwikkelomgeving uitgevoerd. Het script voert een aanvullende GET-controle op `/api/put-spreads` uit. Volg de [bestaande installatiehandleiding](installatie.md) voor een nieuwe installatie.
 
 ## Validatie
 

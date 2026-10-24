@@ -295,7 +295,7 @@ const server = createServer(async (request, response) => {
             resume = body.resume === true
             if (resume) {
               const previous = optionScans.spreads
-              if (!previous.entries || previous.universeChecked >= previous.entries.length || JSON.stringify(spreadFilters(previous.filters)) !== JSON.stringify(filters) || previous.universeMode !== universeMode || (universeMode === 'custom' && JSON.stringify(previous.symbols) !== JSON.stringify(symbols)))
+              if (!previous.entries || previous.universeChecked >= previous.entries.length && !Number.isInteger(previous.retryFrom) || JSON.stringify(spreadFilters(previous.filters)) !== JSON.stringify(filters) || previous.universeMode !== universeMode || (universeMode === 'custom' && JSON.stringify(previous.symbols) !== JSON.stringify(symbols)))
                 throw Error('Hervatten kan alleen met dezelfde criteria en hetzelfde universum van een onvoltooide scan.')
             }
           } catch (error) { return sendJson(response, 400, { message: error.message }) }

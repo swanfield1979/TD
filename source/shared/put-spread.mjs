@@ -34,7 +34,7 @@ export function bullPutSpread(short, long, today) {
     shortStrike: short.strike, longStrike: long.strike, shortBid: short.bid, shortAsk: short.ask, longBid: long.bid, longAsk: long.ask,
     credit, maxProfit, maxLoss, breakEven: short.strike - credit, returnOnRisk: maxProfit / maxLoss * 100,
     buffer: (1 - short.strike / short.underlyingPrice) * 100, otmProxy: (1 - Math.abs(short.delta)) * 100,
-    cached: short.cached === true || long.cached === true, shortQuotedAt: short.quotedAt, longQuotedAt: long.quotedAt, shortDataType: short.marketDataType, longDataType: long.marketDataType }
+    ivSource: short.ivSource, ivAsOf: short.ivAsOf, cached: short.cached === true || long.cached === true, shortQuotedAt: short.quotedAt, longQuotedAt: long.quotedAt, shortDataType: short.marketDataType, longDataType: long.marketDataType }
 }
 export function selectSpreads(puts, today, input = {}) {
   const f = spreadFilters(input), groups = new Map(), rows = []

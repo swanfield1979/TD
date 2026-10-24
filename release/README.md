@@ -1,5 +1,9 @@
 # Releases
 
+## Trading Monitor 0.33.1 — IV en Gateway-belasting
+
+Eén scanverbinding per run, één eerste IV-quoteverzoek, gedateerde historische IV-fallback en persistente/incrementele IV-cache. Wachtrij met pauzes en beveiliging na vijf opeenvolgende IV-fouten. Geen nieuw installatiepakket; [updatehandleiding](../docs/put-spreads.md#installatie-en-serverupdate). Serverinstallatie niet uitgevoerd.
+
 ## Trading Monitor 0.33.0 — broncode-update
 
 Breed Amerikaans universum voor Put spreads, voorselectie vóór chainaanvragen, persistente ruwe optiecache en stoppen/hervatten. Geen nieuw installatiepakket; [updatehandleiding](../docs/put-spreads.md#installatie-en-serverupdate). Serverinstallatie nog niet uitgevoerd.

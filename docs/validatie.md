@@ -1,5 +1,14 @@
 # Validatie
 
+## Trading Monitor 0.33.1 — ontbrekende IV en Gateway-belasting (24 oktober 2026)
+
+- Werkmap: **166 Node-tests** geslaagd, inclusief bestaande lokale referentietests; **13 frontendtests** en TypeScript/Vite-build geslaagd. Bestaande IV-, Leaps- en CSP-tests behouden. Geen extra dependencies.
+- Gerichte tests voor ontbrekende tick-106-IV: één aandelenquote, gebruik van tick-75-slotkoers, daarna IV-jaarhistorie; gedateerde historische IV vóór de chain, geen gefingeerde actuele IV. Historische terugval weigert te oude/korte reeksen en gebruikt tijdens open sessie een eerdere dag.
+- Brokermock verifieert één fysieke connectie over meerdere scan-aanroepen, oplopende request-ID’s, listener-cleanup en één fysieke disconnect aan het eind. Persistent herladen van IV-historie voorkomt een nieuwe jaardownload; een volgende open handelsdag gebruikt `10 D` voor een geldige bestaande reeks.
+- Vijf opeenvolgende IV-fouten pauzeren de job. Hervatten beoordeelt de mislukte aandelen opnieuw. Wachtrijtest bevestigt 1 s tussen beoordelingen en 20 s na 25 brokerbeoordelingen. Bestaande pacertests voor serialisatie, historiebudget en annuleren slagen.
+- Browserworkflow geslaagd voor gedateerde Dag-IV, pauzemelding en hervatten bij `remainingSymbols=0` met een retrycursor. Bestaande brede/eigen modus, tabel, CSV, fouten, start/stop, paginering, lichte/donkere modus, 200% zoom en 360–1600px blijven gecontroleerd. Geen browserruntimefouten.
+- Officiële IBKR-documentatie gecontroleerd voor tickbeschikbaarheid, vertraagde versus historische rechten en onderscheid tussen kleine-bar-pacing en zachte throttling voor grotere bars. Het screenshot bewijst geen pacingfout of ontbrekend abonnement. De echte TWS/API-rechten en brokerresultaten zijn vanuit deze omgeving niet vastgesteld. Geen serverinstallatie uitgevoerd.
+
 ## Trading Monitor 0.33.0 — breed universum, voorselectie en oude chains (24 oktober 2026)
 
 - Werkmap: `npm test` **161 geslaagd** (inclusief bestaande lokale TradingView-referentietests), `npm run test:frontend` **13 geslaagd**, TypeScript/Vite-productiebuild geslaagd. Geen dependencies toegevoegd.

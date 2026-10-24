@@ -58,6 +58,9 @@ test('raw quotes persist across cache instances, isolate gateways and use old un
   try {
     const cache = createSpreadCache(dir, 'gateway-a')
     await cache.save('TEST', snapshot('TEST'))
+    await cache.saveIv('TEST', { bars: [{ date: '20261023', close: .4 }], day: '2026-10-23' })
+    assert.equal((await createSpreadCache(dir, 'gateway-a').getIv('TEST')).bars[0].close, .4)
+    await assert.rejects(createSpreadCache(dir, 'gateway-b').getIv('TEST'), /Ongeldige/)
     assert.equal((await createSpreadCache(dir, 'gateway-a').get('TEST')).puts.length, 2)
     await assert.rejects(createSpreadCache(dir, 'gateway-b').get('TEST'), /Ongeldige/)
     const universe = { entries: [{ symbol: 'TEST' }], updatedAt: '2026-10-23' }

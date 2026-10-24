@@ -1,5 +1,13 @@
 # Versiehistorie
 
+## 0.33.1 — ontbrekende IV en veilige scanverbinding (24 oktober 2026)
+
+- Ontbrekende actuele tick-106-IV blokkeert de IV-daghistorie niet meer voor Put spreads. Recente dag-IV wordt als gedateerde referentie gebruikt, met minimaal 200 waarnemingen, jaar- en recentedekking. Actuele IV en historische referentie blijven onderscheiden in tabel, beoordeling en CSV.
+- Eén fysieke scanverbinding per run, geïsoleerde listeners per aandeel en oplopende request-ID’s. Eén eerste aandelenquote in vertraagde/bevroren modus; geen drievoudige herhaling uitsluitend wegens ontbrekende IV.
+- IV-historie apart persistent opgeslagen; dagcache hergebruikt, geldige oudere reeks op open markt met tien dagen bijgewerkt. Te oude/ongeldige historie vraagt opnieuw een jaar.
+- Bestaande requestpacing behouden, plus één seconde tussen brokerbeoordelingen en twintig seconden na 25. Vijf opeenvolgende IV-fouten pauzeren de job; hervatten probeert deze aandelen opnieuw, ook wanneer ze achteraan het universum stonden.
+- Lokale tests/build en browsercontrole geslaagd. Geen diagnose van de werkelijke serverrechten, echte brokerproef of serverinstallatie geclaimd.
+
 ## 0.33.0 — brede put-spreadscan en oude chains (24 oktober 2026)
 
 - Standaard alle gewone Amerikaanse aandelen/ADR’s uit Nasdaq Trader-noteringen; geen 50-aandelenlimiet voor breed scannen. Optiegeschiktheid via IBKR, zonder vaste shortlist of beperking tot Nasdaq/S&P 500. Eigen tickers blijven optioneel.

@@ -7,9 +7,9 @@ const page = await browser.newPage({ viewport: { width: 1600, height: 1100 } })
 const errors = []; page.on('pageerror', error => errors.push(error.message))
 const today = '2026-10-24'
 const short = { symbol: 'HOOD', expiry: '20270122', tradingClass: 'HOOD', right: 'P', currency: 'USD', multiplier: 100, strike: 75, bid: 1.2, ask: 1.4, delta: -.12, underlyingPrice: 110, ivr: 45, marketDataType: 3, quotedAt: '2026-10-24T10:00:00Z' }
-const row = bullPutSpread(short, { ...short, strike: 65, bid: .5, ask: .6, delta: -.08 }, today)
+const row = { ...bullPutSpread(short, { ...short, strike: 65, bid: .5, ask: .6, delta: -.08 }, today), ivSource: 'historical-close', ivAsOf: '2026-10-23' }
 let scan = { state: 'idle', rows: [], warnings: [], symbolsChecked: 0, contractsChecked: 0 }
-let failure = false, running = false, posts = 0
+let failure = false, running = false, posts = 0, resumePosted = false
 await page.route('**/api/**', async route => {
   const req = route.request(), path = new URL(req.url()).pathname
   let status = 200, body = {}
@@ -17,6 +17,7 @@ await page.route('**/api/**', async route => {
     if (req.method() === 'POST') {
       posts++
       const input = req.postDataJSON()
+      if (input.resume) resumePosted = true
       assert.deepEqual(input.symbols, input.universeMode === 'us' ? [] : ['HOOD', 'AMD'])
       assert.equal(input.filters.minDte, 80)
       if (failure) { status = 503; body = { message: 'Test: broker niet beschikbaar.' } }
@@ -42,6 +43,7 @@ try {
   await page.getByRole('button', { name: 'Scan starten', exact: true }).click()
   await page.getByRole('heading', { name: 'Gevonden spreads', exact: true }).waitFor()
   await page.locator('.spreads-table tbody tr').first().waitFor()
+  await page.getByText('Dag-IV 2026-10-23', { exact: true }).first().waitFor()
   assert.equal(await page.locator('.spreads-table tbody tr').count(), 2)
   assert.match(await page.locator('.spreads-table tbody tr').first().innerText(), /AMD/)
   await page.getByLabel('Sorteren op', { exact: true }).selectOption('maxLoss')
@@ -98,6 +100,12 @@ try {
   assert.equal(await page.locator('.spreads-table tbody tr').count(), 50)
   await page.getByRole('button', { name: 'Volgende', exact: true }).click()
   assert.equal(await page.locator('.spreads-table tbody tr').count(), 5)
+  scan = { ...scan, state: 'paused', remainingSymbols: 0, retryFrom: 0, message: 'Test: gepauzeerd na vijf IV-fouten.' }
+  await page.reload()
+  await page.getByText('Test: gepauzeerd na vijf IV-fouten.', { exact: true }).waitFor()
+  await page.getByRole('button', { name: 'Scan hervatten', exact: true }).click()
+  await page.getByRole('button', { name: 'Scan stoppen', exact: true }).waitFor()
+  assert.equal(resumePosted, true)
   assert.deepEqual(errors, [])
   console.log('Spread workflow verified: IV selection, conservative amounts, sorting, search, quotes, CSV, persistence, errors, stop, 360–1600px; no page errors.')
 } finally { await browser.close() }
