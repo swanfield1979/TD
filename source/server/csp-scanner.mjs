@@ -1,6 +1,7 @@
 import { IBApi, EventName, MarketDataType } from '@stoqey/ib'
 import { cspCandidate, daysToExpiry, ivRank, scanDate, sortCandidates } from '../shared/csp-scan.mjs'
 
+import { selectSpreads, spreadFilters } from '../shared/put-spread.mjs'
 import { ivMetrics, leapPut, compareLeaps } from '../shared/leaps-scan.mjs'
 import { scanGuard, pacingError, disabledScanner } from './scan-guard.mjs'
 import { loadIvUniverse, SP500_URL } from './iv-universe.mjs'
@@ -11,6 +12,7 @@ export { SP500_URL } from './iv-universe.mjs'
 export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'csp') {
   const ib = new Api({ host: config.gatewayHost, port: config.gatewayPort })
   const today = scanDate()
+  const filters = mode === 'spreads' ? spreadFilters(state.filters) : null
   const guard = scanGuard(config)
   const pacer = config.scanPacer ?? guard.pacer
   let fatalError = null
@@ -152,7 +154,7 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
         const ivr = ivRank(stock.iv, bars, today)
         if (ivr === null) throw new Error('Actuele IV of voldoende recente jaarhistorie ontbreekt; IVR niet toetsbaar.')
         const metrics = ivMetrics(stock.iv, bars, today)
-        if (ivr <= (mode === 'csp' ? 30 : 40)) return
+        if (mode === 'spreads' ? ivr < filters.minIvr : ivr <= (mode === 'csp' ? 30 : 40)) return
         if (mode === 'iv') {
           state.rows.push({ symbol, underlyingPrice: price, iv: stock.iv * 100, ...metrics,
             marketDataType: stock.marketDataType, quotedAt: new Date().toISOString(), universe })
@@ -164,8 +166,11 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
         const contracts = []
         const seen = new Set()
         for (const chain of chains.filter((chain) => chain.exchange === 'SMART' && chain.multiplier === 100)) {
-          for (const expiry of chain.expirations.filter((value) => mode === 'leaps' ? ((daysToExpiry(value, today) >= 30 && daysToExpiry(value, today) <= 50) || (daysToExpiry(value, today) >= 300 && daysToExpiry(value, today) <= 700)) : daysToExpiry(value, today) >= 35 && daysToExpiry(value, today) <= 50)) {
-            for (const strike of chain.strikes.filter((value) => value > 0 && value < price)) {
+          for (const expiry of chain.expirations.filter((value) => mode === 'spreads' ? daysToExpiry(value, today) >= filters.minDte && daysToExpiry(value, today) <= filters.maxDte : mode === 'leaps' ? ((daysToExpiry(value, today) >= 30 && daysToExpiry(value, today) <= 50) || (daysToExpiry(value, today) >= 300 && daysToExpiry(value, today) <= 700)) : daysToExpiry(value, today) >= 35 && daysToExpiry(value, today) <= 50)) {
+            // Bounded coverage: 32 strikes nearest the requested short-strike ceiling.
+            const strikes = chain.strikes.filter(value => value > 0 && value < price)
+            const selected = mode === 'spreads' ? strikes.filter(value => value <= price * (1 - filters.minBuffer / 100)).sort((a,b) => b-a).slice(0,32) : strikes
+            for (const strike of selected) {
               const key = `${chain.tradingClass}:${expiry}:${strike}`
               if (seen.has(key)) continue
               seen.add(key)
@@ -173,7 +178,8 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
             }
           }
         }
-        if (!contracts.length) throw new Error(mode === 'leaps' ? 'Geen standaardputs binnen 30–50 of 300–700 DTE beschikbaar.' : 'Geen standaardputketen met 35–50 dagen looptijd beschikbaar.')
+        if (mode === 'spreads') state.coverage = 'Maximaal 32 strikes per expiratie en handelsklasse, onder de gekozen buffergrens; geen volledige marktdekking.'
+        if (!contracts.length) throw new Error(mode === 'spreads' ? 'Geen standaardputs binnen de gekozen looptijd en buffer beschikbaar.' : mode === 'leaps' ? 'Geen standaardputs binnen 30–50 of 300–700 DTE beschikbaar.' : 'Geen standaardputketen met 35–50 dagen looptijd beschikbaar.')
         let missing = 0
         for (let offset = 0; offset < contracts.length; offset += 1) {
           const batch = contracts.slice(offset, offset + 1)
@@ -183,6 +189,13 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
             const item = quotes[index]
             const opt = batch[index]
             if (item.status !== 'fulfilled' || !Number.isFinite(item.value.delta) || !(item.value.bid > 0) || !Number.isFinite(item.value.ask)) { missing++; continue }
+            if (mode === 'spreads') {
+              state.puts.push({ ...item.value, symbol, right: 'P', currency: 'USD', multiplier: 100, strike: opt.strike,
+                underlyingPrice: price, expiry: opt.lastTradeDateOrContractMonth, tradingClass: opt.tradingClass, ivr,
+                quotedAt: new Date().toISOString(), marketDataType: item.value.marketDataType })
+              state.rows = selectSpreads(state.puts, today, filters)
+              continue
+            }
             const row = (mode === 'leaps' ? leapPut : cspCandidate)({ ...item.value, symbol, right: 'P', currency: 'USD', multiplier: 100, strike: opt.strike,
               expiry: opt.lastTradeDateOrContractMonth, tradingClass: opt.tradingClass, ivr, ...metrics,
               marketDataType: item.value.marketDataType ?? 3, quotedAt: new Date().toISOString(), universe }, today, discovery)
@@ -191,6 +204,10 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
               list.push(row)
               list.sort((a, b) => b.annualizedYield - a.annualizedYield)
             }
+          }
+          if (mode === 'spreads') {
+            state.progress = `Put spreads · ${symbol} · ${offset + 1} / ${contracts.length} contracten`
+            await config.onScanCheckpoint?.()
           }
           if (mode === 'leaps') {
             state.rows = compareLeaps(state.puts)
@@ -238,6 +255,13 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
       return
     }
     for (const symbol of [...new Set(symbols)]) await scanSymbol(symbol)
+    if (mode === 'spreads') {
+      state.rows = selectSpreads(state.puts, today, filters)
+      state.state = state.warnings.length ? 'partial' : 'complete'
+      state.progress = 'Scan afgerond'
+      delete state.puts
+      return
+    }
     if (mode === 'leaps') {
       state.rows = compareLeaps(state.puts)
       for (const symbol of symbols) {

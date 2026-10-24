@@ -1,7 +1,7 @@
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
 
-const modes = ['iv', 'leaps', 'csp']
+const modes = ['iv', 'leaps', 'spreads', 'csp']
 export function serializeScans(scans, round, gateway) {
   const savedAt = new Date().toISOString()
   return JSON.stringify({ version: 1, gateway, savedAt,

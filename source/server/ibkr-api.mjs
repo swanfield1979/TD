@@ -6,6 +6,7 @@ import { collectSnapshot } from './gateway-client.mjs'
 import { withPreviousBalance } from './ibkr-domain.mjs'
 import { mergeExecutions } from '../shared/gateway-trades.mjs'
 import { runCspScan } from './csp-scanner.mjs'
+import { spreadFilters } from '../shared/put-spread.mjs'
 import { normalizeShortlist } from '../shared/leaps-scan.mjs'
 import { createScanStore } from './scan-store.mjs'
 import { scanGuard } from './scan-guard.mjs'
@@ -161,6 +162,7 @@ let shortlistError = null
 try { shortlist = normalizeShortlist(JSON.parse(await readFile(shortlistPath, 'utf8'))) }
 catch (error) { if (error.code !== 'ENOENT') shortlistError = 'Shortlist kon niet worden gelezen; controleer het opgeslagen bestand voordat je opnieuw opslaat.' }
 const optionScans = {
+  spreads: { state: 'idle', rows: [], warnings: [], symbolsChecked: 0, contractsChecked: 0 },
   iv: { state: 'idle', rows: [], warnings: [], symbolsChecked: 0, contractsChecked: 0 },
   leaps: { state: 'idle', rows: [], warnings: [], assessments: [], symbolsChecked: 0, contractsChecked: 0 },
 }
@@ -170,7 +172,7 @@ let scanStorageError = null
 try {
   const stored = await scanStore.load()
   if (stored) {
-    for (const mode of ['iv', 'leaps']) if (stored.scans[mode]) optionScans[mode] = stored.scans[mode]
+    for (const mode of ['iv', 'leaps', 'spreads']) if (stored.scans[mode]) optionScans[mode] = stored.scans[mode]
     if (stored.scans.csp) scanState = stored.scans.csp
     if (stored.round) scanGuard(config).ivRound = stored.round
   }
@@ -194,6 +196,7 @@ async function runOptionScan(mode, symbols, state, previous) {
       state.rows = previous.rows
       state.showingPreviousResults = true
       state.previousFinishedAt = previous.previousFinishedAt || previous.finishedAt || previous.savedAt
+      if (mode === 'spreads') { state.filters = previous.filters; state.symbols = previous.symbols; state.coverage = previous.coverage }
     }
   } finally { await saveScanResults() }
 }
@@ -240,7 +243,7 @@ const server = createServer(async (request, response) => {
       if (!isAllowedPost(request)) return sendJson(response, 403, { message: 'Ongeldige aanvraag.' })
       return sendJson(response, 202, martinScan.stop())
     }
-    const stopMode = { '/api/iv-scan/stop': 'iv', '/api/leaps/stop': 'leaps', '/api/scans/stop': 'csp' }[request.url]
+    const stopMode = { '/api/put-spreads/stop': 'spreads', '/api/iv-scan/stop': 'iv', '/api/leaps/stop': 'leaps', '/api/scans/stop': 'csp' }[request.url]
     if (stopMode && request.method === 'POST') {
       if (!isAllowedPost(request)) return sendJson(response, 403, { message: 'Ongeldige aanvraag.' })
       const state = stopMode === 'csp' ? scanState : optionScans[stopMode]
@@ -266,7 +269,7 @@ const server = createServer(async (request, response) => {
         finally { shortlistSaving = false }
       }
     }
-    const mode = request.url === '/api/iv-scan' ? 'iv' : request.url === '/api/leaps' ? 'leaps' : null
+    const mode = request.url === '/api/put-spreads' ? 'spreads' : request.url === '/api/iv-scan' ? 'iv' : request.url === '/api/leaps' ? 'leaps' : null
     if (mode) {
       if (request.method === 'GET') return sendJson(response, 200, { ...optionScans[mode], storageError: scanStorageError || optionScans[mode].storageError })
       if (request.method === 'POST') {
@@ -276,8 +279,19 @@ const server = createServer(async (request, response) => {
         if (scanState.state === 'running' || Object.values(optionScans).some(scan => scan.state === 'running'))
           return sendJson(response, 409, { message: 'Er loopt al een optiescan. Wacht tot deze klaar is.' })
         if (mode === 'leaps' && (shortlistError || !shortlist.length)) return sendJson(response, 400, { message: shortlistError || 'Voeg eerst aandelen toe aan de shortlist.' })
-        const symbols = mode === 'leaps' ? [...shortlist] : []
-        const state = { state: 'running', rows: [], puts: [], portfolio: [], market: [], assessments: [], warnings: [], symbols,
+        let symbols = mode === 'leaps' ? [...shortlist] : []
+        let filters
+        if (mode === 'spreads') {
+          try {
+            const body = await readJsonBody(request)
+            symbols = normalizeShortlist(body.symbols)
+            if (!symbols.length) throw Error('Vul minstens één ticker in.')
+            filters = spreadFilters(body.filters)
+          } catch (error) { return sendJson(response, 400, { message: error.message }) }
+        }
+        if (mode === 'spreads' && (scanState.state === 'running' || Object.values(optionScans).some(scan => scan.state === 'running')))
+          return sendJson(response, 409, { message: 'Er loopt al een optiescan. Wacht tot deze klaar is.' })
+        const state = { state: 'running', filters, rows: [], puts: [], portfolio: [], market: [], assessments: [], warnings: [], symbols,
           symbolsChecked: 0, contractsChecked: 0, startedAt: new Date().toISOString(), progress: 'Verbinding met IBKR maken' }
         const previous = optionScans[mode]
         optionScans[mode] = state

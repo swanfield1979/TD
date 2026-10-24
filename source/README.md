@@ -1,6 +1,6 @@
 # Ontwikkeling
 
-Actuele versie: **0.31.8**. Menu **Martin-scan** (`#martin`) scant standaard automatisch Nasdaq en overige Amerikaanse beursnoteringen. Ondersteunt koerscache, stoppen/hervatten, watchlists en exports; eigen tickers zijn optioneel. Zie [Martin-scan en installatie](../docs/martin-scanner.md). Vanuit deze map: `npm ci`, `npm test`, `npm run test:frontend`, `npm run build`; lokaal `npm run dev:lan` of `npm run serve:lan`. Browsercontrole: start Vite op 5198 (`npm run dev -- --port 5198`) en voer `npm run test:martin` uit.
+Actuele versie: **0.32.0**. **Put spreads** (`#put-spreads`) voegt een lokale bull-put-spreadscanner toe met instelbare criteria, quote-details, CSV en serveropslag. Zie [handleiding](../docs/put-spreads.md). Browsercontrole vanuit deze map: start `npm run dev -- --host 127.0.0.1 --port 5197` en voer `npm run test:spreads` uit. Menu **Martin-scan** (`#martin`) scant standaard automatisch Nasdaq en overige Amerikaanse beursnoteringen. Ondersteunt koerscache, stoppen/hervatten, watchlists en exports; eigen tickers zijn optioneel. Zie [Martin-scan en installatie](../docs/martin-scanner.md). Vanuit deze map: `npm ci`, `npm test`, `npm run test:frontend`, `npm run build`; lokaal `npm run dev:lan` of `npm run serve:lan`. Browsercontrole: start Vite op 5198 (`npm run dev -- --port 5198`) en voer `npm run test:martin` uit.
 
 De webapp staat volledig in deze map. Voer alle ontwikkel- en bouwcommando's vanuit `source/` uit.
 

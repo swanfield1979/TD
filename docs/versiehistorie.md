@@ -1,5 +1,13 @@
 # Versiehistorie
 
+## 0.32.0 — bull-put-spreadscanner (24 oktober 2026)
+
+- Nieuwe pagina **Put spreads** met filters links, eigen tickers of overname van maximaal 50 IV-resultaten, sortering, zoeken, paginering en CSV.
+- Bestaande read-only IBKR-scan uitgebreid met standaard USD-putparen van dezelfde expiratie en handelsklasse, conservatieve credit, expiratiewinst/-verlies en rendement op risico.
+- Delta-indicatie expliciet als OTM-proxy, zonder exacte winstkans, optievolume of externe scores te verzinnen. Beide bronstatussen en ophaaltijden inspecteerbaar.
+- Start/stop, wederzijdse optiescanblokkering, invoervalidatie, checkpoints, herstel na herstart en LAN-proxy. Begrensde strike-dekking zichtbaar.
+- Lokale validatie geslaagd; nog geen serverinstallatie of echte-brokerproef voor deze uitbreiding. Zie [handleiding](put-spreads.md).
+
 ## 0.31.8 — breed Amerikaans Martin-universum (16 oktober 2026)
 
 - Standaard officiële Nasdaq Trader-lijsten voor Nasdaq en overige Amerikaanse beurzen, ontdubbeld en gefilterd op gewone aandelen/ADR’s. Geen vaste shortlistfallback. Bronmetadata en dekking zichtbaar.

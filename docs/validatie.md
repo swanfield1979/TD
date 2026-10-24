@@ -1,5 +1,15 @@
 # Validatie
 
+## Trading Monitor 0.32.0 — bull-put-spreadscanner (24 oktober 2026)
+
+- `npm test`: **155 geslaagd**; `npm run test:frontend`: **13 geslaagd**; `npm run build`: TypeScript en Vite geslaagd. Geen nieuwe afhankelijkheden.
+- Nieuwe domeintests toetsen credit op bied/laat, multiplier 100, max. winst/verlies, break-even, rendement, filters en afwijzing van ongeldige/gekruiste, debet-, verlopen, aangepaste en gemengde contracten. Brokerfixture bevestigt pairing, bounded strikes, checkpoints, één actieve quote en cleanup zonder orderfunctie.
+- Echte lokale HTTP-API getest met een onbereikbare testbroker: origincontrole, ticker-/filtervalidatie, wederzijdse scanblokkering, stoppen en herstel van criteria/resultaat na procesherstart. Dit is geen echte IBKR-quotetest.
+- `backend/.venv/Scripts/python.exe -m pytest backend/tests -q`: **49 geslaagd**; inclusief GET/POST-proxy voor put-spreads en stop. Eén bestaande Starlette/httpx-deprecatiewaarschuwing.
+- `npm run test:spreads`: browserworkflow met expliciete testquotes geslaagd voor IV-overname, start, sorteren, zoeken, bronstatus en tijden, bedragen, CSV-download, voorkeuren na herladen, foutafhandeling en stop. Geen paginaruntimefouten of pagina-overloop bij 360, 768, 1024 en 1600 pixels. Mobiel menu openen/sluiten, toetsenbordvolgorde, 50/5-resultaatpaginering, lichte modus en 200% zoom gecontroleerd; desktop-, mobiele en lichte screenshots visueel beoordeeld.
+- Screenshots uitsluitend in genegeerde `source/data/private/spread-validation/`; geen privé- of testkoersen toegevoegd aan openbare appdata. `git diff --check` geslaagd. Bestaande lokale TradingView-wijzigingen behouden.
+- Geen echte brokerdata voor deze uitbreiding opgehaald, geen push, externe publicatie of serverinstallatie. Datarechten, echte contractbeschikbaarheid en uitvoerbaarheid van combinatieprijzen blijven op de doelomgeving te controleren. Zie [handleiding en dekking](put-spreads.md).
+
 ## Trading Monitor 0.31.8 — breed Martin-universum (16 oktober 2026)
 
 - Officiële Nasdaq Trader-bronnen daadwerkelijk opgehaald: 3.321 Nasdaq en 2.292 overige beursnoteringen, samen 5.613 unieke namen na filtering. Geen vaste-shortlistfallback.

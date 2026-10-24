@@ -2,7 +2,7 @@
 
 Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voortgang op basis van Interactive Brokers Flex-rapporten.
 
-**Versie/status:** 0.31.8. Martin-scan selecteert automatisch uit een breed Amerikaans beursuniversum via officiële Nasdaq Trader-lijsten, met koerscache, stoppen/hervatten en focus-, dag-, maand- en premarketwatchlists. Eigen tickers blijven optioneel. Lokale tests, productiebuild en beperkte echte broncontrole geslaagd; serverinstallatie nog niet uitgevoerd.
+**Versie/status:** 0.32.0. Bull-put-spreadscanner toegevoegd aan de bestaande Trading Monitor, met IBKR-quotes, instelbare criteria, sortering, CSV en opgeslagen scanresultaten. Lokale tests en productiebuild geslaagd; echte brokerdata voor deze uitbreiding en serverinstallatie nog niet geverifieerd.
 
 | Map | Inhoud |
 | --- | --- |
@@ -17,7 +17,9 @@ Lokale mobiele correctie (14 oktober 2026): IBKR-status en vernieuwknop staan op
 Ontwikkeling: `npm run dev:lan`; productie: `npm run serve:lan`, vanuit source na dependency-installatie. Zie [LAN-handleiding](docs/breakout-lan.md). Optionele systemd-service wordt handmatig geïnstalleerd.
 
 
-Zie [Serverupdate naar 0.31.8](docs/iv-leaps.md#serverupdate-via-github): publiceer frontend en API samen en herstart de services. Een nieuwe Flex-import is voor deze uitbreiding niet vereist.
+Voor Put spreads: [installatie en serverupdate](docs/put-spreads.md#installatie-en-serverupdate).
+
+Zie [Historische serverupdate naar 0.31.8](docs/iv-leaps.md#serverupdate-via-github): publiceer frontend en API samen en herstart de services. Een nieuwe Flex-import is voor deze uitbreiding niet vereist.
 
 Zie [`docs/installatie.md`](docs/installatie.md) voor de installatie en [`source/README.md`](source/README.md) voor alle ontwikkelcommando's.
 
@@ -44,6 +46,8 @@ Installeer en configureer TWS of IB Gateway handmatig voor paper en read-only AP
 [SETUP_LOGIC.md](docs/SETUP_LOGIC.md) verklaart ieder criterium en corporate-actionbeleid. [DEPLOYMENT.md](docs/DEPLOYMENT.md) bevat Linux/Windows-installatie, tests, LAN-hosting en de GitHub-serverupdate. Tests vanuit source: `backend/.venv/bin/python -m pytest backend/tests -q`, `npm run test:frontend`, `npm test`; na starten van dev:demo voert `npm run test:e2e` de browserworkflow uit. De productiebuild gebruikt `npm run build`.
 
 ## Functies
+
+- [Bull-put-spreadscanner](docs/put-spreads.md): menu **Put spreads** (`#put-spreads`), filters links en spreadvergelijking met conservatieve credit, maximaal verlies en rendement op risico.
 
 - [Martin-selectiescanner](docs/martin-scanner.md): menu **Martin-scan** (`#martin`) met automatisch breed Amerikaans beursuniversum, stoppen/hervatten, koerscache, watchlists en CSV-/TradingView-export. Eigen tickers en CLI blijven beschikbaar.
 

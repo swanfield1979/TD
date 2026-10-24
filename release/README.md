@@ -1,5 +1,9 @@
 # Releases
 
+## Trading Monitor 0.32.0 — lokaal voorbereid
+
+Bull-put-spreadscanner in de bestaande app, met frontend, Node-API en LAN-proxy. Er is geen nieuw installatiepakket beschikbaar; tijdelijke build staat in `source/dist/`. [Handleiding en serverupdate](../docs/put-spreads.md). Nog niet op de server geïnstalleerd; geen nieuwe controlesom voor een distributiepakket.
+
 ## Trading Monitor 0.31.8
 
 Martin-scan gebruikt standaard officiële Nasdaq- en overige Amerikaanse beurslijsten in plaats van 29 vaste tickers. Automatische watchlists, per-aandeelkoerscache, stoppen/hervatten en paginering. Broncode via GitHub; geen apart installatiepakket. Frontend en API samen bijwerken volgens [serverupdate](../docs/martin-scanner.md#serverupdate-en-verificatie). Serverinstallatie nog niet uitgevoerd.
