@@ -2,7 +2,7 @@
 
 Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voortgang op basis van Interactive Brokers Flex-rapporten.
 
-**Versie/status:** 0.37.1. Tickers in de drie scanoverzichten openen de eigen TradingView-layout in een nieuw venster/tabblad. Put spreads toont sectoren in Stock Filter, IV Scan en Option Scan, met bron-/datumopslag en CSV-export. De aandelenlijst is inklapbaar en de browser onthoudt de keuze. Weekplanning en Geblokkeerde Stocks blijven behouden. Tests, build en browsercontrole geslaagd; serverinstallatie nog niet uitgevoerd.
+**Versie/status:** 0.38.0. Aandelen zonder bruikbare koers-/IV-data worden automatisch geblokkeerd met reden en scanstap; handmatig deblokkeren blijft mogelijk. Tickers in de drie scanoverzichten openen de eigen TradingView-layout in een nieuw venster/tabblad. Put spreads toont sectoren in Stock Filter, IV Scan en Option Scan, met bron-/datumopslag en CSV-export. De aandelenlijst is inklapbaar en de browser onthoudt de keuze. Weekplanning en Geblokkeerde Stocks blijven behouden. Tests, build en browsercontrole geslaagd; serverinstallatie nog niet uitgevoerd.
 
 | Map | Inhoud |
 | --- | --- |

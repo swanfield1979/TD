@@ -1,5 +1,9 @@
 # Releases
 
+## Trading Monitor 0.38.0 — automatisch Geblokkeerde Stocks
+
+Aandelen zonder bevestigde bruikbare koers-/IV-data komen automatisch in de blokkeerlijst, inclusief reden en scanstap. Deblokkeren blijft beschikbaar. Geen nieuw installatiepakket; tijdelijke bouwuitvoer in `source/dist/`. [Serverupdate](../docs/put-spreads.md#installatie-en-serverupdate). Broncode-update; serverinstallatie nog niet uitgevoerd.
+
 ## Trading Monitor 0.37.1 — TradingView-links
 
 Klikbare tickers in de drie scanoverzichten openen de eigen TradingView-layout in een nieuw venster/tabblad. Geen nieuw installatiepakket; tijdelijke bouwuitvoer in `source/dist/`. [Serverupdate](../docs/put-spreads.md#installatie-en-serverupdate). Broncode-update; serverinstallatie nog niet uitgevoerd.

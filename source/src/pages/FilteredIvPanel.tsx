@@ -7,7 +7,7 @@ export interface FilteredIvState {
   id?: string; stockSelectionId?: string; state: string; filters?: { minIvr: number }; ready?: boolean;
   universeCount?: number; universeChecked?: number; remainingSymbols?: number; retryFrom?: number;
   rows: { symbol: string; sector?: string; sectorSource?: string; sectorAsOf?: string; underlyingPrice: number; ivr: number; iv: number; ivPercentile: number; quotedAt: string; ivSource?: string; ivAsOf?: string }[];
-  failures?: { symbol: string; message: string }[]; warnings: string[]; finishedAt?: string; message?: string; storageError?: string;
+  failures?: { symbol: string; message: string; automaticallyBlocked?: boolean }[]; warnings: string[]; finishedAt?: string; message?: string; storageError?: string; autoBlockError?: string;
 }
 const empty: FilteredIvState = { state: 'idle', rows: [], warnings: [] }
 const number = (value: number) => value.toLocaleString('nl-NL', { maximumFractionDigits: 2 })
@@ -68,7 +68,8 @@ export default function FilteredIvPanel({ stock, disabled, refresh, onChange, on
     {scan.filters && scan.filters.minIvr !== Number(minimum) && <p>IV-criterium gewijzigd. Start de IV Scan opnieuw om stap 3 te gebruiken.</p>}
     {(error || scan.storageError) && <div role="alert"><p>{error || scan.storageError}</p><button onClick={() => setRetry(value => value + 1)}>IV Scan opnieuw laden</button></div>}
     {scan.message && <p role="status">{scan.message}</p>}
-    {!!scan.failures?.length && <details><summary>{scan.failures.length} aandelen zonder bruikbare IV-data</summary><ul>{scan.failures.slice(0, 50).map(row => <li key={row.symbol}>{row.symbol}: {row.message}</li>)}</ul></details>}
+    {scan.autoBlockError && <p role="alert">{scan.autoBlockError}</p>}
+    {!!scan.failures?.length && <details><summary>{scan.failures.length} aandelen zonder bruikbare IV-data</summary><ul>{scan.failures.slice(0, 50).map(row => <li key={row.symbol}>{row.symbol}: {row.message}{row.automaticallyBlocked && ' · Automatisch geblokkeerd'}</li>)}</ul></details>}
     {!!scan.rows.length && <><div className="spreads-toolbar"><label htmlFor="filtered-iv-search">Zoeken in IV-resultaten<input id="filtered-iv-search" value={search} onChange={event => { setSearch(event.target.value); setPage(0) }} /></label></div>
       <div className="scan-table-scroll" role="region" aria-label="IV-resultaten" tabIndex={0}><table className="scan-table"><thead><tr><th>Aandeel</th><th>Sector</th><th>Koers ($)</th><th>IV-rank</th><th>IV (%)</th><th>IV-percentile</th><th>IV-bron / datum</th><th>Actie</th></tr></thead><tbody>{rows.slice(current * 50, current * 50 + 50).map(row => <tr key={row.symbol}><th scope="row"><TradingViewSymbol symbol={row.symbol} /></th><SectorCell value={row} /><td>{number(row.underlyingPrice)}</td><td>{number(row.ivr)}</td><td>{number(row.iv)}</td><td>{number(row.ivPercentile)}</td><td>{row.ivSource === 'historical-close' ? 'Dag-IV' : 'IBKR-quote'} · {row.ivAsOf || new Date(row.quotedAt).toLocaleDateString('nl-NL')}</td><td><button disabled={disabled || busy || running} onClick={() => void onBlock(row.symbol, true).catch(cause => setError(cause.message))}>Verwijder {row.symbol}</button></td></tr>)}</tbody></table></div>
       {!rows.length && <p>Geen IV-resultaten voor deze zoekterm.</p>}

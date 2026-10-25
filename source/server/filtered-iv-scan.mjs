@@ -24,7 +24,7 @@ export function ivSelection(state, stock, id, blocked = () => false, now = Date.
   if (!rows.length) throw Error('Geen niet-geblokkeerde aandelen voldoen aan de IV-filter.')
   return { id: state.id, finishedAt: state.finishedAt, filters: state.filters, entries: rows.map(row => ({ symbol: row.symbol, ...sectorMetadata(row), ...stockMetadata.get(stockKey(row.symbol)) })) }
 }
-export async function runFilteredIvScan(config, state, { cache, checkpoint = async () => {}, scan = runCspScan, connection = createScanConnection(), blocked = () => false, wait = (ms, signal) => sleep(ms, undefined, { signal }), now = () => new Date() }) {
+export async function runFilteredIvScan(config, state, { cache, checkpoint = async () => {}, scan = runCspScan, connection = createScanConnection(), blocked = () => false, autoBlock, wait = (ms, signal) => sleep(ms, undefined, { signal }), now = () => new Date() }) {
   const signal = config.scanSignal
   let consecutiveFailures = 0
   try {
@@ -50,7 +50,12 @@ export async function runFilteredIvScan(config, state, { cache, checkpoint = asy
           state.observations = [...state.observations.filter(item => item.symbol !== symbol), row]
           state.rows = state.observations.filter(item => item.ivr >= state.filters.minIvr).sort((a, b) => b.ivr - a.ivr)
           consecutiveFailures = 0
-        } else { state.failures.push({ symbol, message: part.warnings.join(' · ') || 'Geen volledige IV-jaarhistorie.' }); consecutiveFailures++ }
+        } else {
+          const failure = { symbol, message: part.warnings.join(' · ') || 'Geen volledige IV-jaarhistorie.', ...part.failures?.[0], stage: 'iv', observedAt: now().toISOString() }
+          if (await autoBlock?.(failure)) { failure.automaticallyBlocked = true; state.autoBlocked = (state.autoBlocked || 0) + 1; consecutiveFailures = 0 }
+          else consecutiveFailures++
+          state.failures.push(failure)
+        }
       }
       state.universeChecked++; state.symbolsChecked = state.universeChecked
       state.remainingSymbols = state.entries.length - state.universeChecked

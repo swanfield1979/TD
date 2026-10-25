@@ -15,7 +15,7 @@ let stock = { state: 'idle', rows: [], failures: [], warnings: [], checked: 0, t
 let stockPosts = 0
 let stockFailure = false, stockRunning = false, stockEmpty = false
 let iv = { state: 'idle', rows: [], warnings: [] }, ivPosts = 0
-const blockedStocks = new Map()
+const blockedStocks = new Map([['AIOK', { symbol: 'AIOK', blockedAt: '2026-10-25T12:00:00Z', automatic: true, stage: 'iv', reason: 'Geen bruikbare IV of recente volledige IV-jaarhistorie.' }]])
 let planning = { settings: { enabled: true, stockDay: 0, stockTime: '09:00', ivAtMarketOpen: true }, state: 'idle', running: false }
 await page.route('**/api/**', async route => {
   const req = route.request(), path = new URL(req.url()).pathname
@@ -72,6 +72,10 @@ await page.route('**/api/**', async route => {
 try {
   await page.goto(`${process.env.SPREAD_URL || 'http://127.0.0.1:5197'}/#put-spreads`)
   await page.getByRole('heading', { name: '1. Stock Filter', exact: true }).waitFor()
+  await page.getByRole('region', { name: 'Geblokkeerde Stocks', exact: true }).getByText('Automatisch · IV Scan', { exact: false }).waitFor()
+  await page.getByRole('region', { name: 'Geblokkeerde Stocks', exact: true }).getByText('Geen bruikbare IV of recente volledige IV-jaarhistorie.', { exact: true }).waitFor()
+  await page.getByRole('region', { name: 'Geblokkeerde Stocks', exact: true }).getByRole('button', { name: 'Deblokkeer AIOK', exact: true }).click()
+  await page.waitForFunction(() => ![...document.querySelectorAll('button')].some(button => button.textContent === 'Deblokkeer AIOK'))
   assert.equal(await page.getByRole('link', { name: 'IV Scan', exact: true }).count(), 0)
   assert.equal(await page.getByRole('button', { name: 'Optiescan starten', exact: true }).isDisabled(), true)
   assert.equal(await page.getByLabel('Aandelenuniversum', { exact: true }).inputValue(), 'us')

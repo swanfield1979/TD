@@ -1,5 +1,14 @@
 # Validatie
 
+## Trading Monitor 0.38.0 — automatisch blokkeren (25 oktober 2026)
+
+- 197 scanner-/dashboardtests geslaagd, inclusief negen nieuwe tests voor de screenshotmeldingen, bron-/rechten-/pacinguitval zonder blokkering, blijvende automatische reden/stap, behoud van handmatige blokkeringen, zes ontbrekende IV-reeksen zonder ongewenste pauze en overslaan in een volgende job.
+- Stock Filter-test: definitief ontbrekende Yahoo-dagdata zonder bruikbare brokerterugval blokkeren; bronbrede HTTP 429 pauzeert zonder blokkering. Option Scan-test: ontbrekende IV blokkeert, normale niet-passende spreads niet. Geen blokkering op onbekende sector of ontbrekende generic-volumevelden zonder bevestigde instrumentspecifieke oorzaak.
+- Reconciliatieproef: oude meldingen verwerkt, beschikbare resultaten inclusief klassealias blijven behouden, deblokkeren overleeft herstart zonder directe herblokkering door de oude melding; nieuwe waarneming kan wel opnieuw blokkeren.
+- API-integratie: reeds opgeslagen HMDS-no-data voor AIOK wordt bij processtart geblokkeerd met automatische IV-reden; offline Gateway niet; deblokkeren en tweede herstart laten AIOK gedeblokkeerd.
+- 13 frontendtests, productiebuild en browserworkflow geslaagd. Blokkeerlijst toont Automatisch · IV Scan en de reden, met werkende deblokkering. Overige drie-stappen-, sector-, TradingView-, CSV-, responsieve en 200%-zoomcontroles blijven slagen.
+- Tests gebruiken geïsoleerde opslag en brokermocks. De echte serverdata en blokkeerlijst zijn niet aangepast; geen GitHub-push of serverinstallatie uitgevoerd.
+
 ## Trading Monitor 0.37.1 — TradingView-links (25 oktober 2026)
 
 - TypeScript/Vite-build geslaagd. Bestaande browserworkflow controleert in alle drie de tabellen een link naar `https://www.tradingview.com/chart/fxY1us9e/?symbol=HOOD`, `target=_blank` en `rel=noopener noreferrer`.

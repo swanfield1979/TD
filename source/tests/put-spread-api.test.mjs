@@ -74,5 +74,17 @@ test('spread API validates inputs, enforces origin and scan lock, supports stop 
     await fetch(`${origin}/api/put-spreads/iv/stop`, { method: 'POST', headers })
     for (let i = 0; i < 50; i++) { if ((await (await fetch(`${origin}/api/put-spreads/iv`)).json()).state !== 'running') break; await pause(20) }
     assert.equal((await (await fetch(`${origin}/api/put-spreads/iv`)).json()).state, 'cancelled')
+    await stop()
+    const store = createScanStore(join(directory, 'scans.json'), '127.0.0.1:1'), savedScans = await store.load()
+    savedScans.scans.iv.failures = [{ symbol: 'AIOK', message: 'IBKR 162: HMDS query returned no data: AIOK@SMART Option_Implied_Volatility', observedAt: new Date(Date.now() - 10000).toISOString() }, { symbol: 'OFFLINE', message: 'Gateway niet bereikbaar.' }]
+    await store.save(savedScans.scans, savedScans.round)
+    await start()
+    const automatic = (await (await fetch(`${origin}/api/put-spreads/blocked`)).json()).entries
+    assert.equal(automatic.find(row => row.symbol === 'AIOK').automatic, true)
+    assert.equal(automatic.find(row => row.symbol === 'AIOK').stage, 'iv')
+    assert.equal(automatic.some(row => row.symbol === 'OFFLINE'), false)
+    await block('AIOK', false)
+    await stop(); await start()
+    assert.equal((await (await fetch(`${origin}/api/put-spreads/blocked`)).json()).entries.some(row => row.symbol === 'AIOK'), false, 'Old failure must not undo explicit unblock on restart')
   } finally { if (child?.exitCode === null) await stop(); await rm(directory, { recursive: true, force: true }) }
 })

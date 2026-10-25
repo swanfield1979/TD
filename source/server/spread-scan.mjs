@@ -15,7 +15,7 @@ export function optionsSession(date = new Date()) {
   const minute = Number(parts.hour) * 60 + Number(parts.minute)
   return { ...session, open: session.shouldSync && minute >= 570 && minute < session.closeHour * 60 }
 }
-export async function runSpreadScan(config, state, { cache, checkpoint = async () => {}, universeLoader = loadUsUniverse, scan = runCspScan, now = () => new Date(), connection = createScanConnection(), wait = (ms, signal) => sleep(ms, undefined, { signal }), blocked = () => false }) {
+export async function runSpreadScan(config, state, { cache, checkpoint = async () => {}, universeLoader = loadUsUniverse, scan = runCspScan, now = () => new Date(), connection = createScanConnection(), wait = (ms, signal) => sleep(ms, undefined, { signal }), blocked = () => false, autoBlock }) {
   const signal = config.scanSignal, filters = spreadFilters(state.filters)
   state.filters = filters
   state.rows = state.rows.filter(row => !blocked(row.symbol)).map(row => ({ ...row, dte: daysToExpiry(row.expiry, scanDate(now())), cached: true }))
@@ -96,10 +96,13 @@ export async function runSpreadScan(config, state, { cache, checkpoint = async (
           state.warnings.push('IBKR niet bereikbaar; resterende aandelen uitsluitend uit lokale chains beoordeeld. Ontbrekende chains krijgen geen resultaat.')
         }
       }
+      if (assessment.status === 'missing' && !rows.length && await autoBlock?.({ ...assessment, stage: 'options', observedAt: now().toISOString() })) {
+        assessment.automaticallyBlocked = true; state.autoBlocked = (state.autoBlocked || 0) + 1
+      }
       state.rows = [...state.rows.filter(row => row.symbol !== symbol), ...rows.map(annotate)].sort((a,b) => b.returnOnRisk - a.returnOnRisk)
       state.assessments.push(assessment); state.universeChecked++; state.symbolsChecked = state.universeChecked
       state.remainingSymbols = state.entries.length - state.universeChecked
-      ivFailures = ['IV_UNAVAILABLE', 'VOLUME_UNAVAILABLE'].includes(assessment.code) ? ivFailures + 1 : 0
+      ivFailures = !assessment.automaticallyBlocked && ['IV_UNAVAILABLE', 'VOLUME_UNAVAILABLE'].includes(assessment.code) ? ivFailures + 1 : 0
       state.warnings = [...new Set(state.warnings)]
       await checkpoint()
       if (state.storageError) throw Error('Scan gestopt: voortgang kon niet worden opgeslagen.')

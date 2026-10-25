@@ -277,7 +277,11 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
           assess(missing ? 'partial' : count ? 'match' : 'no-match', `${count} passende spreads; ${symbolPuts.length} putquotes; ${missing} contracten zonder volledige data.`)
         }
         if (missing) state.warnings.push(`${symbol}: ${missing} contracten zonder volledige bied/laat/greeks; overgeslagen.`)
-      } catch (error) { ensureActive(); warn(symbol, error); if (mode === 'spreads') { assess('missing', error.message); spreadAssessment.code = error.code; spreadAssessment.ibCode = error.ibCode } }
+      } catch (error) {
+        ensureActive(); warn(symbol, error)
+        if (stockIv) { state.failures ??= []; state.failures.push({ symbol, message: error.message, code: error.code, ibCode: error.ibCode }) }
+        if (mode === 'spreads') { assess('missing', error.message); spreadAssessment.code = error.code; spreadAssessment.ibCode = error.ibCode }
+      }
       finally { state.symbolsChecked++; if (mode === 'spreads' && spreadAssessment) { Object.assign(spreadAssessment, state.ivReference?.symbol === symbol ? state.ivReference : {}, state.liquidity?.symbol === symbol ? state.liquidity : {}); state.assessments ??= []; state.assessments.push(spreadAssessment) } }
     }
 

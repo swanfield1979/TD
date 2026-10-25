@@ -32,7 +32,7 @@ const initial = () => ({ state: 'idle', rows: [], observations: {}, failures: []
 // Raw observations survive filter changes. The frozen result ID binds an option job
 // to exactly the completed selection the user reviewed, without a 50-ticker limit.
 export async function createStockFilter(directory, config, dependencies = {}) {
-  const { now = Date.now, yahoo = yahooStockHistory, universe = loadUsUniverse, wait = (ms, signal) => sleep(ms, undefined, { signal }), brokerFactory = createIbkrStockHistory, blocked = () => false, sectors } = dependencies
+  const { now = Date.now, yahoo = yahooStockHistory, universe = loadUsUniverse, wait = (ms, signal) => sleep(ms, undefined, { signal }), brokerFactory = createIbkrStockHistory, blocked = () => false, sectors, autoBlock } = dependencies
   await mkdir(directory, { recursive: true })
   const path = join(directory, 'selection.json'), cachePath = join(directory, 'observations.json')
   let state = initial(), observations = {}, controller, saving = Promise.resolve(), storageError, active = false
@@ -108,7 +108,11 @@ export async function createStockFilter(directory, config, dependencies = {}) {
             observations[entry.symbol] = { ...value, cached: false }
             state.observations[entry.symbol] = value
             if (value.price >= state.filters.minPrice && value.price <= state.filters.maxPrice && value.volume >= state.filters.minVolume) state.rows.push(value)
-          } else state.failures.push({ symbol: entry.symbol, message: failure })
+          } else {
+            const missing = { symbol: entry.symbol, message: failure, observedAt: new Date(now()).toISOString() }
+            if (await autoBlock?.({ ...missing, message: result.reason?.message || failure, stage: 'stock' })) { missing.automaticallyBlocked = true; state.autoBlocked = (state.autoBlocked || 0) + 1 }
+            state.failures.push(missing)
+          }
           state.checked++
         }
         state.progress = `${state.checked} / ${state.total} aandelen gecontroleerd`

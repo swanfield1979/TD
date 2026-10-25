@@ -4,7 +4,7 @@ interface Schedule { settings: Settings; state: string; running?: boolean; phase
 const days = ['Zondag', 'Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag']
 export default function SpreadScanManagement({ disabled, refresh, onRunning, onBlock }: { disabled: boolean; refresh: number; onRunning: (running: boolean) => void; onBlock: (symbol: string, blocked: boolean) => Promise<void> }) {
   const [schedule, setSchedule] = useState<Schedule | null>(null), [settings, setSettings] = useState<Settings | null>(null)
-  const [blocked, setBlocked] = useState<{ symbol: string; blockedAt: string }[]>([]), [ticker, setTicker] = useState('')
+  const [blocked, setBlocked] = useState<{ symbol: string; blockedAt: string; automatic?: boolean; stage?: string; reason?: string }[]>([]), [ticker, setTicker] = useState('')
   const [busy, setBusy] = useState(false), [error, setError] = useState(''), [notice, setNotice] = useState(''), [retry, setRetry] = useState(0)
   useEffect(() => { onRunning(!!schedule?.running) }, [schedule?.running, onRunning])
   useEffect(() => {
@@ -43,9 +43,9 @@ export default function SpreadScanManagement({ disabled, refresh, onRunning, onB
       {notice && <p role="status">{notice}</p>}
       {error && <div role="alert"><p>{error}</p><button onClick={() => setRetry(value => value + 1)}>Scaninstellingen opnieuw laden</button></div>}
     </section>
-    <section className="monitor-panel stock-filter-panel"><h2>Geblokkeerde Stocks</h2><p>Verwijderen uit een scan blokkeert het aandeel in alle drie de stappen en toekomstige weekscans. Deblokkeren maakt het weer beschikbaar.</p>
+    <section className="monitor-panel stock-filter-panel"><h2>Geblokkeerde Stocks</h2><p>Aandelen zonder bruikbare koers- of IV-data worden automatisch geblokkeerd. Verwijderen uit een scan blokkeert ook handmatig. Geblokkeerde aandelen worden in alle drie de stappen en toekomstige weekscans overgeslagen. Deblokkeren maakt ze weer beschikbaar.</p>
       <form onSubmit={event => { event.preventDefault(); void onBlock(ticker, true).then(() => setTicker('')).catch(cause => setError(cause.message)) }}><div className="spreads-toolbar"><label htmlFor="blocked-stock-input">Ticker blokkeren<input id="blocked-stock-input" value={ticker} required disabled={disabled || !schedule} onChange={event => setTicker(event.target.value.toUpperCase())} placeholder="Bijvoorbeeld TSLA" /></label><button disabled={disabled || !ticker.trim() || !schedule}>Stock blokkeren</button></div></form>
-      {!blocked.length ? <p>Geen geblokkeerde stocks.</p> : <div className="scan-table-scroll" role="region" aria-label="Geblokkeerde Stocks" tabIndex={0}><table className="scan-table"><thead><tr><th>Aandeel</th><th>Geblokkeerd op</th><th>Actie</th></tr></thead><tbody>{blocked.map(row => <tr key={row.symbol}><th scope="row">{row.symbol}</th><td>{new Date(row.blockedAt).toLocaleString('nl-NL')}</td><td><button disabled={disabled} onClick={() => void onBlock(row.symbol, false).catch(cause => setError(cause.message))}>Deblokkeer {row.symbol}</button></td></tr>)}</tbody></table></div>}
+      {!blocked.length ? <p>Geen geblokkeerde stocks.</p> : <div className="scan-table-scroll" role="region" aria-label="Geblokkeerde Stocks" tabIndex={0}><table className="scan-table"><thead><tr><th>Aandeel</th><th>Geblokkeerd op</th><th>Reden</th><th>Actie</th></tr></thead><tbody>{blocked.map(row => <tr key={row.symbol}><th scope="row">{row.symbol}</th><td>{new Date(row.blockedAt).toLocaleString('nl-NL')}</td><td className="spreads-block-reason">{row.automatic ? `Automatisch · ${{ stock: 'Stock Filter', iv: 'IV Scan', options: 'Option Scan' }[row.stage || ''] || 'Scan'}` : 'Handmatig'}{row.reason && <small>{row.reason}</small>}</td><td><button disabled={disabled} onClick={() => void onBlock(row.symbol, false).catch(cause => setError(cause.message))}>Deblokkeer {row.symbol}</button></td></tr>)}</tbody></table></div>}
     </section>
   </div>
 }

@@ -51,3 +51,4 @@
 @media (max-width: 420px) { .spreads-toolbar { align-items: stretch; flex-direction: column; } }
 
 .spreads-assessment-reason { white-space: normal; min-width: 260px; max-width: 420px; text-align: left !important; }
+.spreads-block-reason { white-space: normal; min-width: 180px; max-width: 360px; overflow-wrap: anywhere; }

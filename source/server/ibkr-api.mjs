@@ -18,6 +18,7 @@ import { createBlockedStocks } from './blocked-stocks.mjs'
 import { makeFilteredIvState, runFilteredIvScan, ivSelection, ivFilters } from './filtered-iv-scan.mjs'
 import { createWeeklySpreadSchedule } from './weekly-spread-schedule.mjs'
 import { createStockSectors } from './stock-sectors.mjs'
+import { autoBlockStock, reconcileMissingStocks } from './auto-block-stocks.mjs'
 
 const scanControllers = {}
 const activeScanJobs = new Set()
@@ -201,8 +202,8 @@ async function runOptionScan(mode, symbols, state, previous) {
     const signal = scanControllers[mode].signal
     const researchConfig = { ...config, scanSignal: signal, onStockDetails: (symbol, details) => stockSectors.rememberIbkr(symbol, details) }
     const runBatch = () => runCspScan({ ...config, scanSignal: signal, ivContinueRound: mode === 'iv' && state.batchesCompleted > 0, onScanCheckpoint: saveScanResults }, symbols, state, undefined, mode)
-    if (mode === 'spreads') await runSpreadScan(researchConfig, state, { cache: spreadCache, checkpoint: saveScanResults, blocked: symbol => blockedStocks.has(symbol) })
-    else if (mode === 'iv') await runFilteredIvScan(researchConfig, state, { cache: spreadCache, checkpoint: saveScanResults, blocked: symbol => blockedStocks.has(symbol) })
+    if (mode === 'spreads') await runSpreadScan(researchConfig, state, { cache: spreadCache, checkpoint: saveScanResults, blocked: symbol => blockedStocks.has(symbol), autoBlock: failure => autoBlockStock(blockedStocks, failure) })
+    else if (mode === 'iv') await runFilteredIvScan(researchConfig, state, { cache: spreadCache, checkpoint: saveScanResults, blocked: symbol => blockedStocks.has(symbol), autoBlock: failure => autoBlockStock(blockedStocks, failure) })
     else await runBatch()
     if (mode === 'leaps' && state.rows.length === 0 && ['error', 'cancelled'].includes(state.state) && previous.rows.length) {
       state.rows = previous.rows
@@ -247,7 +248,13 @@ function isAllowedPost(request) {
 const martinScan = await createMartinScan(resolve(process.env.MARTIN_SCAN_DIR || dirname(config.snapshotPath) + '/martin'))
 const blockedStocks = await createBlockedStocks(resolve(dirname(config.snapshotPath), 'blocked-stocks.json'))
 const stockSectors = await createStockSectors(resolve(dirname(config.snapshotPath), 'stock-sectors.json'), { enabled: process.env.SECTOR_LOOKUPS_DISABLED !== '1' })
-const stockFilter = await createStockFilter(resolve(dirname(config.snapshotPath), 'stock-filter'), config, { blocked: symbol => blockedStocks.has(symbol), sectors: stockSectors })
+const stockFilter = await createStockFilter(resolve(dirname(config.snapshotPath), 'stock-filter'), config, { blocked: symbol => blockedStocks.has(symbol), sectors: stockSectors, autoBlock: failure => autoBlockStock(blockedStocks, failure) })
+// Also migrate the per-stock missing-data reports from the preceding version.
+// Explicitly unblocked stocks have durable timestamps preventing reblocking by an old report.
+try {
+  await reconcileMissingStocks(blockedStocks, { stock: stockFilter.snapshot(), iv: optionScans.iv, options: optionScans.spreads })
+  await saveScanResults()
+} catch (error) { optionScans.iv.autoBlockError = `Automatisch blokkeren kon niet worden opgeslagen: ${error.message}` }
 const scansBusy = () => blockedStocks.isSaving() || activeScanJobs.size > 0 || scanState.state === 'running' || Object.values(optionScans).some(scan => scan.state === 'running') || stockFilter.snapshot().state === 'running'
 function startFilteredIv(selection, filters, resume = false) {
   const previous = optionScans.iv

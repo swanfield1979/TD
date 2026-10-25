@@ -6,7 +6,7 @@ export interface StockSelection {
   id?: string; state: string; filters?: { minPrice: number; maxPrice: number; minVolume: number };
   universeMode?: string; symbols?: string[]; checked: number; total: number; cacheHits: number;
   rows: { symbol: string; companyName?: string; sector?: string; sectorSource?: string; sectorAsOf?: string; price: number; volume: number; asOf: string; source: string; cached?: boolean; fetchedAt: string }[];
-  failures: { symbol: string; message: string }[]; warnings: string[]; canResume?: boolean; finishedAt?: string; message?: string; storageError?: string;
+  failures: { symbol: string; message: string; automaticallyBlocked?: boolean }[]; warnings: string[]; canResume?: boolean; finishedAt?: string; message?: string; storageError?: string;
 }
 const empty: StockSelection = { state: 'idle', checked: 0, total: 0, cacheHits: 0, rows: [], failures: [], warnings: [] }
 const format = (value: number) => value.toLocaleString('nl-NL', { maximumFractionDigits: 2 })
@@ -96,7 +96,7 @@ export default function StockFilterPanel({ disabled, onSelection, refresh, onRun
     {!running && !unchanged && scan.id && <p>Criteria gewijzigd. Start de aandelenfilter opnieuw om deze selectie bij te werken.</p>}
     {(error || scan.storageError) && <div role="alert"><p>{error || scan.storageError}</p><button type="button" onClick={() => setRetry(value => value + 1)}>Aandelenfilter opnieuw laden</button></div>}
     {scan.message && <p role="status">{scan.message}</p>}
-    {!!scan.failures.length && <details><summary>{format(scan.failures.length)} aandelen zonder bruikbare data, uitgesloten</summary><ul>{scan.failures.slice(0, 50).map(item => <li key={item.symbol}>{item.symbol}: {item.message}</li>)}</ul></details>}
+    {!!scan.failures.length && <details><summary>{format(scan.failures.length)} aandelen zonder bruikbare data, uitgesloten</summary><ul>{scan.failures.slice(0, 50).map(item => <li key={item.symbol}>{item.symbol}: {item.message}{item.automaticallyBlocked && ' · Automatisch geblokkeerd'}</li>)}</ul></details>}
     {scan.warnings.map(warning => <p key={warning}>{warning}</p>)}
     {!!scan.rows.length && <details className="stock-results-disclosure" open={expanded} onToggle={event => {
       const open = event.currentTarget.open

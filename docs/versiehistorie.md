@@ -1,5 +1,12 @@
 # Versiehistorie
 
+## 0.38.0 — automatisch blokkeren bij ontbrekende data (25 oktober 2026)
+
+- Bevestigde ontbrekende koers-/IV-data per aandeel worden automatisch bewaard in Geblokkeerde Stocks, met scanstap, reden en waarnemingsdatum. Stock Filter, IV Scan en Option Scan slaan deze aandelen daarna over. Normale afwijzingen op criteria of ontbrekende sectorinformatie veroorzaken geen blokkering.
+- Broker-/netwerkuitval, snelheidslimieten, time-outs, stopverzoeken en ontbrekende accountrechten blokkeren geen volledig universum. De bestaande pauzes voor onduidelijke/systemische dataproblemen blijven werken. Automatisch geblokkeerde aandelen laten de IV-job doorgaan, ook bij meer dan vijf ontbrekende reeksen.
+- Eerder opgeslagen meldingen worden bij API-start verwerkt; bruikbare resultaten krijgen voorrang. Expliciete deblokkering bewaart een tijdstip, zodat oude meldingen het aandeel bij een herstart niet direct opnieuw blokkeren. Een nieuwe mislukte scan kan opnieuw blokkeren.
+- 197 scanner-/dashboardtests, 13 frontendtests, build en browsercontrole geslaagd. Broncode-update; serverinstallatie nog niet uitgevoerd.
+
 ## 0.37.1 — TradingView-links bij scanresultaten (25 oktober 2026)
 
 - Tickers in Stock Filter, IV Scan en Option Scan openen de persoonlijke TradingView-layout `fxY1us9e` met de betreffende ticker in een nieuw tabblad/venster. URL-encoding en klassevarianten (`BRK B`/`BRK-B` → `BRK.B`) behouden de juiste ticker.
