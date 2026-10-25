@@ -1,5 +1,25 @@
 # Validatie
 
+## Trading Monitor 0.36.0 — drie scans, weekplanning en blokkeren (25 oktober 2026)
+
+- `npm test`: 180 Node-tests in de GitHub-publicatie (190 inclusief tien losse lokale TradingView-referentietests die buiten deze wijziging blijven); `npm run test:frontend`: 13 frontendtests. TypeScript/Vite-build geslaagd.
+- Nieuwe pipelineproeven: blijvende blokkeerlijst met klassealias-normalisatie en deblokkeren; onleesbare blokkeerlijst niet overschrijven; geblokkeerde aandelen veroorzaken geen Yahoo-, IBKR- of optiecacheaanvragen; afgeronde Stock Filter gearchiveerd. IV verwerkt alleen de gekozen aandelen, bewaart raw IV-observaties en cursor, sluit ontbrekende data uit en pauzeert na vijf ontbrekende reeksen.
+- Brokermock van de echte IV-adapter: alleen STK-quote/generic 106 en `OPTION_IMPLIED_VOLATILITY`-jaarhistorie; geen opties, optiechains of brede broker-scanner. Historische IV-terugval houdt bron/datum; de bestaande IV-cache wordt gedeeld met de optiejob.
+- Scheduler met gesimuleerde klok: zondag 09:00 Europe/Amsterdam voor Stock Filter; maandag exact vanaf 09:30 New York IV; gesloten maandag Labor Day uitgesteld naar dinsdag; aparte Amerikaanse/Nederlandse zomertijd (maart 2026). Concurrente ticks, herstart met lopende job, eerdere fout, uitschakelen en ongeldige instellingen starten geen dubbele weekjob. Geen automatische Option Scan.
+- API-integratie met geïsoleerde opslag: beide selectie-ID's vereist voor de optiejob, blokkeren/deblokkeren zichtbaar in Stock-/IV-resultaten en bewaard na procesherstart; geen lijstmutatie tijdens een scan; weekinstellingen opslaan; IV starten/stoppen op de Stock Filter; legacy-IV-route kan geen ongefilterde ronde starten. Bestaande Leaps-shortlist en resultaten blijven behouden.
+- Browserworkflow `npm run test:spreads`: drie stappen en hun afhankelijkheden, standalone-IV-menu weg, nieuw Stock Filter maakt eerdere IV ongeschikt, aangepast IV-criterium blokkeert stap 3, verwijderen/deblokkeren met herladen, weektijd wijzigen en bewaren, lege/ontbrekende data, stop/hervat, sorteren, CSV en quote-details. 360/768/1024/1600 pixels, licht/donker, toetsenbord en 200% zoom; geen runtimefouten. Desktop/mobiel visueel gecontroleerd.
+- Leaps-regressie via `RESEARCH_URL=http://127.0.0.1:5197 npm run test:research`: shortlist toevoegen/verwijderen, bewaren, berekeningen, fout/stop en 360–1440px geslaagd. IV-browserdekking verhuisd naar `test:spreads`.
+- Geen echte IBKR-optieaanvragen, datarechtencontrole of serverinstallatie uitgevoerd. Weekplanning is lokaal voorbereid en draait pas op de server na installatie. Bestaande lokale TradingView-bestanden en wijzigingen behouden.
+
+## Trading Monitor 0.35.0 — tweedelige scan (25 oktober 2026)
+
+- `npm test`: 181 Node-tests geslaagd; `npm run test:frontend`: 13 frontendtests geslaagd; `npm run build`: TypeScript en Vite geslaagd.
+- Negen nieuwe gerichte tests: dagvolume in aandelen, koersgrenzen, incomplete/stale dagbars, Yahoo-USD/equitycontrole, bronbegrenzing, herfilteren uit cache met oorspronkelijke ophaaltijden, opslag en procesherstart, stoppen/hervatten, ontbrekende data en seriële IBKR-terugval, configureerbare volumeeenheden en een brede selectie van 75 aandelen zonder 50-limiet.
+- API-integratietest: geen nieuwe optiescan zonder geldige afgeronde selectie-ID; selectie wordt overgenomen in de optiejob, locks tussen beide stappen, origincontrole, stoppen en herstel na herstart.
+- `npm run test:spreads`: beide handmatige stappen, bewaren/herladen, gewijzigde criteria blokkeren optiescan, bronfout met behoud van resultaten, aandelenfilter stoppen/hervatten, lege selectie, zoeken, optiequotes/bedragen, CSV, sorteren, optiehervatten, toetsenbord, licht/donker, 360/768/1024/1600 pixels en 200% zoom. Geen browserruntimefouten. Desktop- en mobiele screenshots visueel bekeken; bestanden uitsluitend in de private validatiemap.
+- Echte Yahoo-proef met 20 Amerikaanse aandelen: 20/20 opgehaald, 10 geselecteerd bij $5–$150 en volume ≥ 5.000.000; bronhandelsdag 23 oktober 2026. Eerste filter 3.613 ms, identieke tweede filter 32 ms met 20/20 cachehits. Dit is een lokale steekproef, geen belofte voor duizenden aandelen. Resultaten/cache uitsluitend in `source/data/private/stock-filter-validation/`.
+- Echte IBKR-dagvolume-eenheden en datarechten niet geverifieerd; adapter met brokermocks getest. Geen optiescan op de echte rekening en geen serverinstallatie uitgevoerd. Bestaande lokale TradingView-wijzigingen behouden.
+
 ## Trading Monitor 0.34.1 — rustige scanweergave (24 oktober 2026)
 
 - `npm run test:frontend`: 13 geslaagd; TypeScript/Vite-build geslaagd. Geen wijziging aan berekeningen, API of scanbeveiliging.

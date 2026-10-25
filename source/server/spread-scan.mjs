@@ -14,10 +14,10 @@ export function optionsSession(date = new Date()) {
   const minute = Number(parts.hour) * 60 + Number(parts.minute)
   return { ...session, open: session.shouldSync && minute >= 570 && minute < session.closeHour * 60 }
 }
-export async function runSpreadScan(config, state, { cache, checkpoint = async () => {}, universeLoader = loadUsUniverse, scan = runCspScan, now = () => new Date(), connection = createScanConnection(), wait = (ms, signal) => sleep(ms, undefined, { signal }) }) {
+export async function runSpreadScan(config, state, { cache, checkpoint = async () => {}, universeLoader = loadUsUniverse, scan = runCspScan, now = () => new Date(), connection = createScanConnection(), wait = (ms, signal) => sleep(ms, undefined, { signal }), blocked = () => false }) {
   const signal = config.scanSignal, filters = spreadFilters(state.filters)
   state.filters = filters
-  state.rows = state.rows.map(row => ({ ...row, dte: daysToExpiry(row.expiry, scanDate(now())), cached: true }))
+  state.rows = state.rows.filter(row => !blocked(row.symbol)).map(row => ({ ...row, dte: daysToExpiry(row.expiry, scanDate(now())), cached: true }))
     .filter(row => row.dte >= filters.minDte && row.dte <= filters.maxDte && ['pass', 'disabled'].includes(volumeGate(volumeSnapshot({}, row, now()), filters.minAvgOptionVolume)))
   state.assessments ??= []; state.cacheHits ??= 0; state.chainsSkipped ??= 0
   if (Number.isInteger(state.retryFrom)) {
@@ -43,6 +43,7 @@ export async function runSpreadScan(config, state, { cache, checkpoint = async (
     for (; state.universeChecked < state.entries.length;) {
       signal?.throwIfAborted()
       const { symbol } = state.entries[state.universeChecked]
+      if (blocked(symbol)) { state.universeChecked++; state.symbolsChecked = state.universeChecked; state.remainingSymbols = state.entries.length - state.universeChecked; await checkpoint(); continue }
       state.state = 'running'; state.progress = `Aandelenfilter · ${symbol} · ${state.universeChecked + 1} / ${state.entries.length}`
       const session = optionsSession(now()); state.marketOpen = session.open
       let stored = null, assessment, rows = []

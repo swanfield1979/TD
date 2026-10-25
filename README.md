@@ -2,7 +2,7 @@
 
 Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voortgang op basis van Interactive Brokers Flex-rapporten.
 
-**Versie/status:** 0.34.1. Put spreads toont alleen een compacte scanteller/status en de passende spreads; afwijzingsredenen, aandelenbeoordelingen en technische scanmeldingen zijn uit de pagina verwijderd. Criteria en scanbeveiliging behouden. Build, frontendtests en browsercontrole geslaagd; serverinstallatie nog niet uitgevoerd.
+**Versie/status:** 0.36.0. Put spreads bevat Stock Filter → IV Scan → Option Scan, met opgeslagen selecties en Geblokkeerde Stocks. Weekplanning op de API-server: zondag Stock Filter (standaard 09:00 Nederlandse tijd, instelbaar), maandag IV bij Amerikaanse beursopening; Option Scan handmatig. Los IV-menu vervallen. 180 Node-tests, 13 frontendtests, build en browsercontroles geslaagd; nog niet op de server geïnstalleerd.
 
 | Map | Inhoud |
 | --- | --- |
@@ -25,7 +25,7 @@ Zie [`docs/installatie.md`](docs/installatie.md) voor de installatie en [`source
 
 ## Historische breakoutscanner
 
-Deze functie is vervallen in de webappnavigatie; bestaande broncode en historie blijven bewaard. Gebruik [IV Scan en Leaps](docs/iv-leaps.md) voor de actuele optiescan. Onderstaande informatie beschrijft de oudere scanner.
+Deze functie is vervallen in de webappnavigatie; bestaande broncode en historie blijven bewaard. Gebruik [Put spreads met IV Scan](docs/put-spreads.md) of [Leaps](docs/iv-leaps.md) voor de actuele optiescans. Onderstaande informatie beschrijft de oudere scanner.
 
 De scanner zoekt leiders op cross-sectionele 21/63/126-sessierendementen en beoordeelt impuls, consolidatie en range-expansie. React/TypeScript en Lightweight Charts tonen een sorteerbare tabel en candlestickdetails; FastAPI, SQLAlchemy/SQLite en een read-only IBKR-adapter verzorgen API, analyse en incrementele cache. Dit is een educatief onderzoeksinstrument, geen financieel advies.
 
@@ -51,7 +51,7 @@ Installeer en configureer TWS of IB Gateway handmatig voor paper en read-only AP
 
 - [Martin-selectiescanner](docs/martin-scanner.md): menu **Martin-scan** (`#martin`) met automatisch breed Amerikaans beursuniversum, stoppen/hervatten, koerscache, watchlists en CSV-/TradingView-export. Eigen tickers en CLI blijven beschikbaar.
 
-- [IV Scan](docs/iv-leaps.md): NASDAQ-/S&P 500-marktshortlist met IV-rank boven 40.
+- [IV Scan binnen Put spreads](docs/put-spreads.md#drie-stappen-vanaf-0360): onderzoekt alleen de opgeslagen Stock Filter, standaard minimum IV-rank 40; optiechains pas in stap 3.
 - [Leaps](docs/iv-leaps.md): handmatig gekozen aandelen, putvergelijking bij vergelijkbare delta, jaarlijks premierendement, break-even en 50%-exitprijs.
 
 

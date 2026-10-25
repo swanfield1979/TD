@@ -10,12 +10,16 @@ import { spreadFilters } from '../shared/put-spread.mjs'
 import { normalizeShortlist } from '../shared/leaps-scan.mjs'
 import { createScanStore } from './scan-store.mjs'
 import { scanGuard } from './scan-guard.mjs'
-import { runIvSequence } from './iv-sequence.mjs'
 import { createSpreadCache } from './spread-cache.mjs'
 import { runSpreadScan } from './spread-scan.mjs'
 import { createMartinScan } from './martin-scan.mjs'
+import { createStockFilter } from './stock-filter.mjs'
+import { createBlockedStocks } from './blocked-stocks.mjs'
+import { makeFilteredIvState, runFilteredIvScan, ivSelection, ivFilters } from './filtered-iv-scan.mjs'
+import { createWeeklySpreadSchedule } from './weekly-spread-schedule.mjs'
 
 const scanControllers = {}
+const activeScanJobs = new Set()
 let scanState = { state: 'idle', portfolio: [], market: [], warnings: [], progress: '', symbolsChecked: 0, contractsChecked: 0 }
 
 async function startScan() {
@@ -43,6 +47,7 @@ const config = {
   gatewayHost: process.env.IBKR_HOST || '127.0.0.1',
   gatewayPort: Number(process.env.IBKR_PORT || 4001),
   clientId: Number(process.env.IBKR_CLIENT_ID || 77),
+  stockVolumeMultiplier: Number(process.env.IBKR_STOCK_VOLUME_MULTIPLIER || 1),
   serviceUnit: process.env.IBKR_SYSTEMD_UNIT || 'ibc-gateway.service',
   snapshotPath: resolve(process.env.IBKR_SNAPSHOT_PATH || '/var/lib/trading-monitor/live-snapshot.json'),
   allowedOrigins: new Set((process.env.IBKR_ALLOWED_ORIGINS || 'http://192.168.1.22').split(',').map((value) => value.trim())),
@@ -190,18 +195,26 @@ async function saveScanResults() {
   }
 }
 async function runOptionScan(mode, symbols, state, previous) {
+  activeScanJobs.add(mode)
   try {
     const signal = scanControllers[mode].signal
     const runBatch = () => runCspScan({ ...config, scanSignal: signal, ivContinueRound: mode === 'iv' && state.batchesCompleted > 0, onScanCheckpoint: saveScanResults }, symbols, state, undefined, mode)
-    if (mode === 'spreads') await runSpreadScan({ ...config, scanSignal: signal }, state, { cache: spreadCache, checkpoint: saveScanResults })
-    else if (mode === 'iv') await runIvSequence(state, { signal, runBatch, checkpoint: saveScanResults })
+    if (mode === 'spreads') await runSpreadScan({ ...config, scanSignal: signal }, state, { cache: spreadCache, checkpoint: saveScanResults, blocked: symbol => blockedStocks.has(symbol) })
+    else if (mode === 'iv') await runFilteredIvScan({ ...config, scanSignal: signal }, state, { cache: spreadCache, checkpoint: saveScanResults, blocked: symbol => blockedStocks.has(symbol) })
     else await runBatch()
-    if (mode !== 'spreads' && state.rows.length === 0 && ['error', 'cancelled'].includes(state.state) && previous.rows.length) {
+    if (mode === 'leaps' && state.rows.length === 0 && ['error', 'cancelled'].includes(state.state) && previous.rows.length) {
       state.rows = previous.rows
       state.showingPreviousResults = true
       state.previousFinishedAt = previous.previousFinishedAt || previous.finishedAt || previous.savedAt
     }
-  } finally { await saveScanResults() }
+    if (mode === 'iv' && ['complete', 'partial'].includes(state.state)) {
+      const directory = resolve(dirname(config.snapshotPath), 'iv-scan-history')
+      await mkdir(directory, { recursive: true })
+      const path = resolve(directory, state.id + '.json')
+      await writeFile(path + '.tmp', JSON.stringify(state), { mode: 0o600 }); await rename(path + '.tmp', path)
+    }
+  } catch (error) { state.state = 'error'; state.message = error.message }
+  finally { await saveScanResults(); activeScanJobs.delete(mode) }
 }
 let shortlistSaving = false
 async function readJsonBody(request) {
@@ -230,8 +243,82 @@ function isAllowedPost(request) {
 }
 
 const martinScan = await createMartinScan(resolve(process.env.MARTIN_SCAN_DIR || dirname(config.snapshotPath) + '/martin'))
+const blockedStocks = await createBlockedStocks(resolve(dirname(config.snapshotPath), 'blocked-stocks.json'))
+const stockFilter = await createStockFilter(resolve(dirname(config.snapshotPath), 'stock-filter'), config, { blocked: symbol => blockedStocks.has(symbol) })
+const scansBusy = () => blockedStocks.isSaving() || activeScanJobs.size > 0 || scanState.state === 'running' || Object.values(optionScans).some(scan => scan.state === 'running') || stockFilter.snapshot().state === 'running'
+function startFilteredIv(selection, filters, resume = false) {
+  const previous = optionScans.iv
+  if (resume) {
+    if (!previous.id || previous.stockSelectionId !== selection.id || !previous.entries || previous.universeChecked >= previous.entries.length && !Number.isInteger(previous.retryFrom) || JSON.stringify(ivFilters(filters)) !== JSON.stringify(previous.filters)) throw Error('Hervat met dezelfde Stock Filter en IV-criteria van een onvoltooide scan.')
+    optionScans.iv = { ...previous, state: 'running', message: undefined }
+  } else optionScans.iv = makeFilteredIvState(selection, filters)
+  const state = optionScans.iv
+  scanControllers.iv = new AbortController()
+  const done = runOptionScan('iv', [], state, previous)
+  return { state, done }
+}
+const weeklySchedule = await createWeeklySpreadSchedule(resolve(dirname(config.snapshotPath), 'put-spread-schedule.json'), {
+  busy: scansBusy,
+  async runStock() {
+    blockedStocks.assertReadable()
+    const previous = stockFilter.snapshot()
+    stockFilter.start({ universeMode: previous.universeMode || 'us', symbols: previous.symbols || [], filters: previous.filters })
+    while (stockFilter.snapshot().state === 'running') await delay(500)
+    const result = stockFilter.snapshot()
+    if (result.storageError) throw Error(result.storageError)
+    return result
+  },
+  async runIv(selectionId) {
+    if (scanStorageError) throw Error(scanStorageError)
+    const selection = stockFilter.selection(selectionId)
+    const job = startFilteredIv(selection, optionScans.iv.filters)
+    await job.done
+    if (job.state.storageError) throw Error(job.state.storageError)
+    return job.state
+  },
+})
+const weeklyTimer = setInterval(() => { if (process.env.PUT_SPREAD_SCHEDULE_DISABLED !== '1') void weeklySchedule.tick().catch(() => {}) }, 30000)
+weeklyTimer.unref()
 const server = createServer(async (request, response) => {
   try {
+    if (request.url === '/api/put-spreads/schedule') {
+      if (request.method === 'GET') return sendJson(response, 200, weeklySchedule.snapshot())
+      if (request.method === 'POST') {
+        if (!isAllowedPost(request)) return sendJson(response, 403, { message: 'Ongeldige aanvraag.' })
+        try { return sendJson(response, 200, await weeklySchedule.configure(await readJsonBody(request))) }
+        catch (error) { return sendJson(response, 400, { message: error.message }) }
+      }
+    }
+    if (request.url === '/api/put-spreads/blocked') {
+      if (request.method === 'GET') return sendJson(response, 200, blockedStocks.snapshot())
+      if (request.method === 'POST') {
+        if (!isAllowedPost(request)) return sendJson(response, 403, { message: 'Ongeldige aanvraag.' })
+        try {
+          const input = await readJsonBody(request)
+          if (scansBusy() || weeklySchedule.isRunning()) return sendJson(response, 409, { message: 'Stop de lopende scan voordat je aandelen blokkeert of deblokkeert.' })
+          if (typeof input.blocked !== 'boolean') throw Error('Kies blokkeren of deblokkeren.')
+          return sendJson(response, 200, await blockedStocks.update(input.symbol, input.blocked))
+        } catch (error) { return sendJson(response, 400, { message: error.message }) }
+      }
+    }
+    if (request.url === '/api/stock-filter' || request.url === '/api/stock-filter/stop') {
+      if (request.method === 'GET' && request.url === '/api/stock-filter') return sendJson(response, 200, stockFilter.snapshot())
+      if (request.method === 'POST') {
+        if (!isAllowedPost(request)) return sendJson(response, 403, { message: 'Ongeldige aanvraag.' })
+        if (request.url.endsWith('/stop')) return sendJson(response, 202, stockFilter.stop())
+        if (weeklySchedule.isRunning()) return sendJson(response, 409, { message: 'De geplande weekscan is bezig.' })
+        if (blockedStocks.isSaving() || activeScanJobs.size) return sendJson(response, 409, { message: 'Scanresultaten of blokkeerlijst worden opgeslagen.' })
+        if (scanState.state === 'running' || Object.values(optionScans).some(scan => scan.state === 'running')) return sendJson(response, 409, { message: 'Stop eerst de lopende optiescan.' })
+        try {
+          const input = await readJsonBody(request)
+          blockedStocks.assertReadable()
+          if (blockedStocks.isSaving() || activeScanJobs.size || weeklySchedule.isRunning()) return sendJson(response, 409, { message: 'Een scan of opslagbewerking is bezig.' })
+          if (scanState.state === 'running' || Object.values(optionScans).some(scan => scan.state === 'running')) return sendJson(response, 409, { message: 'Stop eerst de lopende optiescan.' })
+          return sendJson(response, 202, stockFilter.start(input))
+        }
+        catch (error) { return sendJson(response, 400, { message: error.message }) }
+      }
+    }
     if (request.url.split('?')[0] === '/api/martin-scan') {
       if (request.method === 'GET') return sendJson(response, 200, martinScan.snapshot(new URL(request.url, 'http://localhost').searchParams.get('reportVersion')))
       if (request.method === 'POST') {
@@ -246,7 +333,7 @@ const server = createServer(async (request, response) => {
       if (!isAllowedPost(request)) return sendJson(response, 403, { message: 'Ongeldige aanvraag.' })
       return sendJson(response, 202, martinScan.stop())
     }
-    const stopMode = { '/api/put-spreads/stop': 'spreads', '/api/iv-scan/stop': 'iv', '/api/leaps/stop': 'leaps', '/api/scans/stop': 'csp' }[request.url]
+    const stopMode = { '/api/put-spreads/stop': 'spreads', '/api/put-spreads/iv/stop': 'iv', '/api/iv-scan/stop': 'iv', '/api/leaps/stop': 'leaps', '/api/scans/stop': 'csp' }[request.url]
     if (stopMode && request.method === 'POST') {
       if (!isAllowedPost(request)) return sendJson(response, 403, { message: 'Ongeldige aanvraag.' })
       const state = stopMode === 'csp' ? scanState : optionScans[stopMode]
@@ -272,18 +359,30 @@ const server = createServer(async (request, response) => {
         finally { shortlistSaving = false }
       }
     }
-    const mode = request.url === '/api/put-spreads' ? 'spreads' : request.url === '/api/iv-scan' ? 'iv' : request.url === '/api/leaps' ? 'leaps' : null
+    const mode = request.url === '/api/put-spreads' ? 'spreads' : ['/api/iv-scan', '/api/put-spreads/iv'].includes(request.url) ? 'iv' : request.url === '/api/leaps' ? 'leaps' : null
     if (mode) {
-      if (request.method === 'GET') return sendJson(response, 200, { ...optionScans[mode], storageError: scanStorageError || optionScans[mode].storageError })
+      if (request.method === 'GET') return sendJson(response, 200, { ...optionScans[mode], state: activeScanJobs.has(mode) ? 'running' : optionScans[mode].state, rows: mode === 'leaps' ? optionScans[mode].rows : optionScans[mode].rows.filter(row => !blockedStocks.has(row.symbol)), storageError: scanStorageError || optionScans[mode].storageError })
       if (request.method === 'POST') {
         if (!isAllowedPost(request)) return sendJson(response, 403, { message: 'Ongeldige aanvraag.' })
+        if (weeklySchedule.isRunning()) return sendJson(response, 409, { message: 'De geplande weekscan is bezig.' })
+        if (blockedStocks.isSaving() || activeScanJobs.size && optionScans[mode].state !== 'running') return sendJson(response, 409, { message: 'Scanresultaten of blokkeerlijst worden opgeslagen.' })
         if (scanStorageError) return sendJson(response, 409, { message: scanStorageError })
+        if (stockFilter.snapshot().state === 'running') return sendJson(response, 409, { message: 'Rond eerst de aandelenfilter af of stop deze.' })
         if (optionScans[mode].state === 'running') return sendJson(response, 202, optionScans[mode])
         if (scanState.state === 'running' || Object.values(optionScans).some(scan => scan.state === 'running'))
           return sendJson(response, 409, { message: 'Er loopt al een optiescan. Wacht tot deze klaar is.' })
         if (mode === 'leaps' && (shortlistError || !shortlist.length)) return sendJson(response, 400, { message: shortlistError || 'Voeg eerst aandelen toe aan de shortlist.' })
+        if (mode === 'iv') {
+          try {
+            blockedStocks.assertReadable()
+            const body = await readJsonBody(request)
+            const selection = stockFilter.selection(body.selectionId)
+            if (scansBusy() || weeklySchedule.isRunning()) return sendJson(response, 409, { message: 'Er loopt al een scan.' })
+            return sendJson(response, 202, startFilteredIv(selection, body.filters, body.resume === true).state)
+          } catch (error) { return sendJson(response, 400, { message: error.message }) }
+        }
         let symbols = mode === 'leaps' ? [...shortlist] : []
-        let filters, universeMode, resume = false
+        let filters, universeMode, selection, resume = false
         if (mode === 'spreads') {
           try {
             const body = await readJsonBody(request)
@@ -293,6 +392,14 @@ const server = createServer(async (request, response) => {
             if (universeMode === 'custom' && !symbols.length) throw Error('Vul minstens één ticker in voor een eigen lijst.')
             filters = spreadFilters(body.filters)
             resume = body.resume === true
+            if (!resume) {
+              if (stockFilter.snapshot().state === 'running') throw Error('Wacht tot de aandelenfilter klaar is.')
+              selection = stockFilter.selection(body.selectionId)
+              const iv = ivSelection(optionScans.iv, selection, body.ivSelectionId, symbol => blockedStocks.has(symbol))
+              selection = { ...selection, entries: iv.entries, ivSelectionId: iv.id, ivSelectionAt: iv.finishedAt }
+              filters = spreadFilters({ ...filters, minIvr: iv.filters.minIvr })
+              if (filters.minPrice !== selection.filters.minPrice || filters.maxPrice !== selection.filters.maxPrice) throw Error('Koersgrenzen gewijzigd; voer eerst de aandelenfilter opnieuw uit.')
+            }
             if (resume) {
               const previous = optionScans.spreads
               if (filters.minAvgOptionVolume > 0 && previous.filters?.minAvgOptionVolume === undefined) throw Error('Start een nieuwe scan om het nieuwe volumefilter ook op eerdere aandelen toe te passen.')
@@ -305,6 +412,7 @@ const server = createServer(async (request, response) => {
           return sendJson(response, 409, { message: 'Er loopt al een optiescan. Wacht tot deze klaar is.' })
         const state = resume ? { ...optionScans.spreads, state: 'running', message: undefined, finishedAt: undefined } : { state: 'running', filters, universeMode, rows: [], puts: [], portfolio: [], market: [], assessments: [], warnings: [], symbols,
           symbolsChecked: 0, contractsChecked: 0, startedAt: new Date().toISOString(), progress: 'Verbinding met IBKR maken' }
+        if (selection) Object.assign(state, { entries: selection.entries, universeCount: selection.entries.length, universeName: 'Opgeslagen Stock Filter en IV Scan', stockSelectionId: selection.id, stockSelectionAt: selection.finishedAt, ivSelectionId: selection.ivSelectionId, ivSelectionAt: selection.ivSelectionAt, stockFilters: selection.filters })
         const previous = optionScans[mode]
         optionScans[mode] = state
         scanControllers[mode] = new AbortController()
@@ -314,6 +422,8 @@ const server = createServer(async (request, response) => {
     }
     if (request.method === 'GET' && request.url === '/api/scans') return sendJson(response, 200, { ...scanState, storageError: scanStorageError || scanState.storageError })
     if (request.method === 'POST' && request.url === '/api/scans') {
+      if (weeklySchedule.isRunning()) return sendJson(response, 409, { message: 'De geplande weekscan is bezig.' })
+      if (stockFilter.snapshot().state === 'running') return sendJson(response, 409, { message: 'Rond eerst de aandelenfilter af of stop deze.' })
       if (scanStorageError) return sendJson(response, 409, { message: scanStorageError })
       if (!isAllowedPost(request)) return sendJson(response, 403, { message: 'Ongeldige aanvraag.' })
       if (Object.values(optionScans).some(scan => scan.state === 'running')) return sendJson(response, 409, { message: 'Er loopt al een IV- of Leaps-scan.' })

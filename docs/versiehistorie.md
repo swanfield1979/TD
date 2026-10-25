@@ -1,5 +1,21 @@
 # Versiehistorie
 
+## 0.36.0 — drie stappen, weekplanning en blokkeerlijst (25 oktober 2026)
+
+- Put spreads bevat Stock Filter → IV Scan → Option Scan. IV onderzoekt uitsluitend de opgeslagen aandelenvoorselectie en vraagt geen opties of broker-marktscanner aan. De optiejob vereist een afgeronde IV-selectie van dezelfde Stock Filter. Het losse IV-menu is verwijderd; oude `#iv`-/`#breakout`-links openen Put spreads.
+- Stock- en IV-selecties zijn maximaal zeven dagen bruikbaar; bron-/ophaaltijden blijven zichtbaar. Ruwe IV-historie wordt gedeeld met de bestaande optiescanner. Afgeronde Stock Filters en IV Scans krijgen elk een afzonderlijk historiebestand.
+- Verwijderen uit een resultaat voegt de ticker toe aan Geblokkeerde Stocks. Alle drie de fasen en toekomstige weekscans slaan deze over. Blokkeerlijst op de server, blijvend na herstart, met deblokkeren en normalisatie van aandelenticker-/klassevarianten. Geen aanpassing aan portefeuilleposities, Martin of de handmatige Leaps-shortlist.
+- API-weekplanning: zondag Stock Filter om standaard 09:00 Europe/Amsterdam (instelbaar), IV bij de eerste beursopening op een volgende dag om 09:30 America/New_York. NYSE-feestdagen en zomertijd via de bestaande kalender 2026–2028. Geen automatische Option Scan, Gateway-start of MFA. Duurzame startregistratie voorkomt herhaling na herstart; onderbroken/falende runs worden handmatig hervat.
+- 180 Node-tests, 13 frontendtests, TypeScript/Vite-build en browserworkflows voor Put spreads en Leaps geslaagd. Geen echte IBKR-rechtencontrole en geen serverinstallatie.
+
+## 0.35.0 — aandelenfilter vóór de optiescan (25 oktober 2026)
+
+- Twee expliciete stappen bij Put spreads: aandelen filteren en bewaren, daarna opties scannen op uitsluitend de afgeronde selectie. Geen automatische optieaanvragen na het filteren.
+- Minimum-/maximumslotkoers en minimaal 5 miljoen verhandelde aandelen op de laatste afgesloten handelsdag, instelbaar. Dit is aandelenvolume; geen marktkapitalisatie of optievolume.
+- Yahoo: vijf dagen OHLCV, drie gelijktijdige aanvragen, korte pauze tussen netwerkgroepen. Ruwe dagdata kunnen bij gewijzigde criteria opnieuw worden gefilterd zonder netwerkaanvragen. IBKR-daghistorie als seriële terugval met bestaande pacing en een hergebruikte verbinding.
+- Selectie, bronnen, handelsdag, oorspronkelijke ophaaltijden en hervatcursor atomair bewaard buiten de webroot. Stoppen/hervatten, foutmeldingen bij ontbrekende data en bronbeperking. Geen 50-aandelenlimiet op de automatisch geselecteerde Amerikaanse markt.
+- Optiejob verwijst naar een vaste selectie-ID; verouderde of onvoltooide selecties kunnen geen nieuwe optiescan starten. Bestaande optiecriteria en optiecache behouden.
+
 ## 0.34.1 — alleen voortgang en passende spreads (24 oktober 2026)
 
 - Scanpagina beperkt tot instelbare criteria, bediening, aantal gescande aandelen, korte scanstatus en passende spreads. Afgewezen aandelen, redenen, bron-/cachetellingen, technische meldingen en uitlegpanelen verwijderd uit de pagina.

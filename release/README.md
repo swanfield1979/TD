@@ -1,5 +1,13 @@
 # Releases
 
+## Trading Monitor 0.36.0 — drie scans en Geblokkeerde Stocks
+
+Stock Filter → IV Scan → Option Scan in Put spreads. Selecties en blokkeerlijst blijven bewaard; de weekplanning voert zondag de Stock Filter uit en maandag bij Amerikaanse beursopening de IV Scan. De Option Scan blijft handmatig. Geen nieuw installatiepakket; tijdelijke build binnen `source/dist/`. [Installatie en serverupdate](../docs/put-spreads.md#installatie-en-serverupdate). Lokaal getest, serverinstallatie niet uitgevoerd; de weekplanning draait dus nog niet op de server.
+
+## Trading Monitor 0.35.0 — aandelenfilter en aparte optiescan
+
+Opgeslagen aandelenvoorselectie via Yahoo Finance met IBKR-terugval, koersgrenzen en instelbaar minimum van 5 miljoen aandelen dagvolume. De optiescan start apart op de afgeronde selectie. Geen nieuw installatiepakket; tijdelijke build staat in `source/dist/`. [Serverupdate](../docs/put-spreads.md#installatie-en-serverupdate). Serverinstallatie niet uitgevoerd.
+
 ## Trading Monitor 0.34.1 — rustige scanweergave
 
 Compacte scanteller/status en alleen passende spreads. Afwijzingsredenen, per-aandeelbeoordelingen en technische scanmeldingen worden niet meer getoond. Criteria en scanbeveiliging behouden. Geen nieuw installatiepakket; [serverupdate](../docs/put-spreads.md#installatie-en-serverupdate). Serverinstallatie niet uitgevoerd.

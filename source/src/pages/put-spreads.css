@@ -1,4 +1,13 @@
 .spreads-page { display: grid; gap: 16px; min-width: 0; }
+.stock-filter-panel { min-width: 0; }
+.stock-filter-panel > p { color: var(--tm-text-secondary); font-size: 13px; }
+.stock-filter-fields { display: flex; flex-wrap: wrap; gap: 16px; border: 0; padding: 0; margin: 16px 0; min-width: 0; }
+.stock-filter-fields legend { margin-bottom: 12px; }
+.stock-filter-fields label { display: grid; gap: 8px; font-size: 13px; flex: 1 1 180px; min-width: 0; }
+.stock-filter-fields input, .stock-filter-fields select, .stock-filter-fields textarea { width: 100%; }
+.spreads-management { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr)); min-width: 0; }
+.stock-filter-fields .spreads-checkbox { display: flex; flex-direction: row; align-items: center; }
+.stock-filter-fields .spreads-checkbox input { width: auto; }
 .spreads-intro { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .spreads-intro p { margin-bottom: 0; }
 .spreads-method { color: var(--tm-accent-primary); font-size: 13px; }

@@ -1,8 +1,71 @@
 # Bull-put-spreadscanner
 
-Trading Monitor **0.34.1**, bijgewerkt op 24 oktober 2026. Open **Put spreads** in het menu of gebruik `/#put-spreads`. Deze uitbreiding blijft binnen de bestaande lokale app.
+Trading Monitor **0.36.0**, bijgewerkt op 25 oktober 2026. Open **Put spreads** in het menu of gebruik `/#put-spreads`. Deze uitbreiding blijft binnen de bestaande lokale app.
 
-## Gebruik
+## Drie stappen vanaf 0.36.0
+
+1. **Stock Filter**: minimum-/maximumkoers en minimaal 5.000.000 verhandelde aandelen per afgesloten handelsdag, aanpasbaar. Yahoo Finance als eerste bron, IBKR als terugval. Klik **Aandelenfilter starten**. De selectie en ruwe daggegevens worden op de server bewaard.
+2. **IV Scan**: start alleen op de afgeronde, opgeslagen Stock Filter. Minimum IV-rank standaard **40**, aanpasbaar van 0–100; de grens is inclusief. IBKR levert IV en de vereiste recente jaarhistorie. Geen optiechainaanvragen in deze stap. De tabel toont IV-rank, IV-percentile, IV, bron en datum. Ontbrekende gegevens worden uitgesloten. Na vijf ontbrekende reeksen op rij pauzeert de scan; stoppen en hervatten behouden de cursor. Eerder gedocumenteerde IV-jaar-/recentheidseisen blijven gelden.
+3. **Option Scan**: klik zelf **Optiescan starten** nadat beide voorgaande stappen zijn afgerond. Alleen de IV-selectie gaat door naar de bestaande put-spreadscanner. De overige optiecriteria, behoudende creditberekening, oude optiechaincache en bied-laatcontroles blijven gelden. De minimum-IV-rank komt uit stap 2. Koers, IV en optievolume worden in deze fase opnieuw getoetst waar de bestaande scanner dat vereist.
+
+Het losse IV-menu vervalt. Oude `#iv`, `/iv` en `#breakout`-links openen Put spreads. De Leaps-pagina en de afzonderlijke CSP-/Martin-scans blijven behouden. Een nieuwe Stock Filter maakt eerdere IV-resultaten ongeschikt voor stap 3 totdat de IV Scan op die nieuwe selectie is uitgevoerd. Aangepaste aandelen-/IV-criteria blokkeren de volgende stap totdat opnieuw is gescand. Geen limiet van 50 op de automatisch geselecteerde Amerikaanse markt; eigen invoer blijft maximaal 50 tickers.
+
+### Opslag en wekelijkse geldigheid
+
+Stock Filter en IV Scan blijven na browser-/API-herstart beschikbaar. Beide selecties zijn maximaal zeven dagen na afronding bruikbaar voor een nieuwe vervolgstap. De datumcontrole is niet meer beperkt tot dezelfde beursdag: de zondagselectie kan maandag worden gebruikt. Oude koersen en IV worden nooit door hergebruik als nieuw gemarkeerd. Een oude, onvoltooide of lege selectie kan geen nieuwe vervolgstap starten.
+
+Private bestanden naast `IBKR_SNAPSHOT_PATH`:
+
+| Bestand/map | Inhoud |
+| --- | --- |
+| `stock-filter/selection.json` | Laatste aandelenfilter, criteria en voortgang |
+| `stock-filter/observations.json` | Ruwe dagcache met oorspronkelijke ophaaltijden |
+| `stock-filter/history/<selectie-id>.json` | Afgeronde Stock Filters |
+| `scan-results.json` | Laatste IV-/optieresultaten, criteria en hervatcursor |
+| `iv-scan-history/<selectie-id>.json` | Afgeronde IV Scans |
+| `blocked-stocks.json` | Blijvende blokkeerlijst |
+| `put-spread-schedule.json` | Weekplanning, startregistraties en laatste uitvoeringsstatus |
+
+Eerdere afgeronde filters blijven als historiebestanden bestaan bij een volgende scan. De huidige pagina toont de laatste job per stap; er is geen historische-selectiekiezer. Een onleesbare selectie, blokkeerlijst of planning wordt niet stilzwijgend overschreven. De browser bewaart alleen invoervoorkeuren; resultaten en planning staan op de server. Opslag gebeurt via tijdelijke bestanden en rename; afgeronde selecties hebben een eigen ID.
+
+### Weekplanning
+
+Standaard ingeschakeld: **zondag 09:00 Nederlandse tijd** voor de Stock Filter, en **maandag 09:30 New York** voor IV. De zondagtijd is een aanpasbare standaard omdat alleen de zondag was opgegeven. Onder **Weekplanning** kun je dag/tijd aanpassen, uitschakelen en de IV-vervolgscan aan- of uitzetten. Klik **Weekplanning opslaan**. De laatste op de server opgeslagen aandelen-/IV-criteria en dezelfde universumkeuze worden gebruikt.
+
+De API controleert elke 30 seconden of een job mag starten. Hij haalt een gemiste Stock Filter later op dezelfde geplande dag in, zodra de server beschikbaar is en geen andere scan loopt. IV wacht op de eerste reguliere Amerikaanse beursopening op een volgende dag na die Stock Filter; bij een gesloten maandag wordt dit bijvoorbeeld dinsdag. De bestaande NYSE-kalender 2026–2028 en `America/New_York` bepalen de beursuren. Nederlandse en Amerikaanse zomertijdwissels worden daardoor apart verwerkt. Bij herstart tijdens een beursdag kan de nog niet gestarte IV-job later in de open sessie beginnen.
+
+De API-service moet blijven draaien; de browser hoeft niet open te staan. Voor IV moet IBKR Gateway verbonden zijn en moeten de vereiste marktdatarechten beschikbaar zijn. De planning start geen Gateway of MFA. Een startregistratie wordt vóór uitvoering opgeslagen, zodat dezelfde weekjob na herstart niet dubbel start. Een onderbroken, gepauzeerde of mislukte job wordt zichtbaar gemeld en vraagt handmatig hervatten/nieuw starten; geen automatische herhaalstorm. Een geslaagde geplande Stock Filter koppelt de IV-job aan precies die selectie-ID. Een tussentijdse nieuwe handmatige Stock Filter vraagt opnieuw een passende IV Scan.
+
+De **Option Scan blijft handmatig**. Er worden geen orders geplaatst. `PUT_SPREAD_SCHEDULE_DISABLED=1` is alleen voor testprocessen die de achtergrondtimer niet mogen uitvoeren; de normale bediening gebruikt de opgeslagen weekinstellingen. De weekplanning wordt pas op de server actief nadat de nieuwe frontend/API zijn geïnstalleerd.
+
+### Geblokkeerde Stocks
+
+Klik **Verwijder TICKER** bij een aandeel in Stock Filter, IV Scan of de spreadtabel. Het verdwijnt uit de zichtbare resultaten en komt in **Geblokkeerde Stocks**. Je kunt ook rechtstreeks een ticker blokkeren. Alle drie de stappen en toekomstige weekscans slaan geblokkeerde tickers over. De blokkeerlijst geldt voor deze Put-spreadsworkflow, niet voor portefeuilleposities, Martin of de Leaps-shortlist.
+
+**Deblokkeer TICKER** maakt het aandeel weer beschikbaar. Als het in de bewaarde resultaten zat, kan het daar opnieuw zichtbaar worden met de oorspronkelijke datum; anders wordt het bij een volgende passende scan opnieuw meegenomen. Tijdens een scan is de blokkeerlijst vergrendeld; stop de scan of wacht op afronding. Klassevarianten zoals `BRK.B`, `BRK B` en `BRK-B` verwijzen naar dezelfde blokkering.
+
+API: `GET/POST /api/stock-filter`; `GET/POST /api/put-spreads/iv` en `POST /api/put-spreads/iv/stop`; `GET/POST /api/put-spreads/blocked`; `GET/POST /api/put-spreads/schedule`. Nieuwe `POST /api/put-spreads` vereist zowel `selectionId` als `ivSelectionId`; servercontrole bindt de twee aan elkaar. `/api/iv-scan` blijft een compatibiliteitsroute naar stap 2 en kan geen ongefilterde brede IV-scan meer starten. Origin-controle en `X-Requested-With: trading-monitor` blijven verplicht bij mutaties.
+
+## Historisch: twee stappen in 0.35.0
+
+1. Kies **Alle Amerikaanse aandelen** of maximaal 50 eigen tickers. Stel minimumkoers, maximumkoers en minimumdagvolume in. Standaard: $5–$150 en minimaal **5.000.000 aandelen**. Klik **Aandelenfilter starten**. Dit vraagt geen IV, optieketens of optiequotes op.
+2. Bekijk de opgeslagen selectie met slotkoers, dagvolume, handelsdag, bron en ophaaltijd. Na afronding start je desgewenst **Optiescan starten**. Alleen de geselecteerde aandelen worden via de bestaande IBKR-optiescanner verwerkt; een brede selectie heeft geen limiet van 50. De optiecriteria, waaronder gemiddeld optievolume in contracten, blijven onafhankelijk instelbaar.
+
+Het aandelenfilter gebruikt de slotkoers en het volume van de laatste afgesloten reguliere handelsdag. De huidige dag telt vanaf 16:15 New York mee; vóór die tijd wordt de vorige beschikbare dag gebruikt. Zo worden aandelen niet vroeg op de dag afgewezen op nog onvolledig volume. De tabel vermeldt de gebruikte handelsdag. Data ouder dan zeven kalenderdagen en ontbrekende waarden leveren geen goedgekeurd aandeel op. Dagvolume is geen marktkapitalisatie: dit filter garandeert niet dat alle small caps zijn uitgesloten.
+
+Yahoo Finance levert maximaal vijf dagen dagdata, drie aandelen tegelijk met 500 ms tussen netwerkgroepen. Dit is dezelfde experimentele bron als in Martin-scan; beschikbaarheid en responstijd zijn niet gegarandeerd. De ruwe waarnemingen worden per New York-datum en slotperiode bewaard. Andere koers-/volumegrenzen op dezelfde periode worden lokaal opnieuw toegepast; oorspronkelijke ophaaltijden blijven staan. Een eerste volledige marktverkenning vraagt nog steeds duizenden aandelen op. Alleen een nieuwe selectie met dezelfde dagdata kan vrijwel geheel uit cache komen.
+
+Bij ontbrekende Yahoo-data probeert de scanner IBKR-dagbars (`TRADES`, vijf dagen, reguliere uren), seriëel met de bestaande historische pacing en één verbinding. Deze terugval vereist een bereikbare Gateway en passende historische datarechten. Na een mislukte IBKR-terugval worden verdere onbekende aandelen overgeslagen, met zichtbare melding. Yahoo 401/403/429 en 5xx pauzeren de scan om een stortvloed aan IBKR-aanvragen te vermijden; **Aandelenfilter hervatten** vervolgt de cursor. Geen automatische Gateway-start of MFA.
+
+IBKR-volume-eenheden hangen van de Gateway/API-instellingen af. `IBKR_STOCK_VOLUME_MULTIPLIER` is standaard `1` voor aandelen; gebruik alleen `100` als daadwerkelijk is vastgesteld dat jouw Gateway historische volumes in lots levert. De terugval is met brokermocks getest, niet met de echte Gateway. IBKR kan een ander handelsvolume rapporteren doordat het transacties filtert; zie [IBKR historische data](https://interactivebrokers.github.io/tws-api/historical_data.html).
+
+Selectie en ruwe dagcache staan naast `IBKR_SNAPSHOT_PATH` in `stock-filter/selection.json` en `stock-filter/observations.json`. Ze overleven vernieuwen en een API-herstart. Voortgang wordt tijdens de run na circa 25 aandelen en bij afsluiten opgeslagen; bij een harde processtop kunnen de laatste maximaal 26 beoordelingen opnieuw worden uitgevoerd. Stoppen via de knop bewaart alle al afgeronde beoordelingen. Een onleesbare selectie wordt niet stilzwijgend overschreven. Ontbrekende data blijven zichtbaar uitgesloten; bij **Afgerond met ontbrekende data** kan de bruikbare deelverzameling worden gescand.
+
+In 0.35.0 vereisten nieuwe optiescans een afgeronde, niet-lege selectie-ID uit de huidige dag/slotperiode. Dit is vanaf 0.36.0 vervangen door de zeven-dagencontrole en de tussenliggende IV Scan hierboven. Een optiescan bewaart zijn eigen selectie, koersgrenzen en selectie-ID; bestaande hervatbare optiescans blijven hervatbaar. De aandelen-, IV- en optiescan gebruiken niet tegelijkertijd IBKR.
+
+API: `GET/POST /api/stock-filter`, `POST /api/stock-filter/stop`. `POST /api/put-spreads` vereist bij een nieuwe scan `selectionId`; hervatten gebruikt de bestaande optiejob. De bestaande Origin-controle en aanvraagheader blijven verplicht.
+
+## Eerdere werking en technische optiecriteria
 
 Vanaf 0.34.1 toont de pagina alleen de criteria/bediening, het aantal gescande aandelen met korte status en de passende spreads. Afwijzingsredenen, per-aandeelbeoordelingen, technische meldingen en uitlegpanelen zijn niet zichtbaar. De diagnostiek wordt intern behouden voor opslag, beveiliging en hervatten. Onderstaande technische uitleg staat uitsluitend in deze handleiding.
 
@@ -101,7 +164,7 @@ npm run dev:lan
 
 Gebruik de bestaande IB Gateway-configuratie en datarechten; zie [IBKR](IBKR.md). Zonder bereikbare API/broker zijn geen actuele scanresultaten te verifiëren. Lokale frontend apart: `npm run dev -- --host 127.0.0.1 --port 5197`; Node-API apart: `npm run start:api`. Zorg dat die frontend-origin toegestaan is voor de Node-API. De gebruikelijke LAN-launcher regelt dit voor zijn eigen origin.
 
-Serverupdate vereist frontend (`dist/`), Node (`server/`, `shared/`) en de bestaande bijgewerkte Python-LAN-proxy. Het bestaande script `bash deploy/update-options.sh` controleert nu versie 0.34.1, bouwt/test, publiceert en herstart de bestaande services. Er is geen serverinstallatie vanuit deze ontwikkelomgeving uitgevoerd. Het script voert een aanvullende GET-controle op `/api/put-spreads` uit. Volg de [bestaande installatiehandleiding](installatie.md) voor een nieuwe installatie.
+Serverupdate vereist frontend (`dist/`), Node (`server/`, `shared/`) en de bestaande bijgewerkte Python-LAN-proxy. Het bestaande script `bash deploy/update-options.sh` controleert nu versie 0.36.0, bouwt/test, publiceert en herstart de bestaande services. Er is geen serverinstallatie vanuit deze ontwikkelomgeving uitgevoerd. Het script controleert `/api/put-spreads`, `/api/stock-filter`, `/api/put-spreads/iv`, `/api/put-spreads/blocked` en `/api/put-spreads/schedule`. De bestaande algemene `/api/`-proxy ondersteunt deze routes. Volg de [bestaande installatiehandleiding](installatie.md) voor een nieuwe installatie.
 
 ## Validatie
 

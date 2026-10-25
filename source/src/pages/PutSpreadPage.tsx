@@ -1,8 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { ArrowDownloadRegular, PlayRegular, StopRegular } from '@fluentui/react-icons'
 import { spreadDefaults, spreadFilters } from '../../shared/put-spread.mjs'
 import type { PutSpread, SpreadFilters } from '../../shared/put-spread.mjs'
 import './put-spreads.css'
+import StockFilterPanel from './StockFilterPanel'
+import type { StockSelection } from './StockFilterPanel'
+import FilteredIvPanel from './FilteredIvPanel'
+import type { FilteredIvState } from './FilteredIvPanel'
+import SpreadScanManagement from './SpreadScanManagement'
 
 interface Scan {
   state: string; rows: PutSpread[]; warnings: string[]; symbolsChecked: number; contractsChecked: number;
@@ -48,8 +53,10 @@ function exportRows(rows: PutSpread[]) {
 
 export default function PutSpreadPage() {
   const [preferences] = useState(loadPreferences)
-  const [universeMode, setUniverseMode] = useState<'us' | 'custom'>(preferences.universeMode)
-  const [symbols, setSymbols] = useState(preferences.symbols)
+  const [selection, setSelection] = useState<StockSelection | null>(null)
+  const [ivScan, setIvScan] = useState<FilteredIvState>({ state: 'idle', rows: [], warnings: [] })
+  const [stockRunning, setStockRunning] = useState(false), [scheduleRunning, setScheduleRunning] = useState(false)
+  const [refresh, setRefresh] = useState(0)
   const [filters, setFilters] = useState<Record<keyof SpreadFilters, string>>(() => Object.fromEntries(Object.entries(preferences.filters).map(([key, value]) => [key, String(value)])) as Record<keyof SpreadFilters, string>)
   const [scan, setScan] = useState<Scan>(empty)
   const [error, setError] = useState('')
@@ -61,6 +68,16 @@ export default function PutSpreadPage() {
   const [descending, setDescending] = useState(true)
   const [page, setPage] = useState(0)
   const running = scan.state === 'running'
+  const otherRunning = stockRunning || ivScan.state === 'running' || scheduleRunning
+  const blocked = running || otherRunning || busy
+  const blockStock = useCallback(async (symbol: string, value: boolean) => {
+    setBusy(true)
+    try {
+      const response = await fetch('/api/put-spreads/blocked', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'trading-monitor' }, body: JSON.stringify({ symbol, blocked: value }) }), data = await response.json()
+      if (!response.ok) throw Error(data.message || 'Blokkeerlijst kon niet worden opgeslagen.')
+      setRefresh(current => current + 1)
+    } finally { setBusy(false) }
+  }, [])
   useEffect(() => {
     const controller = new AbortController()
     let timer: ReturnType<typeof setTimeout>
@@ -69,28 +86,29 @@ export default function PutSpreadPage() {
         const result = await responseData(await fetch('/api/put-spreads', { signal: controller.signal, cache: 'no-store' }))
         if (controller.signal.aborted) return
         setScan(result); setError(''); setLoading(false)
-        if (result.state === 'running') timer = setTimeout(() => void load(), 3000)
+        timer = setTimeout(() => void load(), result.state === 'running' ? 3000 : 10000)
       } catch (cause) {
         if (!controller.signal.aborted) { setError((cause as Error).message); setLoading(false); timer = setTimeout(() => void load(), 8000) }
       }
     }
     void load()
     return () => { controller.abort(); clearTimeout(timer) }
-  }, [retry])
+  }, [retry, refresh])
 
   async function start(resume = false) {
     setError('')
     let parsed: SpreadFilters
     try {
       if (Object.values(filters).some(value => !value.trim())) throw Error('Vul alle filters in.')
-      parsed = spreadFilters(Object.fromEntries(Object.entries(filters).map(([key, value]) => [key, Number(value)])))
-      if (universeMode === 'custom' && !symbols.trim()) throw Error('Vul minstens één ticker in of neem de IV-resultaten over.')
+      if (!resume && !selection) throw Error('Rond eerst stap 1 af met de gewenste aandelencriteria.')
+      if (!resume && !ivScan.ready) throw Error('Rond eerst stap 2 af op de huidige Stock Filter.')
+      parsed = spreadFilters({ ...Object.fromEntries(Object.entries(filters).map(([key, value]) => [key, Number(value)])), minPrice: resume ? scan.filters?.minPrice : selection!.filters!.minPrice, maxPrice: resume ? scan.filters?.maxPrice : selection!.filters!.maxPrice, minIvr: resume ? scan.filters?.minIvr : ivScan.filters!.minIvr })
     } catch (cause) { setError((cause as Error).message); return }
     setBusy(true)
     try {
-      const result = await responseData(await fetch('/api/put-spreads', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'trading-monitor' }, body: JSON.stringify({ universeMode, resume, symbols: symbols.split(/[\s,;]+/).filter(Boolean), filters: parsed }) }))
+      const result = await responseData(await fetch('/api/put-spreads', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'trading-monitor' }, body: JSON.stringify({ universeMode: resume ? scan.universeMode : selection!.universeMode, resume, symbols: resume ? scan.symbols : selection!.symbols, selectionId: selection?.id, ivSelectionId: ivScan.id, filters: parsed }) }))
       setScan(result); setRetry(value => value + 1)
-      try { localStorage.setItem('tm-put-spread-filters', JSON.stringify({ universeMode, symbols, filters: parsed })) } catch { /* Scanner works without browser storage. */ }
+      try { localStorage.setItem('tm-put-spread-filters', JSON.stringify({ filters: parsed })) } catch { /* Scanner works without browser storage. */ }
     } catch (cause) { setError((cause as Error).message) }
     finally { setBusy(false) }
   }
@@ -100,34 +118,23 @@ export default function PutSpreadPage() {
     catch (cause) { setError((cause as Error).message) }
     finally { setBusy(false) }
   }
-  async function useIvResults() {
-    setBusy(true); setError('')
-    try {
-      const result = await responseData(await fetch('/api/iv-scan', { cache: 'no-store' }))
-      const values = [...new Set(result.rows.map(row => row.symbol))].slice(0, 50)
-      if (!values.length) throw Error('Geen IV-resultaten beschikbaar. Voer tickers in of start eerst een IV Scan.')
-      setUniverseMode('custom'); setSymbols(values.join(', '))
-    } catch (cause) { setError((cause as Error).message) }
-    finally { setBusy(false) }
-  }
   const rows = scan.rows.filter(row => row.symbol.includes(search.toUpperCase().trim())).sort((a, b) => (descending ? b[sort] - a[sort] : a[sort] - b[sort]) || a.id.localeCompare(b.id))
   const pageCount = Math.max(1, Math.ceil(rows.length / 50))
   const currentPage = Math.min(page, pageCount - 1)
   const pageRows = rows.slice(currentPage * 50, currentPage * 50 + 50)
   const status = loading ? 'Laden…' : running ? 'Scan bezig' : scan.state === 'idle' ? 'Klaar om te scannen' : scan.state === 'paused' ? 'Scan gepauzeerd' : scan.state === 'cancelled' ? 'Scan gestopt' : scan.state === 'interrupted' ? 'Scan onderbroken' : scan.state === 'error' ? 'Scan gestopt' : 'Scan afgerond'
   return <div className="spreads-page">
+    <StockFilterPanel disabled={running || busy || ivScan.state === 'running' || scheduleRunning} onSelection={setSelection} refresh={refresh} onRunning={setStockRunning} onBlock={blockStock} />
+    <FilteredIvPanel stock={selection} disabled={running || busy || stockRunning || scheduleRunning} refresh={refresh} onChange={setIvScan} onBlock={blockStock} />
     <div className="spreads-layout">
       <form className="monitor-panel spreads-filters" onSubmit={event => { event.preventDefault(); void start() }}>
-        <h2>Scan instellen</h2>
-        <label htmlFor="spread-universe">Aandelenuniversum</label><select id="spread-universe" disabled={running || busy} value={universeMode} onChange={event => setUniverseMode(event.target.value as typeof universeMode)}><option value="us">Alle Amerikaanse aandelen</option><option value="custom">Eigen tickers</option></select>
-        {universeMode === 'custom' && <><label htmlFor="spread-symbols">Tickers (maximaal 50)</label>
-        <textarea id="spread-symbols" rows={3} value={symbols} disabled={running || busy} placeholder="Bijvoorbeeld TSLA, AMD, PLTR" onChange={event => setSymbols(event.target.value)} /></>}
-        <button type="button" disabled={running || busy} onClick={() => void useIvResults()}>IV-resultaten overnemen</button>
-        <fieldset disabled={running || busy}><legend>Criteria</legend>{fields.map(field => <label key={field.key} htmlFor={`spread-${field.key}`}>{field.label}<input id={`spread-${field.key}`} type="number" step={field.step || '1'} required value={filters[field.key]} onChange={event => setFilters(value => ({ ...value, [field.key]: event.target.value }))} /></label>)}</fieldset>
-        <button className="scan-button spreads-primary" type="submit" disabled={running || busy || loading}><PlayRegular aria-hidden="true" />{running ? 'Scan bezig…' : busy ? 'Even wachten…' : 'Scan starten'}</button>
-        {!running && (!!scan.remainingSymbols || scan.retryFrom !== undefined) && <button type="button" disabled={busy || loading} onClick={() => void start(true)}>Scan hervatten</button>}
+        <h2>3. Option Scan</h2>
+        <p>{ivScan.ready ? `${number(ivScan.rows.length)} aandelen uit de opgeslagen IV Scan.` : 'Rond eerst de Stock Filter en de IV Scan af. Daarna kun je de optiescan starten.'}</p>
+        <fieldset disabled={blocked}><legend>Optiecriteria</legend>{fields.filter(field => !['minPrice', 'maxPrice', 'minIvr'].includes(field.key)).map(field => <label key={field.key} htmlFor={`spread-${field.key}`}>{field.label}<input id={`spread-${field.key}`} type="number" step={field.step || '1'} required value={filters[field.key]} onChange={event => setFilters(value => ({ ...value, [field.key]: event.target.value }))} /></label>)}</fieldset>
+        <button className="scan-button spreads-primary" type="submit" disabled={blocked || loading || !selection || !ivScan.ready}><PlayRegular aria-hidden="true" />{running ? 'Scan bezig…' : busy ? 'Even wachten…' : 'Optiescan starten'}</button>
+        {!running && (!!scan.remainingSymbols || scan.retryFrom !== undefined) && <button type="button" disabled={busy || loading || otherRunning} onClick={() => void start(true)}>Scan hervatten</button>}
         {running && <button type="button" disabled={busy} onClick={() => void stop()}><StopRegular aria-hidden="true" />Scan stoppen</button>}
-        <button type="button" disabled={running || busy} onClick={() => { setFilters(Object.fromEntries(Object.entries(spreadDefaults).map(([key, value]) => [key, String(value)])) as Record<keyof SpreadFilters, string>) }}>Criteria herstellen</button>
+        <button type="button" disabled={blocked} onClick={() => { setFilters(Object.fromEntries(Object.entries(spreadDefaults).map(([key, value]) => [key, String(value)])) as Record<keyof SpreadFilters, string>) }}>Criteria herstellen</button>
       </form>
       <div className="spreads-results">
         <section className="monitor-panel spreads-status" aria-live="polite"><strong>{number(scan.universeChecked ?? scan.symbolsChecked)}{scan.universeCount !== undefined ? ` / ${number(scan.universeCount)}` : ''} aandelen gescand</strong><span>{status}</span></section>
@@ -137,10 +144,11 @@ export default function PutSpreadPage() {
           <div className="spreads-toolbar"><label htmlFor="spread-search">Ticker zoeken<input id="spread-search" value={search} onChange={event => { setSearch(event.target.value); setPage(0) }} placeholder="Zoeken in resultaten" /></label><div className="spreads-sort"><label htmlFor="spread-sort">Sorteren op</label><select id="spread-sort" value={sort} onChange={event => setSort(event.target.value as typeof sort)}><option value="returnOnRisk">Rendement op risico</option><option value="maxProfit">Maximale winst</option><option value="maxLoss">Maximaal verlies</option><option value="ivr">IV-rank</option></select></div><button type="button" onClick={() => setDescending(value => !value)}>{descending ? 'Hoog → laag' : 'Laag → hoog'}</button>{search && <button type="button" onClick={() => setSearch('')}>Zoekfilter wissen</button>}</div>
           {!rows.length ? <div className="spreads-empty"><h3>{search && scan.rows.length ? 'Geen spreads voor deze ticker' : 'Nog geen passende spreads'}</h3></div> : <div className="scan-table-scroll" role="region" aria-label="Bull-put-spreadresultaten" tabIndex={0}><table className="scan-table spreads-table"><thead><tr>
             <th scope="col">Aandeel / details</th><th scope="col">Gem. optievolume</th><th scope="col">Laatste dagvolume</th><th scope="col">Koers</th><th scope="col" aria-sort={sort === 'ivr' ? descending ? 'descending' : 'ascending' : undefined}>IV-rank</th><th scope="col">Put-strikes</th><th scope="col">Expiratie</th><th scope="col">Netto credit</th><th scope="col" title="Delta-indicatie, geen exacte winstkans">OTM-proxy</th><th scope="col" aria-sort={sort === 'returnOnRisk' ? descending ? 'descending' : 'ascending' : undefined}>Rendement / risico</th><th scope="col" aria-sort={sort === 'maxProfit' ? descending ? 'descending' : 'ascending' : undefined}>Max. winst</th><th scope="col" aria-sort={sort === 'maxLoss' ? descending ? 'descending' : 'ascending' : undefined}>Max. verlies</th><th scope="col">Break-even</th>
-          </tr></thead><tbody>{pageRows.map(row => <tr key={row.id}><th scope="row"><details><summary>{row.symbol}{row.cached && <small>Opgeslagen chain</small>}</summary><div className="spreads-quote-detail"><p>Verkoop put {usd(row.shortStrike)}<br />Bied {usd(row.shortBid)} · laat {usd(row.shortAsk)}<br />{dataType(row.shortDataType)} · {time(row.shortQuotedAt)}</p><p>Koop put {usd(row.longStrike)}<br />Bied {usd(row.longBid)} · laat {usd(row.longAsk)}<br />{dataType(row.longDataType)} · {time(row.longQuotedAt)}</p><p>Handelsklasse: {row.tradingClass}<br />Koersbuffer: {number(row.buffer)}%</p></div></details></th><td>{row.avgOptionVolume === undefined ? 'Onbekend' : number(row.avgOptionVolume)}<small>{row.avgOptionVolumeAt ? time(row.avgOptionVolumeAt) : '—'}</small></td><td>{row.dayOptionVolume === undefined ? 'Onbekend' : number(row.dayOptionVolume)}<small>{row.dayOptionVolumeAt ? time(row.dayOptionVolumeAt) : '—'}</small></td><td>{usd(row.underlyingPrice)}</td><td>{number(row.ivr)}{row.ivSource === 'historical-close' && <small>Dag-IV {row.ivAsOf}</small>}</td><td><span className="spreads-leg">Verkoop {number(row.shortStrike)}</span><small>Koop {number(row.longStrike)}</small></td><td>{date(row.expiry)}<small>{row.dte} dagen</small></td><td>{usd(row.credit)}<small>per aandeel</small></td><td>{number(row.otmProxy)}%</td><td>{number(row.returnOnRisk)}%</td><td className="spreads-profit">{usd(row.maxProfit)}</td><td>{usd(row.maxLoss)}</td><td>{usd(row.breakEven)}</td></tr>)}</tbody></table></div>}
+          </tr></thead><tbody>{pageRows.map(row => <tr key={row.id}><th scope="row"><details><summary>{row.symbol}{row.cached && <small>Opgeslagen chain</small>}</summary><div className="spreads-quote-detail"><p>Verkoop put {usd(row.shortStrike)}<br />Bied {usd(row.shortBid)} · laat {usd(row.shortAsk)}<br />{dataType(row.shortDataType)} · {time(row.shortQuotedAt)}</p><p>Koop put {usd(row.longStrike)}<br />Bied {usd(row.longBid)} · laat {usd(row.longAsk)}<br />{dataType(row.longDataType)} · {time(row.longQuotedAt)}</p><p>Handelsklasse: {row.tradingClass}<br />Koersbuffer: {number(row.buffer)}%</p></div></details><button disabled={blocked} title="Verwijder uit de scan en voeg toe aan Geblokkeerde Stocks" onClick={() => void blockStock(row.symbol, true).catch(cause => setError(cause.message))}>Verwijder {row.symbol}</button></th><td>{row.avgOptionVolume === undefined ? 'Onbekend' : number(row.avgOptionVolume)}<small>{row.avgOptionVolumeAt ? time(row.avgOptionVolumeAt) : '—'}</small></td><td>{row.dayOptionVolume === undefined ? 'Onbekend' : number(row.dayOptionVolume)}<small>{row.dayOptionVolumeAt ? time(row.dayOptionVolumeAt) : '—'}</small></td><td>{usd(row.underlyingPrice)}</td><td>{number(row.ivr)}{row.ivSource === 'historical-close' && <small>Dag-IV {row.ivAsOf}</small>}</td><td><span className="spreads-leg">Verkoop {number(row.shortStrike)}</span><small>Koop {number(row.longStrike)}</small></td><td>{date(row.expiry)}<small>{row.dte} dagen</small></td><td>{usd(row.credit)}<small>per aandeel</small></td><td>{number(row.otmProxy)}%</td><td>{number(row.returnOnRisk)}%</td><td className="spreads-profit">{usd(row.maxProfit)}</td><td>{usd(row.maxLoss)}</td><td>{usd(row.breakEven)}</td></tr>)}</tbody></table></div>}
           {rows.length > 50 && <div className="spreads-toolbar" aria-label="Resultaatpagina’s"><button type="button" disabled={currentPage === 0} onClick={() => setPage(currentPage - 1)}>Vorige</button><span>Pagina {currentPage + 1} / {pageCount} · {rows.length} resultaten</span><button type="button" disabled={currentPage + 1 >= pageCount} onClick={() => setPage(currentPage + 1)}>Volgende</button></div>}
         </section>
       </div>
     </div>
+    <SpreadScanManagement disabled={blocked} refresh={refresh} onRunning={setScheduleRunning} onBlock={blockStock} />
   </div>
 }
