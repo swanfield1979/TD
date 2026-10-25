@@ -1,13 +1,14 @@
 import { chromium } from 'playwright'
 import assert from 'node:assert/strict'
-import { mkdir } from 'node:fs/promises'
+import { mkdir, readFile } from 'node:fs/promises'
 import { bullPutSpread, spreadFilters } from '../shared/put-spread.mjs'
 const browser = await chromium.launch({ channel: process.env.PLAYWRIGHT_CHANNEL || 'msedge', headless: true })
 const page = await browser.newPage({ viewport: { width: 1600, height: 1100 } })
 const errors = []; page.on('pageerror', error => errors.push(error.message))
 const today = '2026-10-24'
+const sector = symbol => ({ sector: symbol === 'AMD' ? 'Technology' : 'Financials', sectorSource: 'Nasdaq', sectorAsOf: '2026-10-25T09:00:00Z' })
 const short = { symbol: 'HOOD', expiry: '20270122', tradingClass: 'HOOD', right: 'P', currency: 'USD', multiplier: 100, strike: 75, bid: 1.2, ask: 1.4, delta: -.12, underlyingPrice: 110, ivr: 45, marketDataType: 3, quotedAt: '2026-10-24T10:00:00Z' }
-const row = { ...bullPutSpread(short, { ...short, strike: 65, bid: .5, ask: .6, delta: -.08 }, today), ivSource: 'historical-close', ivAsOf: '2026-10-23', avgOptionVolume: 10000, avgOptionVolumeAt: '2026-10-23T19:55:00Z', dayOptionVolume: 12000, dayOptionVolumeAt: '2026-10-23T19:55:00Z' }
+const row = { ...bullPutSpread(short, { ...short, strike: 65, bid: .5, ask: .6, delta: -.08 }, today), ...sector('HOOD'), ivSource: 'historical-close', ivAsOf: '2026-10-23', avgOptionVolume: 10000, avgOptionVolumeAt: '2026-10-23T19:55:00Z', dayOptionVolume: 12000, dayOptionVolumeAt: '2026-10-23T19:55:00Z' }
 let scan = { state: 'idle', rows: [], warnings: [], symbolsChecked: 0, contractsChecked: 0 }
 let failure = false, running = false, posts = 0, resumePosted = false
 let stock = { state: 'idle', rows: [], failures: [], warnings: [], checked: 0, total: 0, cacheHits: 0 }
@@ -25,7 +26,7 @@ await page.route('**/api/**', async route => {
       const input = req.postDataJSON()
       assert.equal(input.filters.minVolume, 5000000)
       if (stockFailure) { status = 503; body = { message: 'Test: aandelenbron niet beschikbaar.' } }
-      else stock = { ...stock, id: `saved-selection-${stockPosts}`, state: stockRunning ? 'running' : 'complete', filters: input.filters, universeMode: input.universeMode, symbols: input.universeMode === 'custom' ? input.symbols : [], checked: stockRunning ? 3 : 75, total: 75, cacheHits: stockPosts > 1 ? 75 : 0, finishedAt: '2026-10-25T10:00:00Z', rows: (stockEmpty ? [] : ['HOOD', 'AMD']).map(symbol => ({ symbol, price: 110, volume: 6000000, asOf: '2026-10-23', source: 'Yahoo Finance', fetchedAt: '2026-10-25T10:00:00Z', cached: stockPosts > 1 })) }
+      else stock = { ...stock, id: `saved-selection-${stockPosts}`, state: stockRunning ? 'running' : 'complete', filters: input.filters, universeMode: input.universeMode, symbols: input.universeMode === 'custom' ? input.symbols : [], checked: stockRunning ? 3 : 75, total: 75, cacheHits: stockPosts > 1 ? 75 : 0, finishedAt: '2026-10-25T10:00:00Z', rows: (stockEmpty ? [] : ['HOOD', 'AMD']).map(symbol => ({ symbol, ...sector(symbol), price: 110, volume: 6000000, asOf: '2026-10-23', source: 'Yahoo Finance', fetchedAt: '2026-10-25T10:00:00Z', cached: stockPosts > 1 })) }
     }
     if (status === 200) body = stock
   } else if (path === '/api/stock-filter/stop') {
@@ -35,7 +36,7 @@ await page.route('**/api/**', async route => {
       ivPosts++
       const input = req.postDataJSON()
       assert.equal(input.selectionId, stock.id)
-      iv = { id: `iv-${ivPosts}`, state: 'complete', stockSelectionId: input.selectionId, filters: input.filters, universeChecked: 2, universeCount: 2, finishedAt: '2026-10-26T14:00:00Z', rows: ['HOOD', 'AMD'].map(symbol => ({ symbol, ivr: 60, iv: 45, ivPercentile: 70, underlyingPrice: 110, ivSource: 'quote', ivAsOf: '2026-10-26', quotedAt: '2026-10-26T14:00:00Z' })), warnings: [] }
+      iv = { id: `iv-${ivPosts}`, state: 'complete', stockSelectionId: input.selectionId, filters: input.filters, universeChecked: 2, universeCount: 2, finishedAt: '2026-10-26T14:00:00Z', rows: ['HOOD', 'AMD'].map(symbol => ({ symbol, ...sector(symbol), ivr: 60, iv: 45, ivPercentile: 70, underlyingPrice: 110, ivSource: 'quote', ivAsOf: '2026-10-26', quotedAt: '2026-10-26T14:00:00Z' })), warnings: [] }
     }
     body = iv
   } else if (path === '/api/put-spreads/blocked') {
@@ -58,7 +59,7 @@ await page.route('**/api/**', async route => {
       assert.equal(input.filters.minDte, 40)
       assert.equal(input.filters.minAvgOptionVolume, 5000)
       if (failure) { status = 503; body = { message: 'Test: broker niet beschikbaar.' } }
-      else scan = { state: running ? 'running' : 'partial', progress: 'Put spreads · HOOD', universeMode: input.universeMode, universeCount: 75, universeChecked: 2, remainingSymbols: 73, cacheHits: 1, chainsSkipped: 1, marketOpen: false, assessments: [{ symbol: 'LOW', status: 'filtered', reason: 'IV-rank te laag; optiechain overgeslagen.', source: 'cache', asOf: '2026-10-23T19:55:00Z' }], filters: spreadFilters(input.filters), rows: running ? [] : [{ ...row, cached: true }, { ...row, id: 'AMD:1', symbol: 'AMD', maxLoss: 500, returnOnRisk: 12 }], symbols: input.symbols, warnings: ['TEST: ontbrekende optiedata; overgeslagen.'], symbolsChecked: 2, contractsChecked: 4, finishedAt: running ? undefined : '2026-10-24T10:01:00Z' }
+      else scan = { state: running ? 'running' : 'partial', progress: 'Put spreads · HOOD', universeMode: input.universeMode, universeCount: 75, universeChecked: 2, remainingSymbols: 73, cacheHits: 1, chainsSkipped: 1, marketOpen: false, assessments: [{ symbol: 'LOW', status: 'filtered', reason: 'IV-rank te laag; optiechain overgeslagen.', source: 'cache', asOf: '2026-10-23T19:55:00Z' }], filters: spreadFilters(input.filters), rows: running ? [] : [{ ...row, cached: true }, { ...row, ...sector('AMD'), id: 'AMD:1', symbol: 'AMD', maxLoss: 500, returnOnRisk: 12 }], symbols: input.symbols, warnings: ['TEST: ontbrekende optiedata; overgeslagen.'], symbolsChecked: 2, contractsChecked: 4, finishedAt: running ? undefined : '2026-10-24T10:01:00Z' }
     }
     if (status === 200) body = scan
   } else if (path === '/api/put-spreads/stop') { scan = { ...scan, state: 'cancelled' }; body = scan }
@@ -76,6 +77,24 @@ try {
   assert.equal(await page.getByLabel('Aandelenuniversum', { exact: true }).inputValue(), 'us')
   await page.getByRole('button', { name: 'Aandelenfilter starten', exact: true }).click()
   await page.getByText('75 / 75 gecontroleerd · 2 geselecteerd', { exact: true }).waitFor()
+  const stockSummary = page.locator('.stock-results-disclosure > summary')
+  await stockSummary.waitFor()
+  assert.equal(await page.getByRole('region', { name: 'Geselecteerde aandelen', exact: true }).isVisible(), true)
+  await stockSummary.focus(); await page.keyboard.press('Enter')
+  await page.waitForFunction(() => !document.querySelector('.stock-results-disclosure').open)
+  assert.equal(await page.locator('[aria-label="Geselecteerde aandelen"]').isVisible(), false)
+  await page.getByText('75 / 75 gecontroleerd · 2 geselecteerd', { exact: true }).waitFor()
+  assert.equal(await page.getByRole('button', { name: 'IV Scan starten', exact: true }).isEnabled(), true)
+  await page.reload()
+  await stockSummary.waitFor()
+  assert.equal(await page.locator('.stock-results-disclosure').getAttribute('open'), null)
+  assert.equal(await page.locator('[aria-label="Geselecteerde aandelen"]').isVisible(), false)
+  await stockSummary.focus(); await page.keyboard.press('Space')
+  await page.getByRole('region', { name: 'Geselecteerde aandelen', exact: true }).waitFor()
+  await page.getByLabel('Zoeken in aandelen', { exact: true }).fill('HOOD')
+  await stockSummary.click(); await stockSummary.click()
+  assert.equal(await page.getByLabel('Zoeken in aandelen', { exact: true }).inputValue(), 'HOOD')
+  await page.getByLabel('Zoeken in aandelen', { exact: true }).fill('')
   assert.equal(posts, 0)
   assert.equal(await page.getByRole('button', { name: 'Optiescan starten', exact: true }).isDisabled(), true)
   await page.getByRole('button', { name: 'IV Scan starten', exact: true }).click()
@@ -93,6 +112,27 @@ try {
   await page.getByRole('button', { name: 'IV Scan starten', exact: true }).click()
   await page.getByRole('button', { name: 'Optiescan starten', exact: true }).click()
   await page.getByRole('heading', { name: 'Gevonden spreads', exact: true }).waitFor()
+  for (const name of ['Geselecteerde aandelen', 'IV-resultaten', 'Bull-put-spreadresultaten']) {
+    const region = page.getByRole('region', { name, exact: true })
+    await region.getByRole('columnheader', { name: 'Sector', exact: true }).waitFor()
+    await region.getByRole('cell', { name: 'Tech', exact: true }).waitFor()
+    await region.getByRole('cell', { name: 'Financials', exact: true }).waitFor()
+    const link = region.getByRole('link', { name: 'HOOD', exact: true })
+    assert.equal(await link.getAttribute('href'), 'https://www.tradingview.com/chart/fxY1us9e/?symbol=HOOD')
+    assert.equal(await link.getAttribute('target'), '_blank')
+    assert.equal(await link.getAttribute('rel'), 'noopener noreferrer')
+  }
+  await page.context().route('https://www.tradingview.com/**', route => route.fulfill({ contentType: 'text/html', body: '<title>TradingView-linkcontrole</title>' }))
+  const linkedDetails = page.getByRole('region', { name: 'Bull-put-spreadresultaten', exact: true }).locator('tbody tr').filter({ has: page.getByRole('link', { name: 'HOOD', exact: true }) }).locator('details')
+  const detailsBefore = await linkedDetails.getAttribute('open')
+  const popupPromise = page.waitForEvent('popup')
+  await page.getByRole('region', { name: 'Bull-put-spreadresultaten', exact: true }).getByRole('link', { name: 'HOOD', exact: true }).click()
+  const popup = await popupPromise
+  await popup.waitForLoadState()
+  assert.equal(popup.url(), 'https://www.tradingview.com/chart/fxY1us9e/?symbol=HOOD')
+  assert.equal(await popup.evaluate(() => window.opener === null), true)
+  assert.equal(await linkedDetails.getAttribute('open'), detailsBefore)
+  await popup.close()
   await page.locator('.spreads-table tbody tr').first().waitFor()
   await page.getByText('Dag-IV 2026-10-23', { exact: true }).first().waitFor()
   assert.equal(await page.locator('.spreads-table tbody tr').count(), 2)
@@ -108,7 +148,11 @@ try {
   assert.match(await page.locator('.spreads-table tbody').innerText(), /940,00/)
   const downloadPromise = page.waitForEvent('download')
   await page.getByRole('button', { name: 'CSV exporteren', exact: true }).click()
-  assert.equal((await downloadPromise).suggestedFilename(), 'bull-put-spreads.csv')
+  const exported = await downloadPromise
+  assert.equal(exported.suggestedFilename(), 'bull-put-spreads.csv')
+  const csv = await readFile(await exported.path(), 'utf8')
+  assert.match(csv, /;sector;sectorSource;sectorAsOf;/)
+  assert.match(csv, /"Financials"/)
   await page.getByLabel('Ticker zoeken', { exact: true }).fill('ZZZ')
   await page.getByRole('heading', { name: 'Geen spreads voor deze ticker' }).waitFor()
   await page.getByRole('button', { name: 'Zoekfilter wissen' }).click()
@@ -197,6 +241,9 @@ try {
   await page.waitForFunction(() => ![...document.querySelectorAll('button')].find(button => button.textContent === 'Optiescan starten')?.disabled)
   await page.getByLabel('Minimum IV-rank', { exact: true }).fill('50')
   assert.equal(await page.getByRole('button', { name: 'Optiescan starten', exact: true }).isDisabled(), true)
+  iv.rows[0] = { ...iv.rows[0], sector: undefined, sectorSource: undefined, sectorAsOf: undefined }
+  await page.reload()
+  await page.getByRole('region', { name: 'IV-resultaten', exact: true }).getByRole('cell', { name: 'Onbekend', exact: true }).waitFor()
   stockEmpty = true
   await page.getByRole('button', { name: 'Aandelenfilter starten', exact: true }).click()
   await page.getByText('Geen passende aandelen. Pas de criteria aan en start opnieuw.', { exact: true }).waitFor()

@@ -17,6 +17,7 @@ import { createStockFilter } from './stock-filter.mjs'
 import { createBlockedStocks } from './blocked-stocks.mjs'
 import { makeFilteredIvState, runFilteredIvScan, ivSelection, ivFilters } from './filtered-iv-scan.mjs'
 import { createWeeklySpreadSchedule } from './weekly-spread-schedule.mjs'
+import { createStockSectors } from './stock-sectors.mjs'
 
 const scanControllers = {}
 const activeScanJobs = new Set()
@@ -198,9 +199,10 @@ async function runOptionScan(mode, symbols, state, previous) {
   activeScanJobs.add(mode)
   try {
     const signal = scanControllers[mode].signal
+    const researchConfig = { ...config, scanSignal: signal, onStockDetails: (symbol, details) => stockSectors.rememberIbkr(symbol, details) }
     const runBatch = () => runCspScan({ ...config, scanSignal: signal, ivContinueRound: mode === 'iv' && state.batchesCompleted > 0, onScanCheckpoint: saveScanResults }, symbols, state, undefined, mode)
-    if (mode === 'spreads') await runSpreadScan({ ...config, scanSignal: signal }, state, { cache: spreadCache, checkpoint: saveScanResults, blocked: symbol => blockedStocks.has(symbol) })
-    else if (mode === 'iv') await runFilteredIvScan({ ...config, scanSignal: signal }, state, { cache: spreadCache, checkpoint: saveScanResults, blocked: symbol => blockedStocks.has(symbol) })
+    if (mode === 'spreads') await runSpreadScan(researchConfig, state, { cache: spreadCache, checkpoint: saveScanResults, blocked: symbol => blockedStocks.has(symbol) })
+    else if (mode === 'iv') await runFilteredIvScan(researchConfig, state, { cache: spreadCache, checkpoint: saveScanResults, blocked: symbol => blockedStocks.has(symbol) })
     else await runBatch()
     if (mode === 'leaps' && state.rows.length === 0 && ['error', 'cancelled'].includes(state.state) && previous.rows.length) {
       state.rows = previous.rows
@@ -244,7 +246,8 @@ function isAllowedPost(request) {
 
 const martinScan = await createMartinScan(resolve(process.env.MARTIN_SCAN_DIR || dirname(config.snapshotPath) + '/martin'))
 const blockedStocks = await createBlockedStocks(resolve(dirname(config.snapshotPath), 'blocked-stocks.json'))
-const stockFilter = await createStockFilter(resolve(dirname(config.snapshotPath), 'stock-filter'), config, { blocked: symbol => blockedStocks.has(symbol) })
+const stockSectors = await createStockSectors(resolve(dirname(config.snapshotPath), 'stock-sectors.json'), { enabled: process.env.SECTOR_LOOKUPS_DISABLED !== '1' })
+const stockFilter = await createStockFilter(resolve(dirname(config.snapshotPath), 'stock-filter'), config, { blocked: symbol => blockedStocks.has(symbol), sectors: stockSectors })
 const scansBusy = () => blockedStocks.isSaving() || activeScanJobs.size > 0 || scanState.state === 'running' || Object.values(optionScans).some(scan => scan.state === 'running') || stockFilter.snapshot().state === 'running'
 function startFilteredIv(selection, filters, resume = false) {
   const previous = optionScans.iv
@@ -302,7 +305,12 @@ const server = createServer(async (request, response) => {
       }
     }
     if (request.url === '/api/stock-filter' || request.url === '/api/stock-filter/stop') {
-      if (request.method === 'GET' && request.url === '/api/stock-filter') return sendJson(response, 200, stockFilter.snapshot())
+      if (request.method === 'GET' && request.url === '/api/stock-filter') {
+        const result = stockFilter.snapshot()
+        void stockSectors.warm(result.rows)
+        if (stockSectors.warning()) result.warnings = [...new Set([...result.warnings, stockSectors.warning()])]
+        return sendJson(response, 200, result)
+      }
       if (request.method === 'POST') {
         if (!isAllowedPost(request)) return sendJson(response, 403, { message: 'Ongeldige aanvraag.' })
         if (request.url.endsWith('/stop')) return sendJson(response, 202, stockFilter.stop())
@@ -361,7 +369,11 @@ const server = createServer(async (request, response) => {
     }
     const mode = request.url === '/api/put-spreads' ? 'spreads' : ['/api/iv-scan', '/api/put-spreads/iv'].includes(request.url) ? 'iv' : request.url === '/api/leaps' ? 'leaps' : null
     if (mode) {
-      if (request.method === 'GET') return sendJson(response, 200, { ...optionScans[mode], state: activeScanJobs.has(mode) ? 'running' : optionScans[mode].state, rows: mode === 'leaps' ? optionScans[mode].rows : optionScans[mode].rows.filter(row => !blockedStocks.has(row.symbol)), storageError: scanStorageError || optionScans[mode].storageError })
+      if (request.method === 'GET') {
+        const rows = mode === 'leaps' ? optionScans[mode].rows : optionScans[mode].rows.filter(row => !blockedStocks.has(row.symbol)).map(stockSectors.decorate)
+        if (mode !== 'leaps') void stockSectors.warm(rows)
+        return sendJson(response, 200, { ...optionScans[mode], state: activeScanJobs.has(mode) ? 'running' : optionScans[mode].state, rows, storageError: scanStorageError || optionScans[mode].storageError })
+      }
       if (request.method === 'POST') {
         if (!isAllowedPost(request)) return sendJson(response, 403, { message: 'Ongeldige aanvraag.' })
         if (weeklySchedule.isRunning()) return sendJson(response, 409, { message: 'De geplande weekscan is bezig.' })

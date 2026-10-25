@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import type { StockSelection } from './StockFilterPanel'
+import SectorCell from './SectorCell'
+import TradingViewSymbol from './TradingViewSymbol'
 
 export interface FilteredIvState {
   id?: string; stockSelectionId?: string; state: string; filters?: { minIvr: number }; ready?: boolean;
   universeCount?: number; universeChecked?: number; remainingSymbols?: number; retryFrom?: number;
-  rows: { symbol: string; underlyingPrice: number; ivr: number; iv: number; ivPercentile: number; quotedAt: string; ivSource?: string; ivAsOf?: string }[];
+  rows: { symbol: string; sector?: string; sectorSource?: string; sectorAsOf?: string; underlyingPrice: number; ivr: number; iv: number; ivPercentile: number; quotedAt: string; ivSource?: string; ivAsOf?: string }[];
   failures?: { symbol: string; message: string }[]; warnings: string[]; finishedAt?: string; message?: string; storageError?: string;
 }
 const empty: FilteredIvState = { state: 'idle', rows: [], warnings: [] }
@@ -68,7 +70,7 @@ export default function FilteredIvPanel({ stock, disabled, refresh, onChange, on
     {scan.message && <p role="status">{scan.message}</p>}
     {!!scan.failures?.length && <details><summary>{scan.failures.length} aandelen zonder bruikbare IV-data</summary><ul>{scan.failures.slice(0, 50).map(row => <li key={row.symbol}>{row.symbol}: {row.message}</li>)}</ul></details>}
     {!!scan.rows.length && <><div className="spreads-toolbar"><label htmlFor="filtered-iv-search">Zoeken in IV-resultaten<input id="filtered-iv-search" value={search} onChange={event => { setSearch(event.target.value); setPage(0) }} /></label></div>
-      <div className="scan-table-scroll" role="region" aria-label="IV-resultaten" tabIndex={0}><table className="scan-table"><thead><tr><th>Aandeel</th><th>Koers ($)</th><th>IV-rank</th><th>IV (%)</th><th>IV-percentile</th><th>IV-bron / datum</th><th>Actie</th></tr></thead><tbody>{rows.slice(current * 50, current * 50 + 50).map(row => <tr key={row.symbol}><th scope="row">{row.symbol}</th><td>{number(row.underlyingPrice)}</td><td>{number(row.ivr)}</td><td>{number(row.iv)}</td><td>{number(row.ivPercentile)}</td><td>{row.ivSource === 'historical-close' ? 'Dag-IV' : 'IBKR-quote'} · {row.ivAsOf || new Date(row.quotedAt).toLocaleDateString('nl-NL')}</td><td><button disabled={disabled || busy || running} onClick={() => void onBlock(row.symbol, true).catch(cause => setError(cause.message))}>Verwijder {row.symbol}</button></td></tr>)}</tbody></table></div>
+      <div className="scan-table-scroll" role="region" aria-label="IV-resultaten" tabIndex={0}><table className="scan-table"><thead><tr><th>Aandeel</th><th>Sector</th><th>Koers ($)</th><th>IV-rank</th><th>IV (%)</th><th>IV-percentile</th><th>IV-bron / datum</th><th>Actie</th></tr></thead><tbody>{rows.slice(current * 50, current * 50 + 50).map(row => <tr key={row.symbol}><th scope="row"><TradingViewSymbol symbol={row.symbol} /></th><SectorCell value={row} /><td>{number(row.underlyingPrice)}</td><td>{number(row.ivr)}</td><td>{number(row.iv)}</td><td>{number(row.ivPercentile)}</td><td>{row.ivSource === 'historical-close' ? 'Dag-IV' : 'IBKR-quote'} · {row.ivAsOf || new Date(row.quotedAt).toLocaleDateString('nl-NL')}</td><td><button disabled={disabled || busy || running} onClick={() => void onBlock(row.symbol, true).catch(cause => setError(cause.message))}>Verwijder {row.symbol}</button></td></tr>)}</tbody></table></div>
       {!rows.length && <p>Geen IV-resultaten voor deze zoekterm.</p>}
       {rows.length > 50 && <div className="spreads-toolbar"><button disabled={!current} onClick={() => setPage(current - 1)}>Vorige IV-resultaten</button><span>Pagina {current + 1} / {Math.ceil(rows.length / 50)}</span><button disabled={(current + 1) * 50 >= rows.length} onClick={() => setPage(current + 1)}>Volgende IV-resultaten</button></div>}</>}
     {['complete', 'partial'].includes(scan.state) && !scan.rows.length && <p>Geen aandelen voldoen aan de IV-filter. Pas de IV-rank aan of controleer ontbrekende data.</p>}

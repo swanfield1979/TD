@@ -6,6 +6,7 @@ import { nyseSyncWindow } from '../shared/nyse-session.mjs'
 import { createScanConnection } from './scan-connection.mjs'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { volumeSnapshot, volumeGate } from '../shared/option-volume.mjs'
+import { sectorMetadata } from '../shared/stock-sector.mjs'
 
 // Options regular session: pre/post-market is closed for these equity-option quotes.
 export function optionsSession(date = new Date()) {
@@ -42,7 +43,8 @@ export async function runSpreadScan(config, state, { cache, checkpoint = async (
     state.universeChecked ??= 0
     for (; state.universeChecked < state.entries.length;) {
       signal?.throwIfAborted()
-      const { symbol } = state.entries[state.universeChecked]
+      const entry = state.entries[state.universeChecked], { symbol } = entry
+      const annotate = row => ({ ...row, ...sectorMetadata(entry) })
       if (blocked(symbol)) { state.universeChecked++; state.symbolsChecked = state.universeChecked; state.remainingSymbols = state.entries.length - state.universeChecked; await checkpoint(); continue }
       state.state = 'running'; state.progress = `Aandelenfilter · ${symbol} · ${state.universeChecked + 1} / ${state.entries.length}`
       const session = optionsSession(now()); state.marketOpen = session.open
@@ -69,7 +71,7 @@ export async function runSpreadScan(config, state, { cache, checkpoint = async (
         const part = { state: 'running', filters, rows: [], puts: [], assessments: [], warnings: [], symbolsChecked: 0, contractsChecked: 0 }
         const baseContracts = state.contractsChecked
         const merge = () => {
-          state.rows = [...state.rows.filter(row => row.symbol !== symbol), ...part.rows].sort((a,b) => b.returnOnRisk - a.returnOnRisk)
+          state.rows = [...state.rows.filter(row => row.symbol !== symbol), ...part.rows.map(annotate)].sort((a,b) => b.returnOnRisk - a.returnOnRisk)
           state.contractsChecked = baseContracts + part.contractsChecked; state.progress = part.progress || state.progress
         }
         state.phase = 'scanning'
@@ -94,7 +96,7 @@ export async function runSpreadScan(config, state, { cache, checkpoint = async (
           state.warnings.push('IBKR niet bereikbaar; resterende aandelen uitsluitend uit lokale chains beoordeeld. Ontbrekende chains krijgen geen resultaat.')
         }
       }
-      state.rows = [...state.rows.filter(row => row.symbol !== symbol), ...rows].sort((a,b) => b.returnOnRisk - a.returnOnRisk)
+      state.rows = [...state.rows.filter(row => row.symbol !== symbol), ...rows.map(annotate)].sort((a,b) => b.returnOnRisk - a.returnOnRisk)
       state.assessments.push(assessment); state.universeChecked++; state.symbolsChecked = state.universeChecked
       state.remainingSymbols = state.entries.length - state.universeChecked
       ivFailures = ['IV_UNAVAILABLE', 'VOLUME_UNAVAILABLE'].includes(assessment.code) ? ivFailures + 1 : 0

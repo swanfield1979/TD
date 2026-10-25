@@ -4,6 +4,7 @@ import { runCspScan } from './csp-scanner.mjs'
 import { createScanConnection } from './scan-connection.mjs'
 import { optionsSession } from './spread-scan.mjs'
 import { stockKey } from './blocked-stocks.mjs'
+import { sectorMetadata } from '../shared/stock-sector.mjs'
 
 export function ivFilters(input = {}) {
   const minIvr = input.minIvr ?? 40
@@ -18,9 +19,10 @@ export function ivSelection(state, stock, id, blocked = () => false, now = Date.
   const age = now - Date.parse(state.finishedAt)
   if (!Number.isFinite(age) || age < 0 || age > 7 * 86400000) throw Error('IV-resultaten zijn ouder dan zeven dagen; voer de IV Scan opnieuw uit.')
   const allowed = new Set(stock.entries.map(row => stockKey(row.symbol)))
+  const stockMetadata = new Map(stock.entries.map(row => [stockKey(row.symbol), sectorMetadata(row)]))
   const rows = state.rows.filter(row => allowed.has(stockKey(row.symbol)) && !blocked(row.symbol))
   if (!rows.length) throw Error('Geen niet-geblokkeerde aandelen voldoen aan de IV-filter.')
-  return { id: state.id, finishedAt: state.finishedAt, filters: state.filters, entries: rows.map(row => ({ symbol: row.symbol })) }
+  return { id: state.id, finishedAt: state.finishedAt, filters: state.filters, entries: rows.map(row => ({ symbol: row.symbol, ...sectorMetadata(row), ...stockMetadata.get(stockKey(row.symbol)) })) }
 }
 export async function runFilteredIvScan(config, state, { cache, checkpoint = async () => {}, scan = runCspScan, connection = createScanConnection(), blocked = () => false, wait = (ms, signal) => sleep(ms, undefined, { signal }), now = () => new Date() }) {
   const signal = config.scanSignal
@@ -33,7 +35,7 @@ export async function runFilteredIvScan(config, state, { cache, checkpoint = asy
     }
     for (; state.universeChecked < state.entries.length;) {
       signal?.throwIfAborted()
-      const { symbol } = state.entries[state.universeChecked]
+      const entry = state.entries[state.universeChecked], { symbol } = entry
       if (!blocked(symbol)) {
         state.progress = `IV Scan · ${symbol} · ${state.universeChecked + 1} / ${state.entries.length}`
         const part = { state: 'running', rows: [], warnings: [], symbolsChecked: 0, contractsChecked: 0 }
@@ -43,7 +45,7 @@ export async function runFilteredIvScan(config, state, { cache, checkpoint = asy
         signal?.throwIfAborted()
         if (part.state === 'error') throw Error(part.message || 'IBKR niet bereikbaar.')
         state.warnings = [...new Set([...state.warnings, ...part.warnings])]
-        const row = part.rows[0]
+        const row = part.rows[0] ? { ...sectorMetadata(entry), ...part.rows[0] } : null
         if (row) {
           state.observations = [...state.observations.filter(item => item.symbol !== symbol), row]
           state.rows = state.observations.filter(item => item.ivr >= state.filters.minIvr).sort((a, b) => b.ivr - a.ivr)

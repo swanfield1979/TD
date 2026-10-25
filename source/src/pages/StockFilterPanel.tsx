@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
+import SectorCell from './SectorCell'
+import TradingViewSymbol from './TradingViewSymbol'
 
 export interface StockSelection {
   id?: string; state: string; filters?: { minPrice: number; maxPrice: number; minVolume: number };
   universeMode?: string; symbols?: string[]; checked: number; total: number; cacheHits: number;
-  rows: { symbol: string; companyName?: string; price: number; volume: number; asOf: string; source: string; cached?: boolean; fetchedAt: string }[];
+  rows: { symbol: string; companyName?: string; sector?: string; sectorSource?: string; sectorAsOf?: string; price: number; volume: number; asOf: string; source: string; cached?: boolean; fetchedAt: string }[];
   failures: { symbol: string; message: string }[]; warnings: string[]; canResume?: boolean; finishedAt?: string; message?: string; storageError?: string;
 }
 const empty: StockSelection = { state: 'idle', checked: 0, total: 0, cacheHits: 0, rows: [], failures: [], warnings: [] }
@@ -28,6 +30,9 @@ export default function StockFilterPanel({ disabled, onSelection, refresh, onRun
   const [scan, setScan] = useState<StockSelection>(empty)
   const [busy, setBusy] = useState(false), [loading, setLoading] = useState(true), [error, setError] = useState(''), [retry, setRetry] = useState(0)
   const [page, setPage] = useState(0), [search, setSearch] = useState('')
+  const [expanded, setExpanded] = useState(() => {
+    try { return localStorage.getItem('tm-stock-list-expanded') !== 'false' } catch { return true }
+  })
   const running = scan.state === 'running'
   useEffect(() => { onRunning(running) }, [running, onRunning])
   const tickers = [...new Set(symbols.toUpperCase().split(/[\s,;]+/).filter(Boolean))]
@@ -93,10 +98,14 @@ export default function StockFilterPanel({ disabled, onSelection, refresh, onRun
     {scan.message && <p role="status">{scan.message}</p>}
     {!!scan.failures.length && <details><summary>{format(scan.failures.length)} aandelen zonder bruikbare data, uitgesloten</summary><ul>{scan.failures.slice(0, 50).map(item => <li key={item.symbol}>{item.symbol}: {item.message}</li>)}</ul></details>}
     {scan.warnings.map(warning => <p key={warning}>{warning}</p>)}
-    {!!scan.rows.length && <><div className="spreads-toolbar"><label htmlFor="stock-search">Zoeken in aandelen<input id="stock-search" value={search} onChange={event => { setSearch(event.target.value); setPage(0) }} /></label></div>
-      <div className="scan-table-scroll" role="region" aria-label="Geselecteerde aandelen" tabIndex={0}><table className="scan-table"><thead><tr><th>Aandeel</th><th>Slotkoers ($)</th><th>Dagvolume (aandelen)</th><th>Handelsdag</th><th>Bron</th><th>Opgehaald</th><th>Actie</th></tr></thead><tbody>{rows.slice(current * 50, current * 50 + 50).map(row => <tr key={row.symbol}><th scope="row">{row.symbol}</th><td>{format(row.price)}</td><td>{format(row.volume)}</td><td>{row.asOf}</td><td>{row.source}{row.cached ? ' · cache' : ''}</td><td>{new Date(row.fetchedAt).toLocaleString('nl-NL')}</td><td><button disabled={disabled || running || busy} onClick={() => void onBlock(row.symbol, true).catch(cause => setError(cause.message))}>Verwijder {row.symbol}</button></td></tr>)}</tbody></table></div>
+    {!!scan.rows.length && <details className="stock-results-disclosure" open={expanded} onToggle={event => {
+      const open = event.currentTarget.open
+      setExpanded(open)
+      try { localStorage.setItem('tm-stock-list-expanded', String(open)) } catch { /* Collapse works without browser storage. */ }
+    }}><summary>Geselecteerde aandelen ({format(scan.rows.length)})</summary><div className="spreads-toolbar"><label htmlFor="stock-search">Zoeken in aandelen<input id="stock-search" value={search} onChange={event => { setSearch(event.target.value); setPage(0) }} /></label></div>
+      <div className="scan-table-scroll" role="region" aria-label="Geselecteerde aandelen" tabIndex={0}><table className="scan-table"><thead><tr><th>Aandeel</th><th>Sector</th><th>Slotkoers ($)</th><th>Dagvolume (aandelen)</th><th>Handelsdag</th><th>Bron</th><th>Opgehaald</th><th>Actie</th></tr></thead><tbody>{rows.slice(current * 50, current * 50 + 50).map(row => <tr key={row.symbol}><th scope="row"><TradingViewSymbol symbol={row.symbol} /></th><SectorCell value={row} /><td>{format(row.price)}</td><td>{format(row.volume)}</td><td>{row.asOf}</td><td>{row.source}{row.cached ? ' · cache' : ''}</td><td>{new Date(row.fetchedAt).toLocaleString('nl-NL')}</td><td><button disabled={disabled || running || busy} onClick={() => void onBlock(row.symbol, true).catch(cause => setError(cause.message))}>Verwijder {row.symbol}</button></td></tr>)}</tbody></table></div>
       {!rows.length && <p>Geen aandelen voor deze zoekterm.</p>}
-      {rows.length > 50 && <div className="spreads-toolbar"><button disabled={!current} onClick={() => setPage(current - 1)}>Vorige aandelen</button><span>Pagina {current + 1} / {Math.ceil(rows.length / 50)}</span><button disabled={(current + 1) * 50 >= rows.length} onClick={() => setPage(current + 1)}>Volgende aandelen</button></div>}</>}
+      {rows.length > 50 && <div className="spreads-toolbar"><button disabled={!current} onClick={() => setPage(current - 1)}>Vorige aandelen</button><span>Pagina {current + 1} / {Math.ceil(rows.length / 50)}</span><button disabled={(current + 1) * 50 >= rows.length} onClick={() => setPage(current + 1)}>Volgende aandelen</button></div>}</details>}
     {scan.state === 'idle' && <p>Start de aandelenfilter om een selectie te bewaren.</p>}
     {['complete', 'partial'].includes(scan.state) && !scan.rows.length && <p>Geen passende aandelen. Pas de criteria aan en start opnieuw.</p>}
   </section>

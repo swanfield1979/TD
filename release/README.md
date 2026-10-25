@@ -1,5 +1,17 @@
 # Releases
 
+## Trading Monitor 0.37.1 — TradingView-links
+
+Klikbare tickers in de drie scanoverzichten openen de eigen TradingView-layout in een nieuw venster/tabblad. Geen nieuw installatiepakket; tijdelijke bouwuitvoer in `source/dist/`. [Serverupdate](../docs/put-spreads.md#installatie-en-serverupdate). Broncode-update; serverinstallatie nog niet uitgevoerd.
+
+## Trading Monitor 0.37.0 — sectoren in scanoverzichten
+
+Stock Filter, IV Scan en Option Scan tonen sectoren, met blijvende metadatacache en sectorinformatie in CSV. Geen nieuw installatiepakket; tijdelijke build in `source/dist/`. [Serverupdate](../docs/put-spreads.md#installatie-en-serverupdate). Lokaal gevalideerde broncode-update; serverinstallatie nog niet uitgevoerd.
+
+## Trading Monitor 0.36.1 — inklapbare aandelenlijst
+
+Stock Filter-resultaten kunnen worden ingeklapt; de browser onthoudt de keuze. Geen nieuw installatiepakket; tijdelijke bouwuitvoer in `source/dist/`. [Serverupdate](../docs/put-spreads.md#installatie-en-serverupdate). Lokaal gevalideerd, nog niet op de server geïnstalleerd.
+
 ## Trading Monitor 0.36.0 — drie scans en Geblokkeerde Stocks
 
 Stock Filter → IV Scan → Option Scan in Put spreads. Selecties en blokkeerlijst blijven bewaard; de weekplanning voert zondag de Stock Filter uit en maandag bij Amerikaanse beursopening de IV Scan. De Option Scan blijft handmatig. Geen nieuw installatiepakket; tijdelijke build binnen `source/dist/`. [Installatie en serverupdate](../docs/put-spreads.md#installatie-en-serverupdate). Lokaal getest, serverinstallatie niet uitgevoerd; de weekplanning draait dus nog niet op de server.

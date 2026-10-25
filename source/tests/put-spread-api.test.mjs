@@ -17,7 +17,7 @@ test('spread API validates inputs, enforces origin and scan lock, supports stop 
   const headers = { Origin: origin, 'X-Requested-With': 'trading-monitor', 'Content-Type': 'application/json' }
   let child
   const start = async () => {
-    child = spawn(process.execPath, ['server/ibkr-api.mjs'], { stdio: 'ignore', env: { ...process.env, IBKR_API_PORT: String(port), IBKR_API_HOST: '127.0.0.1', IBKR_ALLOWED_ORIGINS: origin, IBKR_PORT: '1', IBKR_SNAPSHOT_PATH: join(directory, 'snapshot.json'), SCAN_RESULTS_PATH: join(directory, 'scans.json'), LEAPS_SHORTLIST_PATH: join(directory, 'shortlist.json') } })
+    child = spawn(process.execPath, ['server/ibkr-api.mjs'], { stdio: 'ignore', env: { ...process.env, SECTOR_LOOKUPS_DISABLED: '1', IBKR_API_PORT: String(port), IBKR_API_HOST: '127.0.0.1', IBKR_ALLOWED_ORIGINS: origin, IBKR_PORT: '1', IBKR_SNAPSHOT_PATH: join(directory, 'snapshot.json'), SCAN_RESULTS_PATH: join(directory, 'scans.json'), LEAPS_SHORTLIST_PATH: join(directory, 'shortlist.json') } })
     for (let i = 0; i < 100; i++) { try { if ((await fetch(`${origin}/api/put-spreads`)).ok) return } catch {} await pause(30) }
     throw Error('Test API did not start')
   }
@@ -27,6 +27,8 @@ test('spread API validates inputs, enforces origin and scan lock, supports stop 
     const selection = { id: 'test-selection', state: 'complete', key: dailyCacheKey(Date.now()), finishedAt: new Date().toISOString(), rows: [{ symbol: 'AMD' }, { symbol: 'HOOD' }], entries: [{ symbol: 'AMD' }, { symbol: 'HOOD' }], failures: [], observations: {}, warnings: [], checked: 2, total: 2, filters: { minPrice: 5, maxPrice: 150, minVolume: 5e6 } }
     await mkdir(join(directory, 'stock-filter'))
     await writeFile(join(directory, 'stock-filter', 'selection.json'), JSON.stringify(selection))
+    const sectorAsOf = new Date().toISOString()
+    await writeFile(join(directory, 'stock-sectors.json'), JSON.stringify({ version: 1, bulkAt: Date.now(), records: { AMD: { sector: 'Technology', sectorSource: 'Nasdaq', sectorAsOf }, HOOD: { sector: 'Financials', sectorSource: 'Nasdaq', sectorAsOf } } }))
     await createScanStore(join(directory, 'scans.json'), '127.0.0.1:1').save({ iv: { id: 'iv-selection', stockSelectionId: selection.id, state: 'complete', filters: { minIvr: 40 }, entries: selection.entries, universeChecked: 2, rows: selection.rows.map(row => ({ ...row, ivr: 60 })), warnings: [], finishedAt: new Date().toISOString() } })
     await start()
     assert.equal((await fetch(`${origin}/api/put-spreads`, { method: 'POST', body: '{}' })).status, 403)
@@ -39,6 +41,9 @@ test('spread API validates inputs, enforces origin and scan lock, supports stop 
     const running = await response.json(); assert.deepEqual(running.symbols, ['AMD', 'HOOD']); assert.equal(running.filters.maxLoss, 900)
     assert.deepEqual(running.entries.map(row => row.symbol), ['AMD', 'HOOD'])
     assert.equal(running.stockSelectionId, selection.id)
+    assert.equal(running.entries[0].sector, 'Technology')
+    assert.equal((await (await fetch(`${origin}/api/stock-filter`)).json()).rows[0].sector, 'Technology')
+    assert.equal((await (await fetch(`${origin}/api/put-spreads/iv`)).json()).rows[1].sector, 'Financials')
     assert.equal((await fetch(`${origin}/api/stock-filter`, { method: 'POST', headers, body: '{}' })).status, 409)
     assert.equal((await fetch(`${origin}/api/iv-scan`, { method: 'POST', headers })).status, 409)
     assert.equal((await fetch(`${origin}/api/put-spreads/stop`, { method: 'POST', headers })).status, 202)

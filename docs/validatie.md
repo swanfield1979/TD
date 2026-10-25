@@ -1,5 +1,27 @@
 # Validatie
 
+## Trading Monitor 0.37.1 — TradingView-links (25 oktober 2026)
+
+- TypeScript/Vite-build geslaagd. Bestaande browserworkflow controleert in alle drie de tabellen een link naar `https://www.tradingview.com/chart/fxY1us9e/?symbol=HOOD`, `target=_blank` en `rel=noopener noreferrer`.
+- Een echte linkklik in de spreadtabel opent een tweede browserpagina op de verwachte URL; `window.opener` is null en de quote-details van het aangeklikte aandeel klappen daarbij niet onbedoeld open/dicht. TradingView zelf is in deze controle afgevangen met een lokale testpagina; toegang tot de privé-layout is niet getest.
+- Bestaande toetsenbord-, tabel-, CSV-, zoek-, inklap-, sector- en responsieve workflow blijft slagen. Geen backendwijziging of serverinstallatie.
+
+## Trading Monitor 0.37.0 — sectorinformatie (25 oktober 2026)
+
+- Acht nieuwe tests voor normalisatie zonder raden op bedrijfs-/industrienaam, één gedeelde bulkaanvraag, persistente cache na herstart, exacte Yahoo-equitymatch, onbekende/negatieve cache, bronbegrenzing, IBKR-terugval en behoud van eerdere koersophaaltijden. Ketenproef bewaart sector van Stock Filter via IV-selectie tot Option Scan; ontbrekende sector weigert geen geldig aandeel.
+- `npm test`: 198 tests in de werkmap, inclusief tien reeds aanwezige lokale TradingView-referentietests buiten deze wijziging. Publiceerbare scanner-/dashboardtests: 188. Frontend: 13 tests; TypeScript/Vite-build geslaagd.
+- API-integratie vult oudere opgeslagen aandelen-/IV-resultaten aan vanuit een vooraf bewaarde sectorcache; Option Scan krijgt de metadata ook als de oudere IV-rij zelf nog geen sector bevat.
+- Browsercontrole: Sectorkolom met Tech/Financials in alle drie de overzichten, onbekende sector als Onbekend, sector/bron/datum in CSV, bestaande collapse-/herlaadworkflow en 360–1600px/200% zoom. Geen browserruntimefouten. Desktop-screenshot visueel gecontroleerd.
+- Echte Nasdaq-proef: 6.978 rijen ontvangen in de bulklijst. AAPL, XOM, SOFI en TSLA ingedeeld in één aanvraag; met cacheopslag circa 567 ms. Herladen van de cache levert dezelfde classificatie zonder netwerkaanvraag. Yahoo-zoekendpoint gecontroleerd op beschikbare sectorvelden; IBKR-fallback alleen via mocks en officiële contractvelden, geen echte Gateway-query.
+- Nasdaq noemt TSLA in deze bron Industrials; providers kunnen dus verschillen. De code gebruikt de vermelde bronclassificatie en verzint geen handmatige tickeruitzonderingen. Bron en datum staan bij de sectorkolom als tooltip.
+- Sectorproefbestanden uitsluitend in `source/data/private/sector-validation/`. Geen serverinstallatie en nog geen GitHub-push.
+
+## Trading Monitor 0.36.1 — inklapbare Stock Filter-resultaten (25 oktober 2026)
+
+- TypeScript/Vite-build en `npm run test:spreads` geslaagd. De bestaande browserworkflow controleert nu ook inklappen via Enter, uitklappen via Spatie, verborgen tabel, blijvende scanteller en beschikbare IV-startknop, onthouden na herladen en behoud van de zoekterm bij dicht/open.
+- Standaard blijft de lijst geopend. De browservoorkeur `tm-stock-list-expanded` onthoudt de keuze; zonder browseropslag blijft inklappen werken.
+- Bestaande workflow voor drie stappen, blokkeren/deblokkeren, weekplanning, responsieve weergave, 200% zoom en quote-/CSV-bediening blijft slagen. Geen browserruntimefouten. Geen backendwijziging of serverinstallatie.
+
 ## Trading Monitor 0.36.0 — drie scans, weekplanning en blokkeren (25 oktober 2026)
 
 - `npm test`: 180 Node-tests in de GitHub-publicatie (190 inclusief tien losse lokale TradingView-referentietests die buiten deze wijziging blijven); `npm run test:frontend`: 13 frontendtests. TypeScript/Vite-build geslaagd.

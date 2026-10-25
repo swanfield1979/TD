@@ -1,5 +1,23 @@
 # Versiehistorie
 
+## 0.37.1 — TradingView-links bij scanresultaten (25 oktober 2026)
+
+- Tickers in Stock Filter, IV Scan en Option Scan openen de persoonlijke TradingView-layout `fxY1us9e` met de betreffende ticker in een nieuw tabblad/venster. URL-encoding en klassevarianten (`BRK B`/`BRK-B` → `BRK.B`) behouden de juiste ticker.
+- Zichtbare link-/focusstijl; quote-details in de spreadtabel blijven afzonderlijk bedienbaar. Productiebuild en browsercontrole van URL, popup, noopener en bestaande scanworkflow geslaagd. Serverinstallatie nog niet uitgevoerd.
+
+## 0.37.0 — sectoren in scanoverzichten (25 oktober 2026)
+
+- Sectorkolom in Stock Filter, IV Scan en Option Scan; Tech, Energy, Financials, Healthcare en overige bekende sectoren. Ontbrekende classificatie blijft Onbekend. Sector en bron-/ophaaltijd gaan mee in opslag, vervolgselecties en CSV.
+- Nasdaq-sectormetadata in één bulkaanvraag, persistent zeven dagen hergebruikt. Yahoo Finance-zoekresultaat met exacte tickermatch als terugval voor ontbrekende kandidaten; IBKR-industrieclassificatie uit reeds opgevraagde contractdetails, zonder extra contractaanvraag.
+- Bestaande opgeslagen resultaten worden bij openen op de achtergrond aangevuld vanuit de aparte sectorcache. Sectoruitval sluit geen aandeel uit en verandert geen koers-/IV-/optiecriteria. Bronclassificaties zijn geen gegarandeerd uniforme GICS-indeling.
+- Acht gerichte metadatatests, API-/browsercontrole en productiebuild geslaagd. Serverinstallatie nog niet uitgevoerd.
+
+## 0.36.1 — aandelenlijst inklappen (25 oktober 2026)
+
+- Stock Filter toont een inklapbare sectie **Geselecteerde aandelen (aantal)** met zoeken, tabel en paginering. Criteria, voortgang en opgeslagen datum blijven zichtbaar.
+- Open/dicht-keuze wordt per browser bewaard; de selectie en de volgende scanstappen blijven beschikbaar bij een ingeklapte lijst. Zoeken en paginering behouden hun lokale staat bij inklappen.
+- Productiebuild en bestaande browserworkflow geslaagd, inclusief Enter/Spatie, herladen en zoektermbehoud; geen serverinstallatie uitgevoerd.
+
 ## 0.36.0 — drie stappen, weekplanning en blokkeerlijst (25 oktober 2026)
 
 - Put spreads bevat Stock Filter → IV Scan → Option Scan. IV onderzoekt uitsluitend de opgeslagen aandelenvoorselectie en vraagt geen opties of broker-marktscanner aan. De optiejob vereist een afgeronde IV-selectie van dezelfde Stock Filter. Het losse IV-menu is verwijderd; oude `#iv`-/`#breakout`-links openen Put spreads.

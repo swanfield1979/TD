@@ -6,6 +6,7 @@ import { loadUsUniverse } from './martin-universe.mjs'
 import { dailyCacheKey } from './martin-market-scan.mjs'
 import { completedBars, nyTime } from '../shared/martin-selection.mjs'
 import { createIbkrStockHistory } from './stock-history.mjs'
+import { sectorMetadata } from '../shared/stock-sector.mjs'
 
 export function stockFilters(input = {}) {
   const filters = { minPrice: input.minPrice ?? 5, maxPrice: input.maxPrice ?? 150, minVolume: input.minVolume ?? 5_000_000 }
@@ -31,7 +32,7 @@ const initial = () => ({ state: 'idle', rows: [], observations: {}, failures: []
 // Raw observations survive filter changes. The frozen result ID binds an option job
 // to exactly the completed selection the user reviewed, without a 50-ticker limit.
 export async function createStockFilter(directory, config, dependencies = {}) {
-  const { now = Date.now, yahoo = yahooStockHistory, universe = loadUsUniverse, wait = (ms, signal) => sleep(ms, undefined, { signal }), brokerFactory = createIbkrStockHistory, blocked = () => false } = dependencies
+  const { now = Date.now, yahoo = yahooStockHistory, universe = loadUsUniverse, wait = (ms, signal) => sleep(ms, undefined, { signal }), brokerFactory = createIbkrStockHistory, blocked = () => false, sectors } = dependencies
   await mkdir(directory, { recursive: true })
   const path = join(directory, 'selection.json'), cachePath = join(directory, 'observations.json')
   let state = initial(), observations = {}, controller, saving = Promise.resolve(), storageError, active = false
@@ -41,7 +42,8 @@ export async function createStockFilter(directory, config, dependencies = {}) {
     if (state.state === 'running') state.state = 'interrupted'
   } catch (error) { if (error.code !== 'ENOENT') storageError = 'Opgeslagen aandelenlijst is onleesbaar; controleer selection.json voordat je opnieuw opslaat.' }
   try { observations = JSON.parse(await readFile(cachePath, 'utf8')); if (!observations || Array.isArray(observations) || typeof observations !== 'object') observations = {} } catch { /* Recoverable raw cache; the saved selection remains independent. */ }
-  const snapshot = () => ({ ...state, rows: state.rows.filter(row => !blocked(row.symbol)), blockedCount: state.rows.filter(row => blocked(row.symbol)).length, state: active ? 'running' : state.state, observations: undefined, entries: undefined, storageError, canResume: !active && ['cancelled', 'interrupted', 'paused', 'error'].includes(state.state) && state.checked < state.total && state.key === dailyCacheKey(now()) })
+  const decorate = row => sectors?.decorate(row) || row
+  const snapshot = () => ({ ...state, rows: state.rows.filter(row => !blocked(row.symbol)).map(decorate), blockedCount: state.rows.filter(row => blocked(row.symbol)).length, state: active ? 'running' : state.state, observations: undefined, entries: undefined, storageError, canResume: !active && ['cancelled', 'interrupted', 'paused', 'error'].includes(state.state) && state.checked < state.total && state.key === dailyCacheKey(now()) })
   const persist = async () => {
     const selected = JSON.stringify(state), raw = JSON.stringify(observations)
     const operation = saving.then(async () => {
@@ -52,6 +54,12 @@ export async function createStockFilter(directory, config, dependencies = {}) {
   }
   async function run() {
     const signal = controller.signal, broker = brokerFactory(config, signal)
+    const withSector = async value => {
+      if (sectors && value.price >= state.filters.minPrice && value.price <= state.filters.maxPrice && value.volume >= state.filters.minVolume) {
+        try { return { ...value, ...await sectors.lookup(value.symbol, signal) } } catch { signal.throwIfAborted() }
+      }
+      return decorate(value)
+    }
     let brokerFailed = false, lastSaved = state.checked
     try {
       if (!state.entries.length) {
@@ -69,11 +77,11 @@ export async function createStockFilter(directory, config, dependencies = {}) {
           const symbol = entry.symbol, cached = observations[symbol]
           if (blocked(symbol)) return { ...entry, blocked: true }
           if (cached?.key === state.key) {
-            try { const value = stockSnapshot([{ date: cached.asOf, close: cached.price, volume: cached.volume }], now()); state.cacheHits++; return { ...entry, ...cached, ...value, cached: true } } catch { /* Refresh stale or invalid observations. */ }
+            try { const value = stockSnapshot([{ date: cached.asOf, close: cached.price, volume: cached.volume }], now()); state.cacheHits++; return withSector({ ...entry, ...cached, ...value, cached: true }) } catch { /* Refresh stale or invalid observations. */ }
           }
           network = true
           const value = stockSnapshot(await yahoo(symbol, signal), now())
-          return { ...entry, ...value, key: state.key, source: 'Yahoo Finance', fetchedAt: new Date(now()).toISOString(), cached: false }
+          return withSector({ ...entry, ...value, key: state.key, source: 'Yahoo Finance', fetchedAt: new Date(now()).toISOString(), cached: false })
         }))
         // A source-wide rate limit pauses immediately rather than sending thousands
         // of fallback requests to IBKR. None of this batch is committed on pause.
@@ -86,7 +94,7 @@ export async function createStockFilter(directory, config, dependencies = {}) {
           if (!value && !brokerFailed) {
             try {
               const data = stockSnapshot(await broker.history(entry.originalSymbol || entry.symbol.replaceAll('-', ' ')), now())
-              value = { ...entry, ...data, source: 'IBKR', key: state.key, fetchedAt: new Date(now()).toISOString(), cached: false }
+              value = await withSector({ ...entry, ...data, source: 'IBKR', key: state.key, fetchedAt: new Date(now()).toISOString(), cached: false })
             } catch (error) {
               signal.throwIfAborted()
               failure += ` · IBKR: ${error.message}`
@@ -148,7 +156,7 @@ export async function createStockFilter(directory, config, dependencies = {}) {
       if (!Number.isFinite(age) || age < 0 || age > 7 * 86400000) throw Error('Aandelenfilter is ouder dan zeven dagen. Vernieuw eerst de wekelijkse selectie.')
       const rows = state.rows.filter(row => !blocked(row.symbol))
       if (!rows.length) throw Error('Alle geselecteerde aandelen zijn geblokkeerd.')
-      return { id: state.id, finishedAt: state.finishedAt, universeMode: state.universeMode, symbols: state.symbols, filters: { ...state.filters }, entries: rows.map(row => ({ symbol: (row.originalSymbol || row.symbol).replace(/[.-]/g, ' '), companyName: row.companyName })) }
+      return { id: state.id, finishedAt: state.finishedAt, universeMode: state.universeMode, symbols: state.symbols, filters: { ...state.filters }, entries: rows.map(row => ({ symbol: (row.originalSymbol || row.symbol).replace(/[.-]/g, ' '), companyName: row.companyName, ...sectorMetadata(decorate(row)) })) }
     },
   }
 }

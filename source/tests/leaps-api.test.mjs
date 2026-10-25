@@ -16,7 +16,7 @@ test('API persists manual shortlist across restart, validates edits and starts s
   const origin=`http://127.0.0.1:${port}`
   const headers={Origin:origin,'X-Requested-With':'trading-monitor','Content-Type':'application/json'}
   const start=async()=>{
-    child=spawn(process.execPath,['server/ibkr-api.mjs'],{env:{...process.env,IBKR_API_PORT:String(port),IBKR_API_HOST:'127.0.0.1',IBKR_ALLOWED_ORIGINS:origin,IBKR_PORT:'1',IBKR_SNAPSHOT_PATH:join(directory,'snapshot.json')},stdio:'ignore'})
+    child=spawn(process.execPath,['server/ibkr-api.mjs'],{env:{...process.env, SECTOR_LOOKUPS_DISABLED: '1',IBKR_API_PORT:String(port),IBKR_API_HOST:'127.0.0.1',IBKR_ALLOWED_ORIGINS:origin,IBKR_PORT:'1',IBKR_SNAPSHOT_PATH:join(directory,'snapshot.json')},stdio:'ignore'})
     for(let i=0;i<100;i++) {try{const res=await fetch(`${origin}/api/leaps/shortlist`);if(res.ok)return}catch{}await pause(30)}
     throw new Error('Test API did not start')
   }

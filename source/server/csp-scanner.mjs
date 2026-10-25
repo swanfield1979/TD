@@ -150,6 +150,7 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
       try {
         const details = suppliedContract ? [{ contract: suppliedContract }] : await request((id) => ib.reqContractDetails(id, { symbol, secType: 'STK', exchange: 'SMART', currency: 'USD' }), 'contractDetailsEnd')
         if (details.length !== 1) throw new Error('Geen eenduidig USD-aandelencontract gevonden.')
+        const sector = await config.onStockDetails?.(symbol, details[0]) || {}
         const contract = { ...details[0].contract, exchange: 'SMART' }
         const cachedVolume = mode === 'spreads' ? await config.getSpreadLiquidity?.(symbol) : null
         const hasCachedVolume = volumeGate(volumeSnapshot({}, cachedVolume), filters?.minAvgOptionVolume ?? 0) !== 'unknown'
@@ -199,7 +200,7 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
         const metrics = ivMetrics(currentIv, bars, today)
         const ivMetadata = reference ? { ivSource: reference.source, ivAsOf: reference.asOf } : {}
         if (stockIv) {
-          state.rows.push({ symbol, underlyingPrice: price, iv: currentIv * 100, ...metrics, ...ivMetadata, marketDataType: stock.marketDataType, quotedAt: stockQuotedAt })
+          state.rows.push({ symbol, underlyingPrice: price, iv: currentIv * 100, ...metrics, ...ivMetadata, ...sector, marketDataType: stock.marketDataType, quotedAt: stockQuotedAt })
           return
         }
         if (mode === 'spreads') state.ivReference = { symbol, ...ivMetadata }
@@ -243,7 +244,7 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
             const opt = batch[index]
             if (item.status !== 'fulfilled' || !Number.isFinite(item.value.delta) || !(item.value.bid > 0) || !Number.isFinite(item.value.ask)) { missing++; continue }
             if (mode === 'spreads') {
-              state.puts.push({ ...item.value, symbol, right: 'P', currency: 'USD', multiplier: 100, strike: opt.strike,
+              state.puts.push({ ...item.value, ...sector, symbol, right: 'P', currency: 'USD', multiplier: 100, strike: opt.strike,
                 underlyingPrice: price, expiry: opt.lastTradeDateOrContractMonth, tradingClass: opt.tradingClass, ivr, ...ivMetadata, ...liquidity,
                 quotedAt: new Date().toISOString(), marketDataType: item.value.marketDataType })
               symbolPuts.push(state.puts.at(-1))

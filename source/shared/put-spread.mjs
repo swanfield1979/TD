@@ -1,4 +1,5 @@
 import { daysToExpiry } from './csp-scan.mjs'
+import { sectorMetadata } from './stock-sector.mjs'
 
 export const spreadDefaults = Object.freeze({ minAvgOptionVolume: 5000, minPrice: 5, maxPrice: 150, minDte: 40, maxDte: 100, minIvr: 20, minBuffer: 25, minProfit: 15, maxLoss: 1000, minOtm: 70, maxQuoteSpread: 1 })
 export function spreadFilters(input = {}) {
@@ -29,7 +30,7 @@ export function bullPutSpread(short, long, today) {
   const width = short.strike - long.strike
   if (!Number.isFinite(dte) || dte <= 0 || credit <= 0 || credit >= width) return null
   const maxProfit = credit * 100, maxLoss = (width - credit) * 100
-  return { id: `${short.symbol}:${short.expiry}:${short.tradingClass}:${short.strike}:${long.strike}`, symbol: short.symbol,
+  return { id: `${short.symbol}:${short.expiry}:${short.tradingClass}:${short.strike}:${long.strike}`, symbol: short.symbol, ...sectorMetadata(short),
     expiry: short.expiry, tradingClass: short.tradingClass, dte, underlyingPrice: short.underlyingPrice, ivr: short.ivr,
     shortStrike: short.strike, longStrike: long.strike, shortBid: short.bid, shortAsk: short.ask, longBid: long.bid, longAsk: long.ask,
     credit, maxProfit, maxLoss, breakEven: short.strike - credit, returnOnRisk: maxProfit / maxLoss * 100,

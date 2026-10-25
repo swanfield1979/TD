@@ -1,6 +1,20 @@
 # Bull-put-spreadscanner
 
-Trading Monitor **0.36.0**, bijgewerkt op 25 oktober 2026. Open **Put spreads** in het menu of gebruik `/#put-spreads`. Deze uitbreiding blijft binnen de bestaande lokale app.
+Trading Monitor **0.37.1**, bijgewerkt op 25 oktober 2026. Open **Put spreads** in het menu of gebruik `/#put-spreads`. Deze uitbreiding blijft binnen de bestaande lokale app.
+
+Klik op **Geselecteerde aandelen (aantal)** om de Stock Filter-lijst in of uit te klappen. Zoeken, tabel en paginering klappen samen in; criteria en voortgang blijven zichtbaar. De browser onthoudt de keuze na herladen. Inklappen wijzigt de opgeslagen selectie niet en houdt de IV Scan beschikbaar.
+
+Klik op een ticker in Stock Filter, IV Scan of Option Scan om de TradingView-layout `fxY1us9e` met dat aandeel te openen. De URL heeft de vorm `https://www.tradingview.com/chart/fxY1us9e/?symbol=TSLA`. De link opent via een nieuw tabblad/venster, afhankelijk van je browserinstellingen. Klassevarianten worden als `BRK.B` doorgegeven. In de spreadtabel kun je de quote-details nog steeds via het uitklappijltje openen.
+
+## Sectoren in de overzichten
+
+Vanaf 0.37.0 tonen Stock Filter, IV Scan en Option Scan een kolom **Sector**. Technology wordt als **Tech** getoond; overige labels zijn bijvoorbeeld Energy, Financials, Healthcare, Industrials en Utilities. Zonder bruikbare bronclassificatie staat er **Onbekend**. Beweeg over de sector voor bron en ophaaltijd. Sector is aanvullende informatie, geen nieuw selectiecriterium. De CSV bevat `sector`, `sectorSource` en `sectorAsOf`.
+
+De [Nasdaq-screener](https://www.nasdaq.com/market-activity/stocks/screener) levert de classificaties in één bulkaanvraag voor het Amerikaanse universum. De aparte private cache `stock-sectors.json` naast `IBKR_SNAPSHOT_PATH` overleeft serverherstarts en wordt na zeven dagen ververst. Voor ontbrekende aandelenkandidaten wordt Yahoo Finance gebruikt, uitsluitend bij een exact overeenkomende equityticker. Een resultaat voor een vergelijkbare naam wordt niet overgenomen. Ontbrekende classificaties worden een dag onthouden; bronbegrenzing voorkomt herhaalde mislukte aanvragen.
+
+IBKR kan ontbrekende sectoren aanvullen vanuit `industry` in de al opgehaalde [contractdetails](https://www.interactivebrokers.com/docs/tws-api/ref/contract-details). Hiervoor wordt geen extra IBKR-aanvraag gedaan. Er wordt niet geraden op basis van bedrijfsnaam, branchebeschrijving of ticker. Bronlabels worden naar een vaste set sectorlabels vertaald, maar de onderliggende bronclassificatie kan afwijken van Yahoo/GICS; Nasdaq classificeert bijvoorbeeld sommige autobouwers bij Industrials.
+
+Sectorgegevens worden met nieuwe selecties opgeslagen en aan de volgende stappen doorgegeven. Bestaande opgeslagen rijen zonder sector worden bij openen op de achtergrond aangevuld, zonder koers-/IV-datum te vernieuwen of een nieuwe scan te starten. Sectoruitval blokkeert de prijs-/volumevoorselectie niet: bekende metadata blijven met hun oorspronkelijke datum beschikbaar, anders verschijnt Onbekend. `SECTOR_LOOKUPS_DISABLED=1` voorkomt externe sectorverzoeken in API-tests; eerder bewaarde metadata blijven leesbaar.
 
 ## Drie stappen vanaf 0.36.0
 
@@ -164,7 +178,7 @@ npm run dev:lan
 
 Gebruik de bestaande IB Gateway-configuratie en datarechten; zie [IBKR](IBKR.md). Zonder bereikbare API/broker zijn geen actuele scanresultaten te verifiëren. Lokale frontend apart: `npm run dev -- --host 127.0.0.1 --port 5197`; Node-API apart: `npm run start:api`. Zorg dat die frontend-origin toegestaan is voor de Node-API. De gebruikelijke LAN-launcher regelt dit voor zijn eigen origin.
 
-Serverupdate vereist frontend (`dist/`), Node (`server/`, `shared/`) en de bestaande bijgewerkte Python-LAN-proxy. Het bestaande script `bash deploy/update-options.sh` controleert nu versie 0.36.0, bouwt/test, publiceert en herstart de bestaande services. Er is geen serverinstallatie vanuit deze ontwikkelomgeving uitgevoerd. Het script controleert `/api/put-spreads`, `/api/stock-filter`, `/api/put-spreads/iv`, `/api/put-spreads/blocked` en `/api/put-spreads/schedule`. De bestaande algemene `/api/`-proxy ondersteunt deze routes. Volg de [bestaande installatiehandleiding](installatie.md) voor een nieuwe installatie.
+Serverupdate vereist frontend (`dist/`), Node (`server/`, `shared/`) en de bestaande bijgewerkte Python-LAN-proxy. Het bestaande script `bash deploy/update-options.sh` controleert nu versie 0.37.1, bouwt/test, publiceert en herstart de bestaande services. Er is geen serverinstallatie vanuit deze ontwikkelomgeving uitgevoerd. Het script controleert `/api/put-spreads`, `/api/stock-filter`, `/api/put-spreads/iv`, `/api/put-spreads/blocked` en `/api/put-spreads/schedule`. De bestaande algemene `/api/`-proxy ondersteunt deze routes. Volg de [bestaande installatiehandleiding](installatie.md) voor een nieuwe installatie.
 
 ## Validatie
 
