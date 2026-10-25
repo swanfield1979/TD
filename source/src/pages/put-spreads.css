@@ -3,7 +3,11 @@
 .tradingview-symbol { color: var(--tm-accent-primary); text-underline-offset: .2em; }
 .tradingview-symbol:hover { text-decoration-thickness: 2px; }
 .tradingview-symbol:focus-visible { outline: 2px solid var(--tm-accent-primary); outline-offset: 3px; }
-.stock-filter-panel > p { color: var(--tm-text-secondary); font-size: 13px; }
+.stock-filter-panel > div > p { color: var(--tm-text-secondary); font-size: 13px; }
+.scan-step-header { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+.scan-step-header h2 { margin: 0; }
+.scan-step-summary { color: var(--tm-text-secondary); font-size: 13px; }
+.scan-step-header button { margin-left: auto; }
 .stock-results-disclosure > summary { min-height: 44px; padding: 12px 0; font-weight: 600; }
 .stock-results-disclosure > summary:focus-visible { outline: 2px solid var(--tm-accent-primary); outline-offset: 2px; border-radius: var(--tm-radius-control); }
 .stock-filter-fields { display: flex; flex-wrap: wrap; gap: 16px; border: 0; padding: 0; margin: 16px 0; min-width: 0; }

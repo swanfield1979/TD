@@ -1,5 +1,11 @@
 # Versiehistorie
 
+## 0.38.1 — volledige scanstappen inklapbaar (25 oktober 2026)
+
+- Knoppen Inklappen/Uitklappen voor de volledige Stock Filter en IV Scan, met stapnaam en selectieaantal in de kop. Stap 3 blijft onafhankelijk open.
+- Afzonderlijke browservoorkeuren, toetsenbordbediening en behoud van formulier-/resultaatstatus. Verborgen panelen blijven gemount; polling, selecties en guards blijven functioneren.
+- Build, frontendtests en uitgebreide browserworkflow geslaagd; geen serverinstallatie uitgevoerd.
+
 ## 0.38.0 — automatisch blokkeren bij ontbrekende data (25 oktober 2026)
 
 - Bevestigde ontbrekende koers-/IV-data per aandeel worden automatisch bewaard in Geblokkeerde Stocks, met scanstap, reden en waarnemingsdatum. Stock Filter, IV Scan en Option Scan slaan deze aandelen daarna over. Normale afwijzingen op criteria of ontbrekende sectorinformatie veroorzaken geen blokkering.

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import SectorCell from './SectorCell'
 import TradingViewSymbol from './TradingViewSymbol'
+import ScanStepPanel from './ScanStepPanel'
 
 export interface StockSelection {
   id?: string; state: string; filters?: { minPrice: number; maxPrice: number; minVolume: number };
@@ -75,8 +76,7 @@ export default function StockFilterPanel({ disabled, onSelection, refresh, onRun
   const rows = scan.rows.filter(row => row.symbol.includes(search.toUpperCase().trim()))
   const current = Math.min(page, Math.max(0, Math.ceil(rows.length / 50) - 1))
   const status = loading ? 'Laden…' : ({ idle: 'Klaar om te filteren', running: 'Aandelenfilter bezig', complete: 'Aandelenfilter afgerond', partial: 'Afgerond met ontbrekende data', cancelled: 'Aandelenfilter gestopt', interrupted: 'Aandelenfilter onderbroken', paused: 'Aandelenfilter gepauzeerd', error: 'Aandelenfilter mislukt' }[scan.state] || scan.state)
-  return <section className="monitor-panel stock-filter-panel" aria-labelledby="stock-filter-title">
-    <h2 id="stock-filter-title">1. Stock Filter</h2>
+  return <ScanStepPanel id="stock-filter" step={1} title="1. Stock Filter" summary={`${format(scan.rows.length)} geselecteerd`}>
     <p>Slotkoers en aandelenvolume van de laatste afgesloten handelsdag. Yahoo Finance eerst, IBKR als terugval. Geen optiedata in deze stap.</p>
     <form onSubmit={event => { event.preventDefault(); void start() }}>
       <fieldset disabled={disabled || running || busy || loading} className="stock-filter-fields"><legend>Aandelencriteria</legend>
@@ -108,5 +108,5 @@ export default function StockFilterPanel({ disabled, onSelection, refresh, onRun
       {rows.length > 50 && <div className="spreads-toolbar"><button disabled={!current} onClick={() => setPage(current - 1)}>Vorige aandelen</button><span>Pagina {current + 1} / {Math.ceil(rows.length / 50)}</span><button disabled={(current + 1) * 50 >= rows.length} onClick={() => setPage(current + 1)}>Volgende aandelen</button></div>}</details>}
     {scan.state === 'idle' && <p>Start de aandelenfilter om een selectie te bewaren.</p>}
     {['complete', 'partial'].includes(scan.state) && !scan.rows.length && <p>Geen passende aandelen. Pas de criteria aan en start opnieuw.</p>}
-  </section>
+  </ScanStepPanel>
 }

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { StockSelection } from './StockFilterPanel'
 import SectorCell from './SectorCell'
 import TradingViewSymbol from './TradingViewSymbol'
+import ScanStepPanel from './ScanStepPanel'
 
 export interface FilteredIvState {
   id?: string; stockSelectionId?: string; state: string; filters?: { minIvr: number }; ready?: boolean;
@@ -52,8 +53,7 @@ export default function FilteredIvPanel({ stock, disabled, refresh, onChange, on
   }
   const rows = scan.rows.filter(row => row.symbol.includes(search.toUpperCase().trim()))
   const current = Math.min(page, Math.max(0, Math.ceil(rows.length / 50) - 1))
-  return <section className="monitor-panel stock-filter-panel" aria-labelledby="filtered-iv-title">
-    <h2 id="filtered-iv-title">2. IV Scan</h2>
+  return <ScanStepPanel id="filtered-iv" step={2} title="2. IV Scan" summary={`${number(scan.rows.length)} geselecteerd`}>
     <p>Alleen aandelen uit de opgeslagen Stock Filter. IV en IV-jaarhistorie via IBKR; optiechains volgen pas in stap 3.</p>
     <form onSubmit={event => { event.preventDefault(); void start() }}><div className="spreads-toolbar">
       <label htmlFor="filtered-iv-min">Minimum IV-rank<input id="filtered-iv-min" type="number" min="0" max="100" required value={minimum} disabled={disabled || busy || running} onChange={event => setMinimum(event.target.value)} /></label>
@@ -75,5 +75,5 @@ export default function FilteredIvPanel({ stock, disabled, refresh, onChange, on
       {!rows.length && <p>Geen IV-resultaten voor deze zoekterm.</p>}
       {rows.length > 50 && <div className="spreads-toolbar"><button disabled={!current} onClick={() => setPage(current - 1)}>Vorige IV-resultaten</button><span>Pagina {current + 1} / {Math.ceil(rows.length / 50)}</span><button disabled={(current + 1) * 50 >= rows.length} onClick={() => setPage(current + 1)}>Volgende IV-resultaten</button></div>}</>}
     {['complete', 'partial'].includes(scan.state) && !scan.rows.length && <p>Geen aandelen voldoen aan de IV-filter. Pas de IV-rank aan of controleer ontbrekende data.</p>}
-  </section>
+  </ScanStepPanel>
 }

@@ -1,5 +1,12 @@
 # Validatie
 
+## Trading Monitor 0.38.1 — volledige scanstappen inklappen (25 oktober 2026)
+
+- `npm run test:frontend`: 13 geslaagd; TypeScript/Vite-build geslaagd. Geen backend- of criteriumwijzigingen.
+- `npm run test:spreads`: bestaande workflow geslaagd, aangevuld met beide volledige stappen inklappen, toetsenbord Enter/Spatie, verborgen formulieren/resultaten, zichtbare Option Scan, behoud na herladen en starten van de optiescan met de eerdere stappen dicht. Inklappen/herladen start geen extra scan; eerder ingestelde IV-rank blijft behouden bij opnieuw openen.
+- Screenshot `source/data/private/spread-validation/collapsed-steps.png` lokaal visueel beoordeeld. Bestaande responsive/zoom-, planning-, blokkering-, sector-, TradingView- en scancontroles blijven slagen. Geen browserruntimefouten.
+- Geen serverinstallatie uitgevoerd.
+
 ## Trading Monitor 0.38.0 — automatisch blokkeren (25 oktober 2026)
 
 - 197 scanner-/dashboardtests geslaagd, inclusief negen nieuwe tests voor de screenshotmeldingen, bron-/rechten-/pacinguitval zonder blokkering, blijvende automatische reden/stap, behoud van handmatige blokkeringen, zes ontbrekende IV-reeksen zonder ongewenste pauze en overslaan in een volgende job.

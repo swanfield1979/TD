@@ -1,5 +1,9 @@
 # Releases
 
+## Trading Monitor 0.38.1 — stappen inklappen
+
+Stock Filter en IV Scan zijn als geheel afzonderlijk inklapbaar, met onthouden browserkeuze. Option Scan kan open blijven en behoudt de eerdere selecties. Geen nieuw installatiepakket; [serverupdate](../docs/put-spreads.md#installatie-en-serverupdate). Nog niet op de server geïnstalleerd.
+
 ## Trading Monitor 0.38.0 — automatisch Geblokkeerde Stocks
 
 Aandelen zonder bevestigde bruikbare koers-/IV-data komen automatisch in de blokkeerlijst, inclusief reden en scanstap. Deblokkeren blijft beschikbaar. Geen nieuw installatiepakket; tijdelijke bouwuitvoer in `source/dist/`. [Serverupdate](../docs/put-spreads.md#installatie-en-serverupdate). Broncode-update; serverinstallatie nog niet uitgevoerd.
