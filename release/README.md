@@ -1,5 +1,9 @@
 # Releases
 
+## Trading Monitor 0.39.2 — uitlijning spreadtabel
+
+Vergrootglas, ticker, detailpijl en rode X staan samen onder Aandeel. Zoek- en sorteervelden hebben gelijke afmetingen; kolomkoppen volgen de uitlijning van de waarden. Broncode-update zonder apart installatiepakket; serverinstallatie nog niet uitgevoerd.
+
 ## Trading Monitor 0.39.1 — overige spreads en rode X
 
 Het vergrootglas toont uitsluitend de overige spreads (bij vijf kandidaten: één in het overzicht, vier in het detail). Een rode X naast de ticker blokkeert het aandeel. Frontendversie zichtbaar in de tabelkop. Updatescript accepteert 0.39.1 in plaats van de oude 0.38.1. Geen nieuw installatiepakket; serverinstallatie nog niet uitgevoerd.

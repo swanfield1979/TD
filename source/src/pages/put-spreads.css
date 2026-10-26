@@ -46,8 +46,23 @@
 .spreads-table th, .spreads-table td { padding: 14px 8px; }
 .spreads-table th { vertical-align: top; }
 .spreads-table .spreads-inspect { white-space: nowrap; color: var(--tm-accent-primary); }
-.spreads-stock-name { display: flex; align-items: flex-start; gap: 8px; }
-.spreads-stock-name details { text-align: left; }
+.spreads-stock-name { display: flex; align-items: flex-start; justify-content: flex-start; gap: 8px; min-width: 196px; }
+.spreads-stock-name details { text-align: left; min-width: 64px; }
+.spreads-stock-name summary { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; min-height: 44px; list-style: none; }
+.spreads-stock-name summary::-webkit-details-marker { display: none; }
+.spreads-stock-name summary > svg { font-size: 14px; color: var(--tm-text-secondary); }
+.spreads-stock-name details[open] summary > svg { transform: rotate(180deg); }
+.spreads-stock-name summary small { flex-basis: 100%; }
+.spreads-table .spreads-inspect { min-width: 60px; flex-shrink: 0; }
+.spreads-table th, .spreads-table td { vertical-align: middle; text-align: right; font-variant-numeric: tabular-nums; }
+.spreads-table th:first-child, .spreads-table td:nth-child(2), .spreads-table thead th:nth-child(2) { text-align: left; }
+.spreads-table th:first-child { padding-left: 12px; }
+.spreads-table th:last-child, .spreads-table td:last-child { padding-right: 12px; }
+.spreads-candidates .monitor-panel__header { align-items: center; }
+.spreads-candidates .monitor-panel__header h2 { margin: 0; display: flex; align-items: baseline; gap: 8px; }
+.spreads-candidates .monitor-note { margin: 12px 0; line-height: 1.6; }
+.spreads-result-controls > label, .spreads-result-controls .spreads-sort { width: 200px; max-width: 100%; }
+.spreads-result-controls input, .spreads-result-controls select { height: 44px; width: 100%; }
 .spreads-page .spreads-remove { color: var(--tm-status-danger); background: var(--tm-status-danger-bg); border-color: var(--tm-status-danger); width: 44px; flex-shrink: 0; padding: 8px; }
 .spreads-version { display: inline; color: var(--tm-text-secondary); font-size: 12px; font-weight: 400; }
 .spreads-page button:focus-visible, .spreads-results h2:focus-visible { outline: 2px solid var(--tm-accent-primary); outline-offset: 3px; }

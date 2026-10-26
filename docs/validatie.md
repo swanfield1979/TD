@@ -1,5 +1,12 @@
 # Validatie
 
+## Trading Monitor 0.39.2 — uitlijning van spreadresultaten (26 oktober 2026)
+
+- Vergrootglas, ticker, detailpijl en rode X in één aandeelkolom met gelijke hoogte; sector links, cijfers rechts onder overeenkomstige kolomkoppen. Bediening heeft vaste veldhoogtes; korte begeleidende tekst.
+- TypeScript/Vite-build, 207 tests en 13 frontendtests geslaagd. Bestaande browserworkflow geslaagd en screenshot visueel gecontroleerd; deze controleert groepering, alternatieven, toetsenbord, verwijderen, sortering, details, TradingView, CSV en responsive weergave. Geen wijziging aan berekeningen of scancriteria.
+- Updatescript en zichtbare frontendversie aangepast naar 0.39.2. Serverinstallatie nog niet uitgevoerd.
+
+
 ## Trading Monitor 0.39.1 — SE-groepering en serverversie (26 oktober 2026)
 
 - Browserregressie met vijf SE-kandidaten: één overzichtsregel met 8,81%; vergrootglas opent exact vier overige spreads, hoogste resterende rendement 4,17%. Sortering op maximale winst houdt de overzichtskandidaat uitgesloten.

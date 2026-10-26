@@ -1,6 +1,10 @@
 # Bull-put-spreadscanner
 
-Trading Monitor **0.39.1**, bijgewerkt op 26 oktober 2026. Open **Put spreads** in het menu of gebruik `/#put-spreads`. Deze uitbreiding blijft binnen de bestaande lokale app.
+Trading Monitor **0.39.2**, bijgewerkt op 26 oktober 2026. Open **Put spreads** in het menu of gebruik `/#put-spreads`. Deze uitbreiding blijft binnen de bestaande lokale app.
+
+## Uitlijning van de resultaten
+
+Vanaf 0.39.2 staan vergrootglas met aantal, ticker met detailpijl en rode verwijderknop samen in één links uitgelijnde kolom **Aandeel**. De sector staat links; bedragen en percentages rechts onder hun kolomkop. Zoek- en sorteervelden hebben dezelfde hoogte en breedte. De korte regel boven de tabel toont aantallen en rangschikking; de uitleg van rendement/risico staat bij de kolomkop. De detailpijl opent nog steeds bied-/laatprijzen en brontijden, de ticker opent TradingView.
 
 ## Beste spread per aandeel
 
@@ -196,9 +200,9 @@ npm run dev:lan
 
 Gebruik de bestaande IB Gateway-configuratie en datarechten; zie [IBKR](IBKR.md). Zonder bereikbare API/broker zijn geen actuele scanresultaten te verifiëren. Lokale frontend apart: `npm run dev -- --host 127.0.0.1 --port 5197`; Node-API apart: `npm run start:api`. Zorg dat die frontend-origin toegestaan is voor de Node-API. De gebruikelijke LAN-launcher regelt dit voor zijn eigen origin.
 
-Serverupdate vereist frontend (`dist/`), Node (`server/`, `shared/`) en de bestaande bijgewerkte Python-LAN-proxy. Het bestaande script `bash deploy/update-options.sh` controleert nu versie 0.39.1, bouwt/test, publiceert en herstart de bestaande services. Er is geen serverinstallatie vanuit deze ontwikkelomgeving uitgevoerd. Het script controleert `/api/put-spreads`, `/api/stock-filter`, `/api/put-spreads/iv`, `/api/put-spreads/blocked` en `/api/put-spreads/schedule`. De bestaande algemene `/api/`-proxy ondersteunt deze routes. Volg de [bestaande installatiehandleiding](installatie.md) voor een nieuwe installatie.
+Serverupdate vereist frontend (`dist/`), Node (`server/`, `shared/`) en de bestaande bijgewerkte Python-LAN-proxy. Het bestaande script `bash deploy/update-options.sh` controleert nu versie 0.39.2, bouwt/test, publiceert en herstart de bestaande services. Er is geen serverinstallatie vanuit deze ontwikkelomgeving uitgevoerd. Het script controleert `/api/put-spreads`, `/api/stock-filter`, `/api/put-spreads/iv`, `/api/put-spreads/blocked` en `/api/put-spreads/schedule`. De bestaande algemene `/api/`-proxy ondersteunt deze routes. Volg de [bestaande installatiehandleiding](installatie.md) voor een nieuwe installatie.
 
-De kop **Gevonden spreads** toont **v0.39.1**. Ontbreken die versie en de kolom Andere spreads, dan wordt nog een oude frontend geleverd. Alleen een GitHub-push vervangt de serverbestanden niet. Voer op de bestaande Linux-server vanuit de repository-root uit:
+De kop **Gevonden spreads** toont **v0.39.2**. Ontbreken die versie en de kolom Andere spreads, dan wordt nog een oude frontend geleverd. Alleen een GitHub-push vervangt de serverbestanden niet. Voer op de bestaande Linux-server vanuit de repository-root uit:
 
 ```bash
 git pull --ff-only

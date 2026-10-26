@@ -2,7 +2,7 @@
 
 Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voortgang op basis van Interactive Brokers Flex-rapporten.
 
-**Versie/status:** 0.39.1. Option Scan toont één beste spread per aandeel, met een vergrootglas voor uitsluitend de overige spreads en een rode X naast de ticker. De tabelkop toont v0.39.1 om de actieve frontend te herkennen. Standaard op rendement/risico, ook sorteerbaar op maximale winst, maximaal verlies en IV-rank. Build, 207 tests, 13 frontendtests en browsercontrole geslaagd; serverinstallatie nog niet uitgevoerd.
+**Versie/status:** 0.39.2. Option Scan heeft één compact uitgelijnde aandeelkolom met vergrootglas, ticker, detailpijl en rode X. Het overzicht toont één beste spread per aandeel, met een vergrootglas voor uitsluitend de overige spreads en een rode X naast de ticker. De tabelkop toont v0.39.2 om de actieve frontend te herkennen. Standaard op rendement/risico, ook sorteerbaar op maximale winst, maximaal verlies en IV-rank. Build, 207 tests, 13 frontendtests en browsercontrole geslaagd; serverinstallatie nog niet uitgevoerd.
 
 | Map | Inhoud |
 | --- | --- |
