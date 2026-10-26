@@ -1,5 +1,13 @@
 # Validatie
 
+## Trading Monitor 0.39.1 — SE-groepering en serverversie (26 oktober 2026)
+
+- Browserregressie met vijf SE-kandidaten: één overzichtsregel met 8,81%; vergrootglas opent exact vier overige spreads, hoogste resterende rendement 4,17%. Sortering op maximale winst houdt de overzichtskandidaat uitgesloten.
+- Rode X naast de ticker via toegankelijke naam Verwijder SE bedienbaar; blokkering verwijdert SE uit de scan en toont Deblokkeer SE in de blokkeerlijst. Detail getest op 360–1600 pixels. Bestaande browserworkflow slaagt zonder runtimefouten.
+- Productiebuild geslaagd. Screenshots se-best.png en se-alternatives.png staan lokaal in source/data/private/spread-validation/.
+- Read-only HTTP-controle van 192.168.1.22: de geleverde bundle index-D7RYZBqu.js bevat de groepering uit 0.39.0 nog niet. Updatescript bleek vastgezet op 0.38.1; vereiste versie en succesmelding aangepast naar 0.39.1. Frontend toont v0.39.1 in de tabelkop. Geen serverinstallatie uitgevoerd.
+
+
 ## Trading Monitor 0.39.0 — beste spread per aandeel (26 oktober 2026)
 
 - TypeScript/Vite-build en 13 frontendtests geslaagd. Alle 207 lokale tests geslaagd. In de eerste parallelle run startten twee API-tests niet binnen hun bestaande korte startvenster; beide afzonderlijk en de daaropvolgende volledige run slagen.

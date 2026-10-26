@@ -1,6 +1,6 @@
 # Bull-put-spreadscanner
 
-Trading Monitor **0.39.0**, bijgewerkt op 26 oktober 2026. Open **Put spreads** in het menu of gebruik `/#put-spreads`. Deze uitbreiding blijft binnen de bestaande lokale app.
+Trading Monitor **0.39.1**, bijgewerkt op 26 oktober 2026. Open **Put spreads** in het menu of gebruik `/#put-spreads`. Deze uitbreiding blijft binnen de bestaande lokale app.
 
 ## Beste spread per aandeel
 
@@ -8,9 +8,9 @@ Option Scan toont één spread per aandeel. Standaard staat de kandidaat met het
 
 Via **Sorteren op** kies je de maatstaf. Bij maximale winst wordt per aandeel de spread met de hoogste maximale winst gekozen; bij maximaal verlies die met het laagste maximale verlies. Bij gelijkstand volgen rendement/risico, maximale winst, lager verlies en de vaste spread-ID. **Hoog → laag / Laag → hoog** verandert de weergavevolgorde en behoudt de beste kandidaat per aandeel.
 
-Klik het **vergrootglas met aantal** links van de ticker voor alle gevonden spreads van dat aandeel, inclusief de beste. De tabel gebruikt dezelfde sorteerkeuze en is standaard aflopend. Kies **Maximale winst** voor de hoogste potentiële dollarwinst bovenaan. **Terug naar aandelen** opent het overzicht op de pagina van dat aandeel en herstelt de toetsenbordfocus. Zoeken blijft behouden. Overzicht en detail tonen maximaal 50 regels per pagina.
+Klik het **vergrootglas met aantal** links van de ticker voor uitsluitend de overige gevonden spreads van dat aandeel. Bij vijf SE-spreads staat SE eenmaal met de beste spread in het overzicht; het vergrootglas toont de andere vier. De bij openen gekozen beste spread blijft tijdens sorteren in het detail uitgesloten. Bij één kandidaat is het vergrootglas met aantal 0 uitgeschakeld. Een rode X direct achter de ticker vervangt de tekstknop Verwijder; hij voegt het volledige aandeel toe aan Geblokkeerde Stocks. De tabel gebruikt dezelfde sorteerkeuze en is standaard aflopend. Kies **Maximale winst** voor de hoogste potentiële dollarwinst bovenaan. **Terug naar aandelen** opent het overzicht op de pagina van dat aandeel en herstelt de toetsenbordfocus. Zoeken blijft behouden. Overzicht en detail tonen maximaal 50 regels per pagina.
 
-CSV vanuit het overzicht bevat alle gevonden spreads binnen het tickerzoekfilter, inclusief verborgen alternatieven en volgende pagina’s. CSV vanuit het detail bevat alle gevonden spreads van het geopende aandeel. Openen, sorteren en exporteren starten geen nieuwe scan of brokerverzoeken. De alternatieven zijn beperkt tot opgehaalde contracten die aan de scancriteria voldoen; er wordt hiermee geen volledige optieketen aangevraagd.
+CSV vanuit het overzicht bevat alle gevonden spreads binnen het tickerzoekfilter, inclusief verborgen alternatieven en volgende pagina’s. CSV vanuit het detail bevat de overige spreads van het geopende aandeel, zonder de in het overzicht gekozen beste spread. Openen, sorteren en exporteren starten geen nieuwe scan of brokerverzoeken. De alternatieven zijn beperkt tot opgehaalde contracten die aan de scancriteria voldoen; er wordt hiermee geen volledige optieketen aangevraagd.
 
 Klik bij **1. Stock Filter** en **2. IV Scan** op **Inklappen** om de volledige stap te sluiten. In de kop blijven de stapnaam, het aantal geselecteerde aandelen en **Uitklappen** zichtbaar. Beide stappen kunnen dicht blijven terwijl **3. Option Scan** open is. De browser bewaart beide keuzes afzonderlijk, ook na herladen. Inklappen wist geen criteria, zoektekst of selectie en onderbreekt de statusopvragingen en scans niet. De onderstaande aandelenlijst kan daarnaast nog afzonderlijk worden ingeklapt.
 
@@ -196,7 +196,17 @@ npm run dev:lan
 
 Gebruik de bestaande IB Gateway-configuratie en datarechten; zie [IBKR](IBKR.md). Zonder bereikbare API/broker zijn geen actuele scanresultaten te verifiëren. Lokale frontend apart: `npm run dev -- --host 127.0.0.1 --port 5197`; Node-API apart: `npm run start:api`. Zorg dat die frontend-origin toegestaan is voor de Node-API. De gebruikelijke LAN-launcher regelt dit voor zijn eigen origin.
 
-Serverupdate vereist frontend (`dist/`), Node (`server/`, `shared/`) en de bestaande bijgewerkte Python-LAN-proxy. Het bestaande script `bash deploy/update-options.sh` controleert nu versie 0.38.1, bouwt/test, publiceert en herstart de bestaande services. Er is geen serverinstallatie vanuit deze ontwikkelomgeving uitgevoerd. Het script controleert `/api/put-spreads`, `/api/stock-filter`, `/api/put-spreads/iv`, `/api/put-spreads/blocked` en `/api/put-spreads/schedule`. De bestaande algemene `/api/`-proxy ondersteunt deze routes. Volg de [bestaande installatiehandleiding](installatie.md) voor een nieuwe installatie.
+Serverupdate vereist frontend (`dist/`), Node (`server/`, `shared/`) en de bestaande bijgewerkte Python-LAN-proxy. Het bestaande script `bash deploy/update-options.sh` controleert nu versie 0.39.1, bouwt/test, publiceert en herstart de bestaande services. Er is geen serverinstallatie vanuit deze ontwikkelomgeving uitgevoerd. Het script controleert `/api/put-spreads`, `/api/stock-filter`, `/api/put-spreads/iv`, `/api/put-spreads/blocked` en `/api/put-spreads/schedule`. De bestaande algemene `/api/`-proxy ondersteunt deze routes. Volg de [bestaande installatiehandleiding](installatie.md) voor een nieuwe installatie.
+
+De kop **Gevonden spreads** toont **v0.39.1**. Ontbreken die versie en de kolom Andere spreads, dan wordt nog een oude frontend geleverd. Alleen een GitHub-push vervangt de serverbestanden niet. Voer op de bestaande Linux-server vanuit de repository-root uit:
+
+```bash
+git pull --ff-only
+cd source
+bash deploy/update-options.sh
+```
+
+Vernieuw daarna met Ctrl+F5 en controleer de versie in de tabelkop.
 
 ## Validatie
 

@@ -46,6 +46,10 @@
 .spreads-table th, .spreads-table td { padding: 14px 8px; }
 .spreads-table th { vertical-align: top; }
 .spreads-table .spreads-inspect { white-space: nowrap; color: var(--tm-accent-primary); }
+.spreads-stock-name { display: flex; align-items: flex-start; gap: 8px; }
+.spreads-stock-name details { text-align: left; }
+.spreads-page .spreads-remove { color: var(--tm-status-danger); background: var(--tm-status-danger-bg); border-color: var(--tm-status-danger); width: 44px; flex-shrink: 0; padding: 8px; }
+.spreads-version { display: inline; color: var(--tm-text-secondary); font-size: 12px; font-weight: 400; }
 .spreads-page button:focus-visible, .spreads-results h2:focus-visible { outline: 2px solid var(--tm-accent-primary); outline-offset: 3px; }
 .spreads-leg { display: block; }
 .spreads-profit { color: var(--tm-status-success); }

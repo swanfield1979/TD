@@ -1,5 +1,9 @@
 # Releases
 
+## Trading Monitor 0.39.1 — overige spreads en rode X
+
+Het vergrootglas toont uitsluitend de overige spreads (bij vijf kandidaten: één in het overzicht, vier in het detail). Een rode X naast de ticker blokkeert het aandeel. Frontendversie zichtbaar in de tabelkop. Updatescript accepteert 0.39.1 in plaats van de oude 0.38.1. Geen nieuw installatiepakket; serverinstallatie nog niet uitgevoerd.
+
 ## Trading Monitor 0.39.0 — beste spread per aandeel
 
 Option Scan toont één kandidaat per aandeel, met vergrootglas en aantal voor alle gevonden spreads. Sorteer op rendement/risico, maximale winst, maximaal verlies of IV-rank. Geen nieuw installatiepakket; bouwuitvoer staat in `source/dist/`. Zie [serverupdate](../docs/put-spreads.md#installatie-en-serverupdate). Nog niet op de server geïnstalleerd.
