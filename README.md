@@ -2,7 +2,7 @@
 
 Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voortgang op basis van Interactive Brokers Flex-rapporten.
 
-**Versie/status:** 0.38.1. De volledige stappen Stock Filter en IV Scan zijn afzonderlijk inklapbaar. De browser onthoudt de keuze, zodat alleen Option Scan open kan blijven. Selecties, scans en weekplanning blijven actief. Frontendtests, build en browsercontrole geslaagd; serverinstallatie nog niet uitgevoerd.
+**Versie/status:** 0.39.0. Option Scan toont één beste spread per aandeel, met een vergrootglas voor alle gevonden alternatieven. Standaard op rendement/risico, ook sorteerbaar op maximale winst, maximaal verlies en IV-rank. Build, 207 tests, 13 frontendtests en browsercontrole geslaagd; serverinstallatie nog niet uitgevoerd.
 
 | Map | Inhoud |
 | --- | --- |

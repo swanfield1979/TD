@@ -1,6 +1,16 @@
 # Bull-put-spreadscanner
 
-Trading Monitor **0.38.1**, bijgewerkt op 25 oktober 2026. Open **Put spreads** in het menu of gebruik `/#put-spreads`. Deze uitbreiding blijft binnen de bestaande lokale app.
+Trading Monitor **0.39.0**, bijgewerkt op 26 oktober 2026. Open **Put spreads** in het menu of gebruik `/#put-spreads`. Deze uitbreiding blijft binnen de bestaande lokale app.
+
+## Beste spread per aandeel
+
+Option Scan toont één spread per aandeel. Standaard staat de kandidaat met het hoogste **Rendement op risico** vooraan: maximale winst ÷ maximaal verlies × 100%, over de looptijd van de trade en vóór kosten. Bedrijfskwaliteit en Samurai-scores maken geen deel uit van deze rangschikking.
+
+Via **Sorteren op** kies je de maatstaf. Bij maximale winst wordt per aandeel de spread met de hoogste maximale winst gekozen; bij maximaal verlies die met het laagste maximale verlies. Bij gelijkstand volgen rendement/risico, maximale winst, lager verlies en de vaste spread-ID. **Hoog → laag / Laag → hoog** verandert de weergavevolgorde en behoudt de beste kandidaat per aandeel.
+
+Klik het **vergrootglas met aantal** links van de ticker voor alle gevonden spreads van dat aandeel, inclusief de beste. De tabel gebruikt dezelfde sorteerkeuze en is standaard aflopend. Kies **Maximale winst** voor de hoogste potentiële dollarwinst bovenaan. **Terug naar aandelen** opent het overzicht op de pagina van dat aandeel en herstelt de toetsenbordfocus. Zoeken blijft behouden. Overzicht en detail tonen maximaal 50 regels per pagina.
+
+CSV vanuit het overzicht bevat alle gevonden spreads binnen het tickerzoekfilter, inclusief verborgen alternatieven en volgende pagina’s. CSV vanuit het detail bevat alle gevonden spreads van het geopende aandeel. Openen, sorteren en exporteren starten geen nieuwe scan of brokerverzoeken. De alternatieven zijn beperkt tot opgehaalde contracten die aan de scancriteria voldoen; er wordt hiermee geen volledige optieketen aangevraagd.
 
 Klik bij **1. Stock Filter** en **2. IV Scan** op **Inklappen** om de volledige stap te sluiten. In de kop blijven de stapnaam, het aantal geselecteerde aandelen en **Uitklappen** zichtbaar. Beide stappen kunnen dicht blijven terwijl **3. Option Scan** open is. De browser bewaart beide keuzes afzonderlijk, ook na herladen. Inklappen wist geen criteria, zoektekst of selectie en onderbreekt de statusopvragingen en scans niet. De onderstaande aandelenlijst kan daarnaast nog afzonderlijk worden ingeklapt.
 

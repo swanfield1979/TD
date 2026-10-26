@@ -1,5 +1,13 @@
 # Validatie
 
+## Trading Monitor 0.39.0 — beste spread per aandeel (26 oktober 2026)
+
+- TypeScript/Vite-build en 13 frontendtests geslaagd. Alle 207 lokale tests geslaagd. In de eerste parallelle run startten twee API-tests niet binnen hun bestaande korte startvenster; beide afzonderlijk en de daaropvolgende volledige run slagen.
+- Browserworkflow met gemockte API: één regel per aandeel, hoogste rendement/risico als standaard, hoogste maximale winst bij omschakelen, laagste verlies als kandidaat bij risico-sortering en behoud van de kandidaat bij omkeren van de weergavevolgorde.
+- Vergrootglas via Enter opent alle alternatieven met focus op de detailkop; terugknop herstelt focus. CSV bewaart verborgen alternatieven. Zowel 55 aandelen als 55 alternatieven van één aandeel pagineren correct. Inspectie/sortering start geen extra optiescan.
+- Bestaande scan-, zoek-, fout-, stop-/hervat-, TradingView-, sector-, planning- en blokkeerlijstcontroles slagen. Detailweergave getest op 360, 768, 1024 en 1600 pixels; bestaande 200%-zoomcontrole blijft slagen. Geen browserruntimefouten.
+- Screenshots in `source/data/private/spread-validation/`: `grouped-stocks.png` en `stock-alternatives.png`, lokaal visueel beoordeeld. Scancriteria en brokerverzameling zijn ongewijzigd. Geen serverinstallatie uitgevoerd.
+
 ## Trading Monitor 0.38.1 — volledige scanstappen inklappen (25 oktober 2026)
 
 - `npm run test:frontend`: 13 geslaagd; TypeScript/Vite-build geslaagd. Geen backend- of criteriumwijzigingen.

@@ -216,11 +216,64 @@ try {
   await page.getByRole('button', { name: 'Scan stoppen', exact: true }).click()
   await page.getByText('Scan gestopt', { exact: true }).waitFor()
   assert.equal(posts, 4)
-  scan = { ...scan, state: 'complete', rows: Array.from({ length: 55 }, (_, i) => ({ ...row, id: `test:${i}` })) }
+  scan = { ...scan, state: 'complete', rows: Array.from({ length: 55 }, (_, i) => ({ ...row, id: `test:${i}`, symbol: `STOCK${i}` })) }
   await page.reload(); await page.locator('.spreads-table tbody tr').first().waitFor()
   assert.equal(await page.locator('.spreads-table tbody tr').count(), 50)
   await page.getByRole('button', { name: 'Volgende', exact: true }).click()
   assert.equal(await page.locator('.spreads-table tbody tr').count(), 5)
+  // Multiple candidates per stock: group before paging, retain all alternatives and CSV rows.
+  scan = { ...scan, state: 'complete', rows: [
+    { ...row, id: 'hood-best-ratio', returnOnRisk: 20, maxProfit: 100, maxLoss: 500 },
+    { ...row, id: 'hood-most-profit', returnOnRisk: 15, maxProfit: 150, maxLoss: 1000 },
+    { ...row, id: 'hood-lowest-risk', returnOnRisk: 10, maxProfit: 20, maxLoss: 200 },
+    { ...row, id: 'amd-best', symbol: 'AMD', returnOnRisk: 18, maxProfit: 90, maxLoss: 500 },
+  ] }
+  await page.reload()
+  const results = page.getByRole('region', { name: 'Bull-put-spreadresultaten', exact: true })
+  await results.getByRole('button', { name: 'Alle 3 spreads voor HOOD bekijken', exact: true }).waitFor()
+  assert.equal(await results.locator('tbody tr').count(), 2)
+  assert.match(await results.locator('tbody tr').first().innerText(), /HOOD/)
+  assert.match(await results.locator('tbody tr').first().innerText(), /100,00/)
+  await page.getByLabel('Sorteren op', { exact: true }).selectOption('maxProfit')
+  assert.match(await results.locator('tbody tr').first().innerText(), /150,00/)
+  const groupedDownload = page.waitForEvent('download')
+  await page.getByRole('button', { name: 'CSV exporteren', exact: true }).click()
+  const groupedCsv = await readFile(await (await groupedDownload).path(), 'utf8')
+  assert.equal(groupedCsv.split('\r\n').length, 5, 'CSV retains all four candidates')
+  await page.getByLabel('Sorteren op', { exact: true }).selectOption('returnOnRisk')
+  const scanPostsBeforeInspect = posts
+  await results.getByRole('button', { name: 'Alle 3 spreads voor HOOD bekijken', exact: true }).focus()
+  await page.keyboard.press('Enter')
+  await page.getByRole('heading', { name: 'Alle spreads voor HOOD', exact: true }).waitFor()
+  assert.equal(await page.getByRole('heading', { name: 'Alle spreads voor HOOD', exact: true }).evaluate(el => el === document.activeElement), true)
+  assert.equal(await results.locator('tbody tr').count(), 3)
+  assert.match(await results.locator('tbody tr').first().innerText(), /20%/)
+  await page.getByLabel('Sorteren op', { exact: true }).selectOption('maxProfit')
+  assert.match(await results.locator('tbody tr').first().innerText(), /150,00/)
+  assert.match(await results.locator('tbody tr').last().innerText(), /20,00/)
+  await results.locator('summary').first().click()
+  await page.screenshot({ path: 'data/private/spread-validation/stock-alternatives.png', fullPage: true })
+  for (const width of [360, 768, 1024, 1600]) {
+    await page.setViewportSize({ width, height: 1000 })
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'Grouped detail contains overflow at ' + width)
+  }
+  await page.getByRole('button', { name: 'Terug naar aandelen', exact: true }).click()
+  const inspectHood = results.getByRole('button', { name: 'Alle 3 spreads voor HOOD bekijken', exact: true })
+  assert.equal(await inspectHood.evaluate(el => el === document.activeElement), true)
+  await page.getByRole('button', { name: 'Hoog → laag', exact: true }).click()
+  assert.match(await results.locator('tbody tr').last().innerText(), /150,00/, 'Changing display direction keeps the best representative')
+  await page.getByLabel('Sorteren op', { exact: true }).selectOption('maxLoss')
+  assert.match(await results.locator('tbody tr').first().innerText(), /200,00/, 'Lowest-risk representative selected')
+  await page.screenshot({ path: 'data/private/spread-validation/grouped-stocks.png', fullPage: true })
+  assert.equal(posts, scanPostsBeforeInspect, 'Inspecting and sorting never starts a broker scan')
+  scan = { ...scan, rows: Array.from({ length: 55 }, (_, i) => ({ ...row, id: 'hood:' + i, maxProfit: i + 1 })) }
+  await page.reload()
+  await results.getByRole('button', { name: 'Alle 55 spreads voor HOOD bekijken', exact: true }).click()
+  assert.equal(await results.locator('tbody tr').count(), 50)
+  await page.getByRole('button', { name: 'Volgende', exact: true }).click()
+  assert.equal(await results.locator('tbody tr').count(), 5)
+  await page.getByRole('button', { name: 'Terug naar aandelen', exact: true }).click()
+  assert.equal(await results.locator('tbody tr').count(), 1)
   scan = { ...scan, state: 'paused', remainingSymbols: 0, retryFrom: 0, message: 'Test: gepauzeerd na vijf IV-fouten.' }
   await page.reload()
   await page.getByText('Scan gepauzeerd', { exact: true }).waitFor()
