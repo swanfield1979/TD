@@ -1,5 +1,13 @@
 # Validatie
 
+## Trading Monitor 0.40.0 — optiechainverbeteringen (28 oktober 2026)
+
+- Aangeleverde Yahoo-/SQLite-code beoordeeld; zie [vergelijking en afwegingen](vergelijking-optiechain.md). Geen externe broncode of nieuwe databron toegevoegd.
+- Maximaal vier gelijktijdige optiequotes, gesynchroniseerde datatypefallback en één herberekening per batch. Tests controleren annulering, snelheidslimieten, abonnementen en selectie-equivalentie in 40 gevarieerde chains.
+- Compacte/uitgebreide tabel, buffer, DTE, B/L, Jaar-R/R, drie extra sorteringen en CSV-kolom. Bestaande selectie per aandeel en alternatieven blijven behouden.
+- 208 Node-tests en 13 frontendtests geslaagd, inclusief reeds aanwezige lokale tests voor andere werkzaamheden; TypeScript/Vite-build geslaagd. Browserworkflow met gesimuleerde API geslaagd: drie stappen, compacte/uitgebreide tabel, berekeningen, sorteringen, CSV, details, alternatieven, blokkeren, fouten, stoppen/hervatten, 360–1600 pixels en 200% zoom. Screenshot visueel gecontroleerd.
+- Lokale synthetische meting: dezelfde 420 spreads uit 640 contracten; selectie circa 7,84 → 3,80 ms (mediaan van 20 uitvoeringen). Geen gemeten livebroker-versnelling of serverinstallatie.
+
 ## Trading Monitor 0.39.2 — uitlijning van spreadresultaten (26 oktober 2026)
 
 - Vergrootglas, ticker, detailpijl en rode X in één aandeelkolom met gelijke hoogte; sector links, cijfers rechts onder overeenkomstige kolomkoppen. Bediening heeft vaste veldhoogtes; korte begeleidende tekst.

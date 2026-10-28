@@ -1,5 +1,9 @@
 # Releases
 
+## Trading Monitor 0.40.0 — snellere optiechainverwerking en compacte tabel
+
+Maximaal vier quoteaanvragen tegelijk met bestaande pacing, vroegere filtering en minder herberekeningen. Compacte/uitgebreide tabel met buffer, DTE, B/L en Jaar-R/R; extra sortering en CSV-veld. Zie [vergelijking](../docs/vergelijking-optiechain.md) en [serverupdate](../docs/put-spreads.md#installatie-en-serverupdate). Broncodeversie op GitHub; geen apart installatiepakket. Serverinstallatie nog niet uitgevoerd.
+
 ## Trading Monitor 0.39.2 — uitlijning spreadtabel
 
 Vergrootglas, ticker, detailpijl en rode X staan samen onder Aandeel. Zoek- en sorteervelden hebben gelijke afmetingen; kolomkoppen volgen de uitlijning van de waarden. Broncode-update zonder apart installatiepakket; serverinstallatie nog niet uitgevoerd.

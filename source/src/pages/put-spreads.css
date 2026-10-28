@@ -65,6 +65,13 @@
 .spreads-result-controls input, .spreads-result-controls select { height: 44px; width: 100%; }
 .spreads-page .spreads-remove { color: var(--tm-status-danger); background: var(--tm-status-danger-bg); border-color: var(--tm-status-danger); width: 44px; flex-shrink: 0; padding: 8px; }
 .spreads-version { display: inline; color: var(--tm-text-secondary); font-size: 12px; font-weight: 400; }
+.spreads-candidates .scan-table-scroll { max-height: 70vh; overflow: auto; }
+.spreads-table thead th { position: sticky; top: 0; z-index: 2; background: var(--tm-surface-2); }
+.spreads-table tbody tr:nth-child(even) { background: var(--tm-surface-2); }
+.spreads-table--compact th, .spreads-table--compact td { padding-top: 8px; padding-bottom: 8px; }
+.spreads-table--compact tbody td:nth-child(2), .spreads-table--compact thead th:nth-child(2) { text-align: right; }
+.spreads-table--compact .spreads-stock-name { min-width: 180px; }
+.spreads-result-controls button[aria-pressed="true"] { border-color: var(--tm-accent-primary); }
 .spreads-page button:focus-visible, .spreads-results h2:focus-visible { outline: 2px solid var(--tm-accent-primary); outline-offset: 3px; }
 .spreads-leg { display: block; }
 .spreads-profit { color: var(--tm-status-success); }

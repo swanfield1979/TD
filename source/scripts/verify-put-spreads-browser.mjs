@@ -4,6 +4,7 @@ import { mkdir, readFile } from 'node:fs/promises'
 import { bullPutSpread, spreadFilters } from '../shared/put-spread.mjs'
 const browser = await chromium.launch({ channel: process.env.PLAYWRIGHT_CHANNEL || 'msedge', headless: true })
 const page = await browser.newPage({ viewport: { width: 1600, height: 1100 } })
+page.setDefaultTimeout(20000); page.setDefaultNavigationTimeout(20000)
 const errors = []; page.on('pageerror', error => errors.push(error.message))
 const today = '2026-10-24'
 const sector = symbol => ({ sector: symbol === 'AMD' ? 'Technology' : 'Financials', sectorSource: 'Nasdaq', sectorAsOf: '2026-10-25T09:00:00Z' })
@@ -138,6 +139,12 @@ try {
   await page.getByRole('heading', { name: 'Gevonden spreads', exact: true }).waitFor()
   for (const name of ['Geselecteerde aandelen', 'IV-resultaten', 'Bull-put-spreadresultaten']) {
     const region = page.getByRole('region', { name, exact: true })
+    if (name === 'Bull-put-spreadresultaten') {
+      assert.equal(await region.getByRole('columnheader', { name: 'Sector', exact: true }).count(), 0)
+      for (const header of ['Buffer', 'DTE', 'B/L', 'Jaar-R/R']) await region.getByRole('columnheader', { name: header, exact: true }).waitFor()
+      await page.screenshot({ path: 'data/private/spread-validation/compact.png', fullPage: true })
+      await page.getByRole('button', { name: 'Uitgebreide tabel', exact: true }).click()
+    }
     await region.getByRole('columnheader', { name: 'Sector', exact: true }).waitFor()
     await region.getByRole('cell', { name: 'Tech', exact: true }).waitFor()
     await region.getByRole('cell', { name: 'Financials', exact: true }).waitFor()
@@ -176,7 +183,12 @@ try {
   assert.equal(exported.suggestedFilename(), 'bull-put-spreads.csv')
   const csv = await readFile(await exported.path(), 'utf8')
   assert.match(csv, /;sector;sectorSource;sectorAsOf;/)
+  assert.match(csv, /;annualizedReturnOnRisk/)
   assert.match(csv, /"Financials"/)
+  await page.getByLabel('Sorteren op', { exact: true }).selectOption('annualizedReturn')
+  assert.match(await page.locator('.spreads-table tbody tr').first().innerText(), /25,89%/)
+  await page.getByLabel('Sorteren op', { exact: true }).selectOption('returnOnRisk')
+  await page.getByRole('button', { name: 'Compacte tabel', exact: true }).click()
   await page.getByLabel('Ticker zoeken', { exact: true }).fill('ZZZ')
   await page.getByRole('heading', { name: 'Geen spreads voor deze ticker' }).waitFor()
   await page.getByRole('button', { name: 'Zoekfilter wissen' }).click()

@@ -1,5 +1,12 @@
 # Versiehistorie
 
+## 0.40.0 — optiechainverwerking en tabeloverzicht (28 oktober 2026)
+
+- Beoordeling van aangeleverde Yahoo-/SQLite-scanner; bruikbare principes toegepast zonder externe broncode over te nemen. [Onderzoek en snelheidsmeting](vergelijking-optiechain.md).
+- Option Scan vraagt maximaal vier quotes tegelijk op, met bestaande pacing, gesynchroniseerde datatypefallback en volledige opruiming bij stoppen/fouten. Spreadselectie filtert vroeg en wordt per batch bijgewerkt.
+- Compacte/uitgebreide tabel met buffer, afzonderlijke DTE, B/L en Jaar-R/R. Sorteren op geannualiseerd rendement/risico, buffer en DTE; Jaar-R/R ook in CSV.
+- Node-tests, frontendtests, build en browserworkflow geslaagd. Nog niet op de productieserver geïnstalleerd.
+
 ## 0.38.1 — volledige scanstappen inklapbaar (25 oktober 2026)
 
 - Knoppen Inklappen/Uitklappen voor de volledige Stock Filter en IV Scan, met stapnaam en selectieaantal in de kop. Stap 3 blijft onafhankelijk open.

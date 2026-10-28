@@ -45,12 +45,20 @@ export function selectSpreads(puts, today, input = {}) {
     if (!groups.has(key)) groups.set(key, [])
     groups.get(key).push(put)
   }
-  for (const group of groups.values()) for (const short of group) for (const long of group) {
-    if (short.strike <= long.strike) continue
-    const row = bullPutSpread(short, long, today)
-    if (row && row.underlyingPrice >= f.minPrice && row.underlyingPrice <= f.maxPrice && row.dte >= f.minDte && row.dte <= f.maxDte && row.ivr >= f.minIvr && row.buffer + 1e-8 >= f.minBuffer
-      && row.maxProfit + 1e-8 >= f.minProfit && row.maxLoss <= f.maxLoss + 1e-8 && row.otmProxy + 1e-8 >= f.minOtm
-      && short.ask - short.bid <= f.maxQuoteSpread + 1e-8 && long.ask - long.bid <= f.maxQuoteSpread + 1e-8) rows.push(row)
+  for (const group of groups.values()) {
+    // Reject individual legs before constructing pairs; keep the executable-side checks below.
+    const longs = group.filter(put => Number.isFinite(put.strike) && Number.isFinite(put.ask) && Number.isFinite(put.bid) && put.ask - put.bid <= f.maxQuoteSpread + 1e-8)
+      .sort((a, b) => a.strike - b.strike)
+    for (const short of longs) {
+      const dte = daysToExpiry(short.expiry, today)
+      if (!(short.underlyingPrice >= f.minPrice && short.underlyingPrice <= f.maxPrice && dte >= f.minDte && dte <= f.maxDte && short.ivr >= f.minIvr
+        && (1 - short.strike / short.underlyingPrice) * 100 + 1e-8 >= f.minBuffer && (1 - Math.abs(short.delta)) * 100 + 1e-8 >= f.minOtm)) continue
+      for (const long of longs) {
+        if (long.strike >= short.strike) break
+        const row = bullPutSpread(short, long, today)
+        if (row && row.maxProfit + 1e-8 >= f.minProfit && row.maxLoss <= f.maxLoss + 1e-8) rows.push(row)
+      }
+    }
   }
   return rows.sort((a, b) => b.returnOnRisk - a.returnOnRisk || a.id.localeCompare(b.id))
 }

@@ -132,6 +132,31 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
   }
   const warn = (symbol, error) => state.warnings.push(`${symbol}: ${error.message}`)
 
+  // reqMarketDataType is connection-wide: finish an entire round before switching type.
+  async function spreadQuotes(contracts) {
+    const results = new Array(contracts.length)
+    let remaining = contracts.map((contract, index) => ({ contract, index }))
+    for (const type of [MarketDataType.DELAYED, MarketDataType.FROZEN, MarketDataType.DELAYED_FROZEN]) {
+      ensureActive()
+      ib.reqMarketDataType(type)
+      const quotes = await Promise.allSettled(remaining.map(({ contract }) => quote(contract)))
+      ensureActive()
+      const retry = []
+      remaining.forEach(({ contract, index }, offset) => {
+        const result = quotes[offset]
+        if (result.status === 'fulfilled') {
+          result.value.marketDataType ??= type
+          results[index] = result
+          if (completeQuote(contract, result.value)) return
+        } else if (results[index]?.status !== 'fulfilled') results[index] = result
+        retry.push({ contract, index })
+      })
+      remaining = retry
+      if (!remaining.length) break
+    }
+    return results
+  }
+
   try {
     ensureActive()
     await new Promise((resolve, reject) => {
@@ -235,9 +260,10 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
         if (!contracts.length) throw new Error(mode === 'spreads' ? 'Geen standaardputs binnen de gekozen looptijd en buffer beschikbaar.' : mode === 'leaps' ? 'Geen standaardputs binnen 30–50 of 300–700 DTE beschikbaar.' : 'Geen standaardputketen met 35–50 dagen looptijd beschikbaar.')
         const symbolPuts = []
         let missing = 0
-        for (let offset = 0; offset < contracts.length; offset += 1) {
-          const batch = contracts.slice(offset, offset + 1)
-          const quotes = await Promise.allSettled(batch.map((contract) => availableQuote(contract)))
+        const batchSize = mode === 'spreads' ? 4 : 1
+        for (let offset = 0; offset < contracts.length; offset += batchSize) {
+          const batch = contracts.slice(offset, offset + batchSize)
+          const quotes = mode === 'spreads' ? await spreadQuotes(batch) : await Promise.allSettled(batch.map((contract) => availableQuote(contract)))
           for (let index = 0; index < batch.length; index++) {
             state.contractsChecked++
             const item = quotes[index]
@@ -248,7 +274,6 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
                 underlyingPrice: price, expiry: opt.lastTradeDateOrContractMonth, tradingClass: opt.tradingClass, ivr, ...ivMetadata, ...liquidity,
                 quotedAt: new Date().toISOString(), marketDataType: item.value.marketDataType })
               symbolPuts.push(state.puts.at(-1))
-              state.rows = selectSpreads(state.puts, today, filters)
               continue
             }
             const row = (mode === 'leaps' ? leapPut : cspCandidate)({ ...item.value, symbol, right: 'P', currency: 'USD', multiplier: 100, strike: opt.strike,
@@ -261,7 +286,8 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
             }
           }
           if (mode === 'spreads') {
-            state.progress = `Put spreads · ${symbol} · ${offset + 1} / ${contracts.length} contracten`
+            state.rows = selectSpreads(state.puts, today, filters)
+            state.progress = `Put spreads · ${symbol} · ${Math.min(offset + batch.length, contracts.length)} / ${contracts.length} contracten`
             await config.onScanCheckpoint?.()
           }
           if (mode === 'leaps') {

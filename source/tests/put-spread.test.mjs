@@ -50,7 +50,7 @@ test('broker scan pairs only matching puts, checkpoints, stays read-only and can
   class Fake extends EventEmitter {
     connect() { queueMicrotask(() => this.emit(EventName.connected)) }
     disconnect() { disconnected = true }
-    reqMarketDataType() {}
+    reqMarketDataType() { assert.equal(active.size, 0, 'Switch data type only after all active quotes finish') }
     reqContractDetails(id, contract) { this.emit(EventName.contractDetails, id, { contract: { ...contract, conId: 1 } }); this.emit(EventName.contractDetailsEnd, id) }
     reqMktData(id, contract) {
       active.add(id); maxActive = Math.max(maxActive, active.size)
@@ -67,14 +67,14 @@ test('broker scan pairs only matching puts, checkpoints, stays read-only and can
       this.emit(EventName.historicalData, id, 'finished')
     }
     cancelHistoricalData() {}
-    reqSecDefOptParams(id) { chainCalls++; this.emit(EventName.securityDefinitionOptionParameter, id, 'SMART', 1, 'TEST', '100', [expiry], [65, 75, 105]); this.emit(EventName.securityDefinitionOptionParameterEnd, id) }
+    reqSecDefOptParams(id) { chainCalls++; this.emit(EventName.securityDefinitionOptionParameter, id, 'SMART', 1, 'TEST', '100', [expiry], [45, 50, 55, 60, 65, 75, 105]); this.emit(EventName.securityDefinitionOptionParameterEnd, id) }
   }
   const state = { state: 'running', filters: spreadFilters(), rows: [], puts: [], warnings: [], symbolsChecked: 0, contractsChecked: 0 }
   await runCspScan({ clientId: 77, scanPacer: { acquire: async () => {} }, onSpreadSnapshot: async snapshot => { saved = snapshot }, onScanCheckpoint: async () => { checkpoints++ } }, ['TEST'], state, Fake, 'spreads')
-  assert.equal(state.state, 'complete'); assert.equal(state.rows.length, 1); assert.equal(state.contractsChecked, 2)
+  assert.equal(state.state, 'complete'); assert.equal(state.rows.length, 1); assert.equal(state.contractsChecked, 6)
   assert.equal(state.rows[0].maxLoss, 940); assert.equal(state.symbolsChecked, 1)
-  assert.equal(disconnected, true); assert.equal(active.size, 0); assert.equal(maxActive, 1); assert.equal(checkpoints, 2)
-  assert.equal(saved.puts.length, 2); assert.equal(saved.chains.length, 1)
+  assert.equal(disconnected, true); assert.equal(active.size, 0); assert.equal(maxActive, 4); assert.equal(checkpoints, 2)
+  assert.equal(saved.puts.length, 6); assert.equal(saved.chains.length, 1)
   assert.equal(chainCalls, 1)
   const before = historyCalls
   for (const filters of [{ maxPrice: 100 }, { minIvr: 80 }]) {
@@ -84,5 +84,58 @@ test('broker scan pairs only matching puts, checkpoints, stays read-only and can
     assert.equal(chainCalls, 1, 'No option-chain request for a rejected stock')
     assert.equal(filtered.contractsChecked, 0); assert.equal(filtered.assessments[0].status, 'filtered')
     if (filters.maxPrice) assert.equal(historyCalls, before, 'Price filter also skips IV history')
+  }
+  class Fallback extends Fake {
+    reqMarketDataType(type) { super.reqMarketDataType(type); this.type = type }
+    reqMktData(id, contract) {
+      if (contract.strike === 65 && this.type === 3) {
+        active.add(id)
+        this.emit(EventName.error, Error('Temporary quote error'), 200, id)
+      } else super.reqMktData(id, contract)
+    }
+  }
+  resetScanGuards()
+  const fallback = { ...state, rows: [], puts: [], warnings: [], assessments: [], contractsChecked: 0 }
+  await runCspScan({ clientId: 77, scanPacer: { acquire: async () => {} } }, ['TEST'], fallback, Fallback, 'spreads')
+  assert.equal(fallback.rows.length, 1)
+  assert.equal(fallback.rows[0].shortDataType, 3)
+  assert.equal(fallback.rows[0].longDataType, 2)
+  assert.equal(active.size, 0)
+
+  for (const reason of ['stop', 'pacing']) {
+    resetScanGuards()
+    const controller = new AbortController()
+    class Interrupted extends Fake {
+      reqMktData(id, contract) {
+        if (contract.secType === 'STK') return super.reqMktData(id, contract)
+        active.add(id)
+        queueMicrotask(() => reason === 'stop' ? controller.abort() : this.emit(EventName.error, Error('Max rate exceeded'), 100, id))
+      }
+    }
+    const interrupted = { ...state, rows: [], puts: [], warnings: [], assessments: [], contractsChecked: 0 }
+    await runCspScan({ clientId: 77, scanSignal: controller.signal, scanPacer: { acquire: async () => {} } }, ['TEST'], interrupted, Interrupted, 'spreads')
+    assert.equal(interrupted.state, reason === 'stop' ? 'cancelled' : 'error')
+    assert.equal(interrupted.rows.length, 0)
+    assert.equal(active.size, 0, 'All subscriptions cancelled on ' + reason)
+  }
+})
+
+test('prefiltered pairing matches exhaustive pairing for varied chains, missing values and filter boundaries', () => {
+  let seed = 421
+  const random = () => ((seed = (1664525 * seed + 1013904223) >>> 0) / 2 ** 32)
+  for (let run = 0; run < 40; run++) {
+    const f = spreadFilters({ minBuffer: run % 35, minOtm: run % 90, minProfit: run % 30, maxLoss: 100 + run * 100, maxQuoteSpread: (run % 4) / 2 })
+    const puts = Array.from({ length: 50 }, (_, i) => ({ ...short, symbol: i % 3 ? 'TEST' : 'OTHER',
+      strike: 10 + i * 2, bid: random() * 5, ask: random() * 6, delta: -random(), ivr: random() * 100 }))
+    puts.push({ ...long, strike: NaN }, { ...short, bid: undefined }, { ...long, delta: NaN }, short, long)
+    const expected = []
+    for (const a of puts) for (const b of puts) {
+      const row = bullPutSpread(a, b, today)
+      if (row && row.underlyingPrice >= f.minPrice && row.underlyingPrice <= f.maxPrice && row.dte >= f.minDte && row.dte <= f.maxDte
+        && row.ivr >= f.minIvr && row.buffer + 1e-8 >= f.minBuffer && row.maxProfit + 1e-8 >= f.minProfit && row.maxLoss <= f.maxLoss + 1e-8
+        && row.otmProxy + 1e-8 >= f.minOtm && a.ask - a.bid <= f.maxQuoteSpread + 1e-8 && b.ask - b.bid <= f.maxQuoteSpread + 1e-8) expected.push(row)
+    }
+    expected.sort((a,b) => b.returnOnRisk - a.returnOnRisk || a.id.localeCompare(b.id))
+    assert.deepEqual(selectSpreads(puts, today, f), expected)
   }
 })
