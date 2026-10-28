@@ -1,6 +1,7 @@
 # Dependencies and build output
 source/node_modules/
 source/dist/
+source/.app-updates/
 
 # Private IBKR input and generated private dashboard data
 source/data/private/

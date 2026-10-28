@@ -2,6 +2,7 @@ import { contributionReturn, contributionsSince } from '../shared/contribution-r
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   ArrowSwapRegular,
+  ArrowSyncRegular,
   ChartMultipleRegular,
   DataTrendingRegular,
   DismissRegular,
@@ -21,15 +22,17 @@ import StatsPage from './StatsPage'
 import ScansPage from './ScansPage'
 import OptionResearchPage from './pages/OptionResearchPage'
 import PutSpreadPage from './pages/PutSpreadPage'
+import AppUpdatePage from './pages/AppUpdatePage'
 import MartinScanPage from './pages/MartinScanPage'
 import TradingActivityCards from './TradingActivityCards'
 import IbkrConnectionControl from './IbkrConnectionControl'
 import { mergeLiveSnapshot, resolvePortfolio } from './ibkr'
 
 const DATA_URL = '/data/portfolio-summary.json'
-type Page = 'dashboard' | 'stocks' | 'options' | 'goals' | 'stats' | 'trades' | 'scans' | 'leaps' | 'spreads' | 'martin'
+type Page = 'dashboard' | 'stocks' | 'options' | 'goals' | 'stats' | 'trades' | 'scans' | 'leaps' | 'spreads' | 'martin' | 'updates'
 
 const pageFromHash = (): Page => {
+  if (window.location.hash === '#updates') return 'updates'
   if (window.location.hash === '#put-spreads' || (!window.location.hash && window.location.pathname === '/put-spreads')) return 'spreads'
   if (window.location.hash === '#martin' || (!window.location.hash && window.location.pathname === '/martin')) return 'martin'
   if (['#iv', '#breakout'].includes(window.location.hash) || (!window.location.hash && ['/iv', '/breakout'].includes(window.location.pathname))) return 'spreads'
@@ -54,6 +57,7 @@ const pageTitles: Record<Page, string> = {
   leaps: 'Leaps',
   spreads: 'Put spreads',
   martin: 'Martin-scan',
+  updates: 'Updates',
 }
 
 const currencyFormatter = (currency: string, showSign = false) =>
@@ -346,6 +350,7 @@ function App() {
             <HistoryRegular aria-hidden="true" />
             <span>Trades</span>
           </a>
+          <a className={`nav-item${currentPage === 'updates' ? ' nav-item--active' : ''}`} href="#updates" aria-current={currentPage === 'updates' ? 'page' : undefined}><ArrowSyncRegular aria-hidden="true" /><span>Updates</span></a>
         </nav>
         <button className="theme-toggle" type="button" aria-pressed={theme === 'dark'} onClick={() => setTheme((value) => value === 'dark' ? 'light' : 'dark')}>
           Donkere modus: {theme === 'dark' ? 'aan' : 'uit'}
@@ -359,7 +364,7 @@ function App() {
             <h1>{pageTitles[currentPage]}</h1>
             {currentPage === 'dashboard' && <p className="page-subtitle">Je portefeuille in één oogopslag</p>}
           </div>
-          {summary && currentPage !== 'scans' && currentPage !== 'leaps' && currentPage !== 'martin' && currentPage !== 'spreads' && (
+          {summary && currentPage !== 'scans' && currentPage !== 'leaps' && currentPage !== 'martin' && currentPage !== 'spreads' && currentPage !== 'updates' && (
             <div className="data-freshness" title={showLiveFreshness ? `IBKR-snapshot opgehaald op ${summary.sourceUpdatedAt}; historische Flex-basis t/m ${importedSummary?.balance.toDate}` : `Bronbestand gegenereerd op ${importedSummary?.sourceUpdatedAt}`}>
               <span className="data-freshness__pulse" aria-hidden="true" />
               <span>
@@ -372,14 +377,15 @@ function App() {
 
         {isMobile && <IbkrConnectionControl onSnapshot={handleLiveSnapshot} />}
 
+        {currentPage === 'updates' && <AppUpdatePage />}
         {currentPage === 'spreads' && <PutSpreadPage />}
         {currentPage === 'scans' && <ScansPage />}
         {currentPage === 'martin' && <MartinScanPage />}
         {currentPage === 'leaps' && <OptionResearchPage mode="leaps" />}
 
-        {isLoading && currentPage !== 'scans' && currentPage !== 'leaps' && currentPage !== 'martin' && currentPage !== 'spreads' && <LoadingDashboard />}
+        {isLoading && currentPage !== 'scans' && currentPage !== 'leaps' && currentPage !== 'martin' && currentPage !== 'spreads' && currentPage !== 'updates' && <LoadingDashboard />}
 
-        {!isLoading && error && currentPage !== 'scans' && currentPage !== 'leaps' && currentPage !== 'martin' && currentPage !== 'spreads' && (
+        {!isLoading && error && currentPage !== 'scans' && currentPage !== 'leaps' && currentPage !== 'martin' && currentPage !== 'spreads' && currentPage !== 'updates' && (
           <section className="state-panel state-panel--error" role="alert">
             <div>
               <h2>Dashboarddata ontbreekt</h2>

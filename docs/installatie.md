@@ -1,5 +1,7 @@
 # Installatie
 
+Vanaf versie 0.41.0 is er een [updatepagina in de webapp](app-updates.md). De eerste installatie daarvan gebeurt nog eenmalig via het bestaande updatescript.
+
 ## Lokale installatie
 
 1. Installeer Node.js 22 of nieuwer.

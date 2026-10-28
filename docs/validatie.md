@@ -1,5 +1,13 @@
 # Validatie
 
+## Trading Monitor 0.41.0 — updateknop (28 oktober 2026)
+
+- Pagina Updates met frontend-/API-versie, expliciete controle/installatie, voortgang, herladen en verbindingsherstel. De oude webapp vereist eenmalig de handmatige update om de service te installeren.
+- Aparte systemd-service als gewone API-gebruiker; tijdelijke Git-worktree voor dependencies/tests/build, vaste root-publicatiehelper en nauw begrensde sudoers-regel. Geen shellopdrachten of downloadlocaties vanuit de browser. Bestaande API-sandbox behouden.
+- Lokale wijzigingen, andere origin/branch en een gewijzigd GitHub-doel blokkeren installatie. Actieve scans/IBKR-vernieuwingen blokkeren de start; nieuwe scans wachten tijdens updates. Webroot-back-up en controle van de nieuwe API-versie.
+- 216 Node-tests en 13 frontendtests geslaagd, inclusief bestaande lokale tests voor andere werkzaamheden. TypeScript/Vite-build en Bash-syntaxcontrole geslaagd. Nieuwe browserworkflow met gesimuleerde API geslaagd: setup, controle/installatie, dubbele acties, herladen, API-onderbreking, fouten, toetsenbord, 360–1440 pixels en 200% zoom. Screenshot visueel gecontroleerd.
+- Geen daadwerkelijke systemd-/sudo-installatie of productie-update uitgevoerd in deze Windows-ontwikkelomgeving. Geen automatische volledige terugrol. Zie [installatie en herstel](app-updates.md).
+
 ## Trading Monitor 0.40.0 — optiechainverbeteringen (28 oktober 2026)
 
 - Aangeleverde Yahoo-/SQLite-code beoordeeld; zie [vergelijking en afwegingen](vergelijking-optiechain.md). Geen externe broncode of nieuwe databron toegevoegd.

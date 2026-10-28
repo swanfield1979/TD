@@ -2,7 +2,7 @@
 
 Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voortgang op basis van Interactive Brokers Flex-rapporten.
 
-**Versie/status:** 0.40.0. Versie 0.40.0 voegt compacte optiechainresultaten, Jaar-R/R en extra sorteringen toe. De scanner verwerkt maximaal vier quotes tegelijk met behoud van pacing en filtert ongeschikte benen vóór het combineren. Build, tests en browsercontrole geslaagd; serverinstallatie nog niet uitgevoerd.
+**Versie/status:** 0.41.0. Nieuwe pagina Updates met versiecontrole, installatieknop en zichtbare voortgang. De aparte updateservice test en bouwt vóór publicatie en blijft actief tijdens een API-herstart. Eenmalige serverinstallatie nog nodig. Lokale tests, build en browsercontrole geslaagd.
 
 | Map | Inhoud |
 | --- | --- |
@@ -13,6 +13,8 @@ Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voort
 Lokale mobiele correctie (14 oktober 2026): IBKR-status en vernieuwknop staan op schermen t/m 700 pixels direct onder de paginatitel. Build en browsercontrole geslaagd; serverpublicatie nog niet uitgevoerd. Zie [validatie](docs/validatie.md).
 
 ## Starten
+
+Bijwerken: [eenmalige installatie en volgende updates via de webapp](docs/app-updates.md).
 
 Ontwikkeling: `npm run dev:lan`; productie: `npm run serve:lan`, vanuit source na dependency-installatie. Zie [LAN-handleiding](docs/breakout-lan.md). Optionele systemd-service wordt handmatig geïnstalleerd.
 

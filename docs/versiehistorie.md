@@ -1,5 +1,12 @@
 # Versiehistorie
 
+## 0.41.0 — updateknop in de webapp (28 oktober 2026)
+
+- Pagina Updates met controle en installatie vanaf GitHub, versie-informatie, voortgang en herstel na API-herstart.
+- Afzonderlijke gewone-gebruikersservice, geïsoleerde voorbereiding, tests en build, vaste publicatiehelper met beperkte sudo-rechten, webroot-back-up en controle van de nieuwe API-versie.
+- Geen overschrijven van lokale wijzigingen; actieve scans en IBKR-vernieuwingen blokkeren installatie. Het bestaande updatescript installeert de nieuwe service eenmalig.
+- Lokale tests, frontendtests, build, Bash-syntax en gesimuleerde browserworkflow geslaagd. Linux-service-installatie nog niet uitgevoerd. [Handleiding](app-updates.md).
+
 ## 0.40.0 — optiechainverwerking en tabeloverzicht (28 oktober 2026)
 
 - Beoordeling van aangeleverde Yahoo-/SQLite-scanner; bruikbare principes toegepast zonder externe broncode over te nemen. [Onderzoek en snelheidsmeting](vergelijking-optiechain.md).

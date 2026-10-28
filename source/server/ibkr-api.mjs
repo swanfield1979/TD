@@ -19,6 +19,8 @@ import { makeFilteredIvState, runFilteredIvScan, ivSelection, ivFilters } from '
 import { createWeeklySpreadSchedule } from './weekly-spread-schedule.mjs'
 import { createStockSectors } from './stock-sectors.mjs'
 import { autoBlockStock, reconcileMissingStocks } from './auto-block-stocks.mjs'
+import { fileURLToPath } from 'node:url'
+import { createAppUpdater } from './app-update.mjs'
 
 const scanControllers = {}
 const activeScanJobs = new Set()
@@ -113,7 +115,7 @@ async function saveSnapshot(snapshot) {
 // Capture executions while Gateway is running, also when no browser is open.
 // Background checks never start Gateway or initiate an MFA login.
 async function refreshConnectedGateway() {
-  if (runtime.isBusy) return
+  if (runtime.isBusy || appUpdater.isBusy()) return
   runtime.isBusy = true
   try {
     const snapshot = await collectSnapshot(config)
@@ -255,7 +257,16 @@ try {
   await reconcileMissingStocks(blockedStocks, { stock: stockFilter.snapshot(), iv: optionScans.iv, options: optionScans.spreads })
   await saveScanResults()
 } catch (error) { optionScans.iv.autoBlockError = `Automatisch blokkeren kon niet worden opgeslagen: ${error.message}` }
-const scansBusy = () => blockedStocks.isSaving() || activeScanJobs.size > 0 || scanState.state === 'running' || Object.values(optionScans).some(scan => scan.state === 'running') || stockFilter.snapshot().state === 'running'
+const workBusy = () => runtime.isBusy || martinScan.snapshot().state === 'running' || blockedStocks.isSaving() || activeScanJobs.size > 0 || scanState.state === 'running' || Object.values(optionScans).some(scan => scan.state === 'running') || stockFilter.snapshot().state === 'running'
+let weeklySchedule
+const appUpdater = createAppUpdater({ path: resolve(dirname(config.snapshotPath), 'app-update.json'),
+  sourceRoot: fileURLToPath(new URL('..', import.meta.url)),
+  installedVersion: JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8')).version,
+  busy: () => workBusy() || weeklySchedule?.isRunning(),
+})
+await appUpdater.snapshot()
+setInterval(() => { void appUpdater.snapshot().catch(() => {}) }, 2000).unref()
+const scansBusy = () => appUpdater.isBusy() || workBusy()
 function startFilteredIv(selection, filters, resume = false) {
   const previous = optionScans.iv
   if (resume) {
@@ -267,7 +278,7 @@ function startFilteredIv(selection, filters, resume = false) {
   const done = runOptionScan('iv', [], state, previous)
   return { state, done }
 }
-const weeklySchedule = await createWeeklySpreadSchedule(resolve(dirname(config.snapshotPath), 'put-spread-schedule.json'), {
+weeklySchedule = await createWeeklySpreadSchedule(resolve(dirname(config.snapshotPath), 'put-spread-schedule.json'), {
   busy: scansBusy,
   async runStock() {
     blockedStocks.assertReadable()
@@ -291,6 +302,16 @@ const weeklyTimer = setInterval(() => { if (process.env.PUT_SPREAD_SCHEDULE_DISA
 weeklyTimer.unref()
 const server = createServer(async (request, response) => {
   try {
+    if (request.url === '/api/app-update') {
+      if (request.method === 'GET') return sendJson(response, 200, await appUpdater.snapshot())
+      if (request.method === 'POST') {
+        if (!isAllowedPost(request)) return sendJson(response, 403, { message: 'Ongeldige aanvraag.' })
+        try { return sendJson(response, 202, await appUpdater.start((await readJsonBody(request)).action)) }
+        catch (error) { return sendJson(response, 409, { message: error.message }) }
+      }
+      return sendJson(response, 405, { message: 'Methode niet toegestaan.' })
+    }
+    if (request.method === 'POST' && appUpdater.isBusy()) return sendJson(response, 409, { message: 'Applicatie-update bezig. Wacht tot deze klaar is.' })
     if (request.url === '/api/put-spreads/schedule') {
       if (request.method === 'GET') return sendJson(response, 200, weeklySchedule.snapshot())
       if (request.method === 'POST') {

@@ -1,5 +1,9 @@
 # Releases
 
+## Trading Monitor 0.41.0 — bijwerken via de webapp
+
+Pagina **Updates** met versiecontrole, installatie en voortgang. Nieuwe Linux-updateservice test en bouwt apart, maakt een webroot-back-up en herstart de bestaande services. Het handmatige updatescript installeert de service eenmalig; daarna kan bijwerken vanuit de browser. [Installatie en beperkingen](../docs/app-updates.md). Broncodeversie; geen apart installatiepakket. De serverinstallatie is nog niet uitgevoerd.
+
 ## Trading Monitor 0.40.0 — snellere optiechainverwerking en compacte tabel
 
 Maximaal vier quoteaanvragen tegelijk met bestaande pacing, vroegere filtering en minder herberekeningen. Compacte/uitgebreide tabel met buffer, DTE, B/L en Jaar-R/R; extra sortering en CSV-veld. Zie [vergelijking](../docs/vergelijking-optiechain.md) en [serverupdate](../docs/put-spreads.md#installatie-en-serverupdate). Broncodeversie op GitHub; geen apart installatiepakket. Serverinstallatie nog niet uitgevoerd.
