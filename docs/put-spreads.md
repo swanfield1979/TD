@@ -1,6 +1,10 @@
 # Bull-put-spreadscanner
 
-Trading Monitor **0.42.0**, bijgewerkt op 28 oktober 2026. Open **Put spreads** in het menu of gebruik `/#put-spreads`. Deze uitbreiding blijft binnen de bestaande lokale app.
+Trading Monitor **0.42.1**, bijgewerkt op 28 oktober 2026. Open **Put spreads** in het menu of gebruik `/#put-spreads`. Deze uitbreiding blijft binnen de bestaande lokale app.
+
+## Bediening en quote-details in 0.42.1
+
+Kruisje vóór het vergrootglas, grotere uitklappijl met klikvlak van 44 × 44 pixels en quotegegevens in een vergelijkingstabel voor verkoopput en koopput. De pijl draait mee bij openen en blijft met het toetsenbord bedienbaar. De tabel toont bied-/laatprijzen en status/tijd per been; algemene gegevens staan eronder als gezamenlijke regels.
 
 ## Nieuw in 0.42.0: Yahoo-voorselectie
 
@@ -210,9 +214,9 @@ npm run dev:lan
 
 Gebruik de bestaande IB Gateway-configuratie en datarechten; zie [IBKR](IBKR.md). Zonder bereikbare API/broker zijn geen actuele scanresultaten te verifiëren. Lokale frontend apart: `npm run dev -- --host 127.0.0.1 --port 5197`; Node-API apart: `npm run start:api`. Zorg dat die frontend-origin toegestaan is voor de Node-API. De gebruikelijke LAN-launcher regelt dit voor zijn eigen origin.
 
-Serverupdate vereist frontend (`dist/`), Node (`server/`, `shared/`) en de bestaande bijgewerkte Python-LAN-proxy. Het bestaande script `bash deploy/update-options.sh` controleert nu versie 0.42.0, bouwt/test, publiceert en herstart de bestaande services. Er is geen serverinstallatie vanuit deze ontwikkelomgeving uitgevoerd. Het script controleert `/api/put-spreads`, `/api/stock-filter`, `/api/put-spreads/iv`, `/api/put-spreads/blocked` en `/api/put-spreads/schedule`. De bestaande algemene `/api/`-proxy ondersteunt deze routes. Volg de [bestaande installatiehandleiding](installatie.md) voor een nieuwe installatie.
+Serverupdate vereist frontend (`dist/`), Node (`server/`, `shared/`) en de bestaande bijgewerkte Python-LAN-proxy. Het bestaande script `bash deploy/update-options.sh` controleert nu versie 0.42.1, bouwt/test, publiceert en herstart de bestaande services. Er is geen serverinstallatie vanuit deze ontwikkelomgeving uitgevoerd. Het script controleert `/api/put-spreads`, `/api/stock-filter`, `/api/put-spreads/iv`, `/api/put-spreads/blocked` en `/api/put-spreads/schedule`. De bestaande algemene `/api/`-proxy ondersteunt deze routes. Volg de [bestaande installatiehandleiding](installatie.md) voor een nieuwe installatie.
 
-De kop **Gevonden spreads** toont **v0.42.0**. Ontbreken die versie en het vergrootglas met overige spreads, dan wordt nog een oude frontend geleverd. Alleen een GitHub-push vervangt de serverbestanden niet. Voer op de bestaande Linux-server vanuit de repository-root uit:
+De kop **Gevonden spreads** toont **v0.42.1**. Ontbreken die versie en het vergrootglas met overige spreads, dan wordt nog een oude frontend geleverd. Alleen een GitHub-push vervangt de serverbestanden niet. Voer op de bestaande Linux-server vanuit de repository-root uit:
 
 ```bash
 git pull --ff-only

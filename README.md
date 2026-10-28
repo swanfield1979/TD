@@ -2,7 +2,7 @@
 
 Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voortgang op basis van Interactive Brokers Flex-rapporten.
 
-**Versie/status:** 0.42.0. Yahoo-optiechains als snelle voorselectie met aansluitende IBKR-controle; bronkeuze in Option Scan en zelfstandige CLI-scraper. 223 Node-tests, 13 frontendtests en build geslaagd. Live Yahoo-proef kreeg HTTP 429; serverinstallatie nog niet uitgevoerd.
+**Versie/status:** 0.42.1. Kruisje vóór het vergrootglas, grotere uitklappijl met klikvlak van 44 × 44 pixels en quotegegevens in een vergelijkingstabel voor verkoopput en koopput. Build en frontendtests geslaagd; serverinstallatie nog niet uitgevoerd.
 
 | Map | Inhoud |
 | --- | --- |

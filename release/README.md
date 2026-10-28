@@ -1,5 +1,9 @@
 # Releases
 
+## Trading Monitor 0.42.1 — grotere uitklappijl en quotetabel
+
+Kruisje vóór het vergrootglas, ruim klikvlak voor de uitklappijl en tabelvergelijking van verkoopput en koopput. Build en frontendtests geslaagd; bijwerken via Updates. Broncodeversie zonder apart installatiepakket; serverinstallatie nog niet uitgevoerd.
+
 ## Trading Monitor 0.42.0 — Yahoo Finance-optiechains
 
 Volledige Yahoo-chains per expiratie met sessiehergebruik en private cache. Nieuwe keuze **Yahoo + IBKR-controle** in Option Scan; de broker controleert de geselecteerde contracten. Zelfstandig: `npm run scrape:yahoo -- AAPL 40 100` vanuit `source/`. [Handleiding en liveproef](../docs/yahoo-optiechains.md). Broncodeversie zonder apart installatiepakket. Yahoo-liveproef kreeg HTTP 429; geen bevestigde live-snelheidsclaim of serverinstallatie. Bijwerken kan via de bestaande pagina Updates.

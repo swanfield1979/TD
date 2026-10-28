@@ -1,5 +1,11 @@
 # Versiehistorie
 
+## 0.42.1 — aandeelbediening en quote-details (28 oktober 2026)
+
+- Kruisje vóór het vergrootglas; zichtbare uitklappijl met klikvlak van 44 × 44 pixels.
+- Quotegegevens in een tabel met verkoopput en koopput naast elkaar, inclusief status/tijden en gezamenlijke volume-/bronvelden.
+- Build, frontendtests en browserworkflow gecontroleerd. Scanlogica ongewijzigd; nog niet op de server geïnstalleerd.
+
 ## 0.42.0 — Yahoo-voorselectie voor optiechains (28 oktober 2026)
 
 - Zelfstandige Node-scraper en CLI voor standaardcalls en -puts, met anonieme sessie, pacing, tienminutencache en oorspronkelijke brontijden.

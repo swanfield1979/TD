@@ -1,5 +1,12 @@
 # Validatie
 
+## Trading Monitor 0.42.1 — bediening en quotetabel (28 oktober 2026)
+
+- Verwijderknop als eerste in de aandeelkolom, vóór het vergrootglas. Uitklappijl vergroot tot 24 pixels binnen een zichtbaar klikvlak van 44 × 44 pixels; native details-/toetsenbordbediening en TradingView-link behouden.
+- Quote-details als tabel met verkoopput en koopput naast elkaar: strike, bied, laat, datastatus en quotetijd. Volume, handelsklasse, buffer en broninformatie staan als gezamenlijke tabelregels.
+- TypeScript/Vite-build en 13 frontendtests geslaagd. Browserworkflow controleert knopvolgorde, afmetingen, uitklappen via de pijl, tabelkoppen en de bestaande spreadbediening; mobiele overflow en toetsenbord blijven gecontroleerd. Geen wijziging aan scanberekeningen.
+- Serverinstallatie nog niet uitgevoerd; bijwerken via Updates.
+
 ## Trading Monitor 0.42.0 — Yahoo-optiechains (28 oktober 2026)
 
 - Node-scraper met normale anonieme cookie-/crumbsessie, volledige standaardcall-/putchains per geselecteerde expiratie, twee expiraties tegelijk en gepacete aanvraagstarts. Aparte private cache van tien minuten met oorspronkelijke ophaaltijden.
