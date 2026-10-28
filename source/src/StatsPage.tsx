@@ -1,15 +1,16 @@
 import { useMemo, useState } from 'react'
 import { ChartMultipleRegular, ClockRegular, TrophyRegular } from '@fluentui/react-icons'
 import type { ClosedTrade, PortfolioHistoryPoint } from './types'
+import { RealizedPerformance, SymbolPerformance } from './StatsPerformance'
 
 interface StatsPageProps {
   trades: ClosedTrade[]
   portfolioHistory: PortfolioHistoryPoint[]
   currency: string
+  portfolioCurrency?: string
 }
 
 const MONTHS = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec']
-const ANALYSIS_YEAR = '2026'
 
 const formatCurrency = (value: number, currency: string, showSign = false) =>
   new Intl.NumberFormat('nl-NL', {
@@ -48,7 +49,7 @@ function PortfolioHistoryChart({ history, currency }: { history: PortfolioHistor
     () => [...new Set(history.map((point) => point.month.slice(0, 4)))].sort(),
     [history],
   )
-  const [selectedPeriod, setSelectedPeriod] = useState(() => years.includes(ANALYSIS_YEAR) ? ANALYSIS_YEAR : 'all')
+  const [selectedPeriod, setSelectedPeriod] = useState(() => years.at(-1) ?? 'all')
   const points = selectedPeriod === 'all'
     ? history
     : history.filter((point) => point.month.startsWith(selectedPeriod))
@@ -93,7 +94,7 @@ function PortfolioHistoryChart({ history, currency }: { history: PortfolioHistor
         <div>
           <span><ChartMultipleRegular aria-hidden="true" /> Portefeuilleverloop</span>
           <h2 id="portfolio-history-title">Ontwikkeling van het saldo</h2>
-          <small>Maandeindsaldi uit de geïmporteerde Flex-rapporten</small>
+          <small>Maandeindsaldi inclusief inleg en open posities · geen beleggingsrendement</small>
         </div>
         <div className="portfolio-history__periods" role="group" aria-label="Kies een periode voor het portefeuilleverloop">
           {years.map((year) => (
@@ -141,7 +142,7 @@ function PortfolioHistoryChart({ history, currency }: { history: PortfolioHistor
       </div>
       <footer className="portfolio-history__footer">
         <span><i aria-hidden="true" /> Portefeuille</span>
-        <small>Benchmarkvergelijking volgt zodra een betrouwbare koersbron is gekoppeld.</small>
+        <small>Voor SPY-vergelijking ontbreekt betrouwbare benchmarkhistorie.</small>
       </footer>
     </section>
   )
@@ -323,12 +324,12 @@ function DurationDistribution({ trades }: { trades: ClosedTrade[] }) {
   )
 }
 
-export default function StatsPage({ trades, portfolioHistory, currency }: StatsPageProps) {
+export default function StatsPage({ trades, portfolioHistory, currency, portfolioCurrency = currency }: StatsPageProps) {
   const years = useMemo(
-    () => [...new Set(trades.map((trade) => trade.closedAt.slice(0, 4)))].sort((left, right) => right.localeCompare(left)),
-    [trades],
+    () => [...new Set([...trades.map((trade) => trade.closedAt.slice(0, 4)), ...portfolioHistory.map(point => point.month.slice(0, 4))])].sort((left, right) => right.localeCompare(left)),
+    [trades, portfolioHistory],
   )
-  const [selectedYear, setSelectedYear] = useState(() => years.includes(ANALYSIS_YEAR) ? ANALYSIS_YEAR : years[0] ?? '')
+  const [selectedYear, setSelectedYear] = useState(() => years[0] ?? '')
   const filteredTrades = useMemo(
     () => trades.filter((trade) => trade.closedAt.startsWith(selectedYear)),
     [selectedYear, trades],
@@ -349,7 +350,7 @@ export default function StatsPage({ trades, portfolioHistory, currency }: StatsP
   return (
     <div className="stats-page">
       <section className="trades-year-filter" aria-labelledby="stats-year-filter-label">
-        <div><span id="stats-year-filter-label">Analysejaar</span><small>Alle kerncijfers en handelsgrafieken volgen deze selectie.</small></div>
+        <div><span id="stats-year-filter-label">Analysejaar</span><small>Gesloten opties · alle kerncijfers en handelsgrafieken volgen deze selectie. De saldografiek heeft een eigen periodekeuze.</small></div>
         <div className="trades-year-filter__options" role="group" aria-label="Kies een analysejaar">
           {years.map((year) => (
             <button key={year} type="button" className={year === selectedYear ? 'trades-year-filter__active' : undefined} aria-pressed={year === selectedYear} onClick={() => setSelectedYear(year)}>{year}</button>
@@ -362,11 +363,13 @@ export default function StatsPage({ trades, portfolioHistory, currency }: StatsP
         <article><span>Winratio</span><strong className="metric--positive">{formatPercentage(filteredTrades.length ? winningTrades.length / filteredTrades.length * 100 : 0)}</strong><small>{winningTrades.length} winsttrades</small></article>
         <article><span>Optieresultaat</span><strong className={`metric--${direction(totalProfit)}`}>{formatCurrency(totalProfit, currency, true)}</strong><small>Long en short · exclusief aandelen</small></article>
         <article><span>Gemiddeld per trade</span><strong className={`metric--${direction(averageProfit)}`}>{formatCurrency(averageProfit, currency, true)}</strong><small>Over alle sluitingen</small></article>
-        <article><span>Profit factor</span><strong>{profitFactor === null ? '—' : formatNumber(profitFactor, 2)}</strong><small>Brutowinst ÷ brutoverlies</small></article>
+        <article><span>Profit factor</span><strong>{profitFactor === null ? '—' : formatNumber(profitFactor, 2)}</strong><small>Som winsttrades ÷ som verliestrades</small></article>
         <article><span>Gemiddelde looptijd</span><strong>{formatNumber(averageDays)} dagen</strong><small>{measuredDurations.length} gemeten trades</small></article>
       </section>
 
-      <PortfolioHistoryChart history={portfolioHistory} currency={currency} />
+      <RealizedPerformance trades={filteredTrades} currency={currency} year={selectedYear} />
+
+      <PortfolioHistoryChart history={portfolioHistory} currency={portfolioCurrency} />
 
       <div className="stats-grid stats-grid--primary">
         <MonthlyResultChart trades={filteredTrades} currency={currency} year={selectedYear} />
@@ -376,6 +379,7 @@ export default function StatsPage({ trades, portfolioHistory, currency }: StatsP
         <UnderlyingResults trades={filteredTrades} currency={currency} />
         <DurationDistribution trades={filteredTrades} />
       </div>
+      <SymbolPerformance trades={filteredTrades} currency={currency} year={selectedYear} />
     </div>
   )
 }

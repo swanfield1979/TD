@@ -2,7 +2,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 test -f package.json
-test "$(node -p "JSON.parse(require('fs').readFileSync('package.json')).version")" = "0.42.3"
+test "$(node -p "JSON.parse(require('fs').readFileSync('package.json')).version")" = "0.42.5"
 systemctl cat trading-monitor-api.service >/dev/null 2>&1 || { echo 'De bestaande trading-monitor-api.service ontbreekt; zie docs/iv-leaps.md.' >&2; exit 1; }
 api_dir="$(systemctl show trading-monitor-api.service -p WorkingDirectory --value)"
 test "$(realpath "$api_dir")" = "$(pwd -P)" || { echo 'API WorkingDirectory wijkt af van deze source-map; werk de echte API-checkout bij.' >&2; exit 1; }
@@ -35,4 +35,4 @@ curl --fail --silent --show-error http://127.0.0.1/api/stock-filter
 curl --fail --silent --show-error http://127.0.0.1/api/put-spreads/iv
 curl --fail --silent --show-error http://127.0.0.1/api/put-spreads/blocked
 curl --fail --silent --show-error http://127.0.0.1/api/put-spreads/schedule
-printf '\nTrading Monitor 0.42.3 geplaatst. Back-up: %s\nOpen http://192.168.1.22/#put-spreads, #martin of #leaps en vernieuw met Ctrl+F5.\n' "$backup_dir"
+printf '\nTrading Monitor 0.42.5 geplaatst. Back-up: %s\nOpen http://192.168.1.22/#put-spreads, #martin of #leaps en vernieuw met Ctrl+F5.\n' "$backup_dir"

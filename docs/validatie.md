@@ -489,3 +489,13 @@ Build, alle 13 frontendtests, de bestaande layoutcontrole (360–3440 pixels, 20
 ## Updateherkenning 0.42.3 — 28 oktober 2026
 
 De ontwerpcommit had nog versienummer 0.42.2; de updater vergelijkt stabiele versienummers en zag daardoor geen nieuwere versie. Manifest, lockfile en handmatig updatescript verhoogd naar 0.42.3. De bestaande updaterfunctie bevestigt dat 0.42.3 nieuwer is dan 0.42.2. Build en 13 frontendtests geslaagd. Eerste volledige Node-run: 222/223 door een API-starttimeout; de betreffende test en alle acht updatertests slaagden bij gerichte herhaling, vervolgens volledige run 223/223 geslaagd. Geen serverinstallatie uitgevoerd.
+
+
+## Stats 0.42.4 — 28 oktober 2026 (lokaal)
+
+Build, alle 223 Node-tests en alle 17 frontendtests geslaagd, inclusief vier nieuwe berekeningstests voor cumulatief resultaat, dagaggregatie, terugval, meetdekking, nulwaarden en totale resultaatbehoud. Bestaande layoutcontrole geslaagd op 360–3440 pixels met mobiele navigatie en 200% zoom. Aanvullende Stats-browsercontrole geslaagd in beide thema's op 375/768/1440 pixels: zoeken, sorteren, jaarfilters, toetsenborddetails en lege historie, zonder pagina-overloop of JavaScript-paginafouten. Ook de algemene financiële browsercontrole op zes portefeuillepagina's geslaagd. Screenshots van Stats op desktop en mobiel visueel gecontroleerd. Browser-API afgevangen; geen live brokercontrole. Versie 0.42.4 staat lokaal in manifest, lockfile en updatescript; nog niet gepusht of op de server geïnstalleerd. Zie [Stats](stats.md).
+
+
+## Options en Stats 0.42.5 — 28 oktober 2026
+
+Build, alle 223 Node-tests en alle 24 frontendtests geslaagd. Zeven nieuwe groeperingstests controleren het SMCI-voorbeeld, netto waarden, behoud van aantallen/bedragen, SYNT-prioriteit, debetposities, onbekende gegevens en ISO-weken. Options-browsercontrole met expliciete testbenen geslaagd voor in-/uitklappen, toetsenbord, openingsweken, hoofdregelwaarden en ongewijzigde totalen in beide thema's op 375/768/1440 pixels. Tijdens ontwikkeling gevonden mobiele overloop van uitgeklapte tabelgroepen opgelost met layout containment; hercontrole geslaagd. Ook Stats-browsercontrole, algemene financiële browsercontrole en layoutcontrole op 360–3440 pixels/200% zoom geslaagd. Screenshots visueel gecontroleerd. Broker-API afgevangen; geen live brokerorders of serverinstallatie. Manifest, lockfile en handmatig updatescript op 0.42.5. Zie [optiecombinaties](optiecombinaties.md).

@@ -1,5 +1,21 @@
 # Versiehistorie
 
+## 0.42.5 — uitklapbare optiecombinaties (28 oktober 2026)
+
+- Putspreads en SYNT long/short hebben één hoofdregel met uitklapbare long- en shortbenen. Losse opties blijven apart staan.
+- Aantal sets, strikes, openingsdatum, expiratie, gekozen DTE, netto premie, netto sluitprijs, marktwaarde en resultaat blijven in de hoofdregel zichtbaar. Verschillende openingsdatums/DTE's worden apart getoond.
+- ISO-weeknummer vóór de openingsdatum, ook voor losse opties en uitgeklapte benen.
+- Ongelijke aantallen worden gesplitst met behoud van restposities en evenredige marktwaarde/resultaat. Totalen en reserveringsberekening behouden.
+- Inclusief de eerder lokaal voorbereide Stats-uitbreiding. Build, 223 Node-tests, 24 frontendtests en browsercontroles geslaagd. Serverinstallatie nog niet uitgevoerd. Zie [optiecombinaties](optiecombinaties.md).
+
+## 0.42.4 — uitgebreid statistiekenoverzicht (meegeleverd in 0.42.5, 28 oktober 2026)
+
+- Geïnspireerd op de aangeleverde referentie: cumulatief netto optieresultaat per sluitingsdag, opbouw per optietype, winst/verlies, payoffratio, gerealiseerde terugval en prestaties per aandeel.
+- Sorteerbare, doorzoekbare tabel met resultaten, sluitingen, winratio, gemiddelde looptijd, openingsrendement en uitsplitsing short put/short call/long. Meetdekking zichtbaar; onbekende waarden blijven onbekend.
+- Jaarselectie standaard op het nieuwste beschikbare jaar. Bedragen van gesloten opties gebruiken de optievaluta; saldo gebruikt de portefeuillevaluta.
+- Geen open holdings/open trades, verzonnen benchmark, kapitaalrendement, sector- of industrieverdeling toegevoegd. Saldo en gerealiseerd resultaat blijven onderscheiden.
+- Gecombineerd uitgebracht met optiecombinaties in 0.42.5; serverinstallatie nog niet uitgevoerd. Zie [Stats](stats.md).
+
 ## 0.42.3 — financieel ontwerp (28 oktober 2026)
 
 - Samenhangend diepblauw/licht thema met betere financiële typografie, duidelijke saldo-hiërarchie en blauw voor navigatie en grafieken.

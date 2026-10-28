@@ -1,5 +1,13 @@
 # Releases
 
+## Trading Monitor 0.42.5 — uitklapbare optiecombinaties en Stats
+
+Putspreads en SYNT worden eenmaal getoond met twee uitklapbare benen, netto premie/koers, gecombineerde waarden en ISO-openingsweek. Inclusief de Stats-uitbreiding met cumulatief resultaat en prestaties per aandeel. Manifest, lockfile en updatescript staan op 0.42.5 zodat Updates de versie herkent. Geen afzonderlijk installatiepakket; serverinstallatie nog niet uitgevoerd. Zie [optiecombinaties](../docs/optiecombinaties.md) en [Stats](../docs/stats.md).
+
+## Stats-uitbreiding vanaf 0.42.4 (meegeleverd in 0.42.5)
+
+Uitgebreide Stats-pagina met cumulatief gesloten optieresultaat, resultaatanalyse en sorteerbare prestaties per aandeel. Meegeleverd in 0.42.5; serverinstallatie nog niet uitgevoerd. Geen afzonderlijk installatiepakket. Zie [Stats](../docs/stats.md).
+
 ## Trading Monitor 0.42.3 — financieel ontwerp
 
 Financiële ontwerpupdate van 28 oktober 2026: broncode en productiebuild gecontroleerd, geen afzonderlijk installatiepakket. Versie 0.42.3 maakt de wijziging herkenbaar via Updates. Serverinstallatie nog niet uitgevoerd. Zie [ontwerp en validatie](../docs/financieel-ontwerp.md).

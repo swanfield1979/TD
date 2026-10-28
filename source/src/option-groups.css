@@ -1,0 +1,18 @@
+.options-page .positions-table-region { position: relative; contain: inline-size layout paint; }
+.option-group-toggle { display: flex; align-items: center; gap: 9px; width: 100%; min-height: 44px; padding: 0; border: 0; border-radius: 5px; background: transparent; color: var(--tm-text-primary); text-align: left; cursor: pointer; }
+.option-group-toggle > svg { flex: 0 0 auto; width: 30px; height: 30px; padding: 5px; background: var(--tm-accent-soft); border: 1px solid var(--tm-stroke); border-radius: 6px; color: var(--tm-accent-primary); transition: transform var(--tm-motion-fast); }
+.option-group-toggle[aria-expanded="true"] > svg { transform: rotate(180deg); }
+.option-group-toggle:hover > svg { border-color: var(--tm-accent-primary); }
+.options-table .options-table__row--group { background: var(--tm-surface-2); }
+.options-table .options-table__row--group > th { background: var(--tm-surface-2); }
+.options-table .options-table__row--leg > th { padding-left: 30px; border-left: 3px solid var(--tm-accent-primary); }
+.options-table .options-table__row--leg > th strong { font-weight: 500; }
+.option-strategy.option-strategy--spread { background: var(--tm-accent-soft); color: var(--tm-accent-primary); border-color: var(--tm-stroke-strong); }
+.option-opened, .option-opened > span, .option-opened > small, .option-net-price, .option-net-price > small { display: block; }
+.option-opened { white-space: nowrap; }
+.option-opened > small { margin-bottom: 3px; font-size: 11px; color: var(--tm-text-secondary); }
+.option-net-price > small { margin-top: 3px; color: var(--tm-text-secondary); font-size: 10px; }
+.option-group-values, .option-group-dates { display: grid; gap: 8px; }
+.option-group-values > span { display: grid; gap: 2px; }
+.option-group-values small, .option-group-dates > span > small { color: var(--tm-text-secondary); font-size: 10px; font-weight: 400; display: block; }
+.option-group-dates .option-opened > small { margin-top: 3px; }

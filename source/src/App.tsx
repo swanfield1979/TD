@@ -478,7 +478,8 @@ function App() {
           <StatsPage
             trades={summary.closedTrades ?? []}
             portfolioHistory={summary.portfolioHistory ?? []}
-            currency={summary.currency}
+            currency={summary.premiumCurrency ?? summary.currency}
+            portfolioCurrency={summary.currency}
           />
         )}
       </main>

@@ -1,7 +1,7 @@
 {
   "name": "trading-monitor",
   "private": true,
-  "version": "0.42.3",
+  "version": "0.42.5",
   "type": "module",
   "scripts": {
     "dev": "vite",
