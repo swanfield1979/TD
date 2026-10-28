@@ -2,6 +2,8 @@
 
 Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voortgang op basis van Interactive Brokers Flex-rapporten.
 
+Lokale ontwerpupdate (28 oktober 2026, nog niet gepubliceerd): financiële werkplek met diepblauwe donkere modus, lichte modus, duidelijkere kerncijfers en tabellen met vaste positie-identificatie. Hoofdgrafieken hebben uitklapbare exacte maandbedragen. Build, 13 frontendtests en browsercontroles geslaagd. Zie [financieel ontwerp](docs/financieel-ontwerp.md).
+
 **Versie/status:** 0.42.2. De app is op brede schermen gecentreerd en maximaal 1760 pixels breed, inclusief navigatie. Kleinere schermen gebruiken de beschikbare breedte; grafieken en kaarten rekken niet meer onbeperkt mee. Build en frontendtests geslaagd; serverinstallatie nog niet uitgevoerd.
 
 | Map | Inhoud |

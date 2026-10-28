@@ -74,7 +74,7 @@ export default function PortfolioAllocationCard({
         {allocation.isEstimated ? ' · aandelen op resterende kostprijs' : ''}
         {!canChart ? ' · negatieve bedragen: zie verdeling' : ''}
       </p>
-      <div className="allocation-card__free"><span>Vrij besteedbaar</span><strong>{formatCurrency(allocation.freeToSpend ?? 0, currency)}</strong>{allocation.unpricedContractCount > 0 && <small>{allocation.unpricedContractCount} contracten zonder strike · reservering onvolledig</small>}</div>
+      <div className="allocation-card__free"><span>Vrij besteedbaar</span><strong className={`metric--${(allocation.freeToSpend ?? 0) < 0 ? 'negative' : (allocation.freeToSpend ?? 0) > 0 ? 'positive' : 'neutral'}`}>{formatCurrency(allocation.freeToSpend ?? 0, currency)}</strong>{allocation.unpricedContractCount > 0 && <small>{allocation.unpricedContractCount} contracten zonder strike · reservering onvolledig</small>}</div>
     </article>
   )
 }

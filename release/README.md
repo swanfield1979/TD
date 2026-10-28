@@ -1,5 +1,7 @@
 # Releases
 
+Lokale financiële ontwerpupdate van 28 oktober 2026: broncode en productiebuild gecontroleerd, nog geen afzonderlijke distributie of serverpublicatie. Pakketversie blijft 0.42.2. Zie [ontwerp en validatie](../docs/financieel-ontwerp.md).
+
 ## Trading Monitor 0.42.2 — prettige breedte op breedschermen
 
 App gecentreerd met een maximale breedte van 1760 pixels inclusief navigatie. Kaarten en grafieken blijven compact op brede schermen; kleinere schermen behouden hun beschikbare ruimte. Build en frontendtests geslaagd. Broncodeversie zonder apart installatiepakket; serverinstallatie nog niet uitgevoerd. Bijwerken via Updates.

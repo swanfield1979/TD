@@ -480,3 +480,7 @@ De eerste versie wordt gecontroleerd met:
 - Playwright: echte CSV/HTTP/SQLite/analyseflow, checklist, detail-/bars-API, bedrijfsnaamzoeken, uitgebreide tabel en responsive grafiek. Productiebuild geslaagd.
 - Productiecommando gestart op 0.0.0.0:8000; frontend, scanner-API en portefeuilleproxy bereikbaar via localhost en eigen 192.168.1.48 LAN-adres, browser gecontroleerd. Ontwikkel/demo-start gecontroleerd met expliciete DEMO-labels. Geen tweede fysiek LAN-apparaat, live IBKR of installatie op 192.168.1.22 bevestigd.
 - Systemd alleen handmatig; updateprocedure vraagt vooraf geïnstalleerde service. Zie [LAN/API-handleiding](breakout-lan.md).
+
+## Financiële vormgeving — 28 oktober 2026 (lokaal)
+
+Build, alle 13 frontendtests, de bestaande layoutcontrole (360–3440 pixels, 200% zoom, mobiele navigatie) en `node scripts/verify-financial-browser.mjs` geslaagd vanuit `source/`. Aanvullend: zes portefeuillepagina's in licht/donker bij 375/812/1440 pixels, gedeelde tekstkleuren minimaal 4,5:1 op drie hoofdoppervlakken, toetsenbordbediening van exacte maandtabellen en verminderde beweging. Geen pagina-overloop of JavaScript-paginafouten. Screenshots visueel gecontroleerd. Broker-API afgevangen; geen live brokercontrole of serverpublicatie. Zie [financieel ontwerp](financieel-ontwerp.md).

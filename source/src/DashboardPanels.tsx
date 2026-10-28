@@ -31,16 +31,17 @@ export function PortfolioTrend({ summary }: { summary: PortfolioSummary }) {
         <button key={value} type="button" aria-pressed={year === value} onClick={() => setYear(value)}>{value}</button>)}</div>
     </header>
     <div className="monitor-legend"><span><i /> Saldo {year}</span>{reference.length > 0 && <span><i className="monitor-legend__reference" /> {Number(year) - 1} ter vergelijking</span>}</div>
-    {points.length === 0 ? <p className="monitor-empty">Nog geen saldohistorie voor {year}.</p> : <svg viewBox="0 0 770 280" className="monitor-chart" role="img" aria-label={`Maandeindsaldi ${year}; inclusief inleg en open posities`}>
-      <defs><linearGradient id={`${id}-fill`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#147d56" stopOpacity=".16" /><stop offset="100%" stopColor="#147d56" stopOpacity=".01" /></linearGradient></defs>
+    {points.length === 0 ? <p className="monitor-empty">Nog geen saldohistorie voor {year}.</p> : <div className="monitor-chart-scroll" tabIndex={0} role="region" aria-label="Portefeuillegrafiek; horizontaal scrollbaar op smalle schermen"><svg viewBox="0 0 770 280" className="monitor-chart" role="img" aria-label={`Maandeindsaldi ${year}; inclusief inleg en open posities`}>
+      <defs><linearGradient id={`${id}-fill`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="var(--tm-accent-primary)" stopOpacity=".24" /><stop offset="100%" stopColor="var(--tm-accent-primary)" stopOpacity=".01" /></linearGradient></defs>
       {[0, .25, .5, .75, 1].map(ratio => <g key={ratio}><line className="chart-gridline" x1="78" x2="738" y1={24 + ratio * 210} y2={24 + ratio * 210} /><text className="chart-axis-value" textAnchor="end" x="66" y={28 + ratio * 210}>{compact(high - ratio * (high - low), summary.currency)}</text></g>)}
       {reference.map(point => <rect key={point.month} className="trend-reference" x={x(point.month) - 13} y={Math.min(y(point.balance), y(0))} width="26" height={Math.abs(y(0) - y(point.balance))} rx="3"><title>{point.date}: {money(point.balance, summary.currency)}</title></rect>)}
       <path d={`${path} L ${x(points.at(-1)!.month)} ${y(0)} L ${x(points[0].month)} ${y(0)} Z`} fill={`url(#${id}-fill)`} />
       <path d={path} className="chart-line" />
       {points.map(point => <circle key={point.month} cx={x(point.month)} cy={y(point.balance)} r="4" fill="var(--tm-accent-primary)"><title>{point.date}: {money(point.balance, summary.currency)}</title></circle>)}
       {months.map((label, index) => <text key={label} className="chart-month-label" textAnchor="middle" x={78 + index / 11 * 660} y="265">{label}</text>)}
-    </svg>}
+    </svg></div>}
     <p className="monitor-note">Flex-historie · actuele maand uit IBKR-synchronisatie</p>
+    {points.length > 0 && <details className="chart-data"><summary>Maandsaldi bekijken</summary><table><caption className="visually-hidden">Maandeindsaldi {year} in {summary.currency}</caption><thead><tr><th scope="col">Peildatum</th><th scope="col">Saldo ({summary.currency})</th></tr></thead><tbody>{points.map(point => <tr key={point.month}><th scope="row">{point.date}</th><td>{money(point.balance, summary.currency)}</td></tr>)}</tbody></table></details>}
   </section>
 }
 
@@ -51,13 +52,14 @@ export function NetMonthlyResults({ summary }: { summary: PortfolioSummary }) {
   const zero = 136
   return <section className="monitor-panel" aria-labelledby={`${id}-title`}>
     <header className="monitor-panel__header"><h2 id={`${id}-title`}>Netto maandresultaat</h2><span className="monitor-year">{summary.yearProfit.toDate.slice(0, 4)}</span></header>
-    {data.length === 0 ? <p className="monitor-empty">Importeer Flex-gegevens opnieuw om de maandresultaten te tonen.</p> : <svg viewBox="0 0 770 250" className="monitor-chart" role="img" aria-label="Gerealiseerd nettoresultaat per maand uit opties en aandelen, na kosten">
+    {data.length === 0 ? <p className="monitor-empty">Importeer Flex-gegevens opnieuw om de maandresultaten te tonen.</p> : <div className="monitor-chart-scroll" tabIndex={0} role="region" aria-label="Maandresultaatgrafiek; horizontaal scrollbaar op smalle schermen"><svg viewBox="0 0 770 250" className="monitor-chart" role="img" aria-label="Gerealiseerd nettoresultaat per maand uit opties en aandelen, na kosten">
       {[high, 0, -high].map(value => <g key={value}><line className="chart-gridline" x1="78" x2="738" y1={zero - value / high * 88} y2={zero - value / high * 88} /><text className="chart-axis-value" x="66" y={zero - value / high * 88 + 4} textAnchor="end">{compact(value, summary.currency)}</text></g>)}
       {months.map((label, index) => { const point = data.find(row => Number(row.month.slice(5, 7)) === index + 1); const px = 91 + index / 11 * 630; return <g key={label}>
         {point && <rect x={px - 14} y={Math.min(zero, zero - point.value / high * 88)} width="28" height={Math.max(2, Math.abs(point.value) / high * 88)} rx="3" fill={`var(--tm-status-${point.value > 0 ? 'success' : point.value < 0 ? 'danger' : 'neutral'})`}><title>{label}: {money(point.value, summary.currency, true)} · short opties {money(point.premium, summary.premiumCurrency)} · long opties {money(point.longOptions ?? 0, summary.premiumCurrency)} · aandelen {money(point.stockSales, summary.currency)}</title></rect>}
         <text className="chart-month-label" x={px} y="245" textAnchor="middle">{label}</text></g> })}
-    </svg>}
+    </svg></div>}
     <p className="monitor-note">Flex-historie plus IBKR-uitvoeringen · gerealiseerd na kosten</p>
+    {data.length > 0 && <details className="chart-data"><summary>Maandresultaten bekijken</summary><table><caption className="visually-hidden">Gerealiseerde maandresultaten in {summary.currency}</caption><thead><tr><th scope="col">Maand</th><th scope="col">Netto ({summary.currency})</th></tr></thead><tbody>{data.map(point => <tr key={point.month}><th scope="row">{point.month}</th><td className={`metric--${direction(point.value)}`}>{money(point.value, summary.currency, true)}</td></tr>)}</tbody></table></details>}
   </section>
 }
 

@@ -361,6 +361,7 @@ function App() {
       <main className="main-content">
         <header className="page-header">
           <div>
+            <p className="page-eyebrow">Trading Monitor · Portfolio & analyse</p>
             <h1>{pageTitles[currentPage]}</h1>
             {currentPage === 'dashboard' && <p className="page-subtitle">Je portefeuille in één oogopslag</p>}
           </div>

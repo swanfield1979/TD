@@ -1,5 +1,13 @@
 # Versiehistorie
 
+## Lokaal — financieel ontwerp (28 oktober 2026)
+
+- Samenhangend diepblauw/licht thema met betere financiële typografie, duidelijke saldo-hiërarchie en blauw voor navigatie en grafieken.
+- Beter leesbare positietabellen met afwisselende rijen, hovermarkering en vaste eerste kolom bij horizontaal scrollen.
+- Exacte maandsaldi en maandresultaten via toetsenbordbereikbare uitklaptabellen; grafieken scrollen apart op mobiel.
+- Negatief vrij besteedbaar geld krijgt de verlieskleur. Berekeningen ongewijzigd.
+- Build, 13 frontendtests en browsercontroles geslaagd. Nog niet gepubliceerd; pakketversie 0.42.2. Zie [financieel ontwerp](financieel-ontwerp.md).
+
 ## 0.42.2 — gecentreerde layout op breedschermen (28 oktober 2026)
 
 - Maximale applicatiebreedte van 1760 pixels inclusief navigatie; gecentreerd op brede schermen.
