@@ -7,6 +7,7 @@ import { createScanConnection } from './scan-connection.mjs'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { volumeSnapshot, volumeGate } from '../shared/option-volume.mjs'
 import { sectorMetadata } from '../shared/stock-sector.mjs'
+import { createYahooOptionClient, yahooSpreadContracts } from './yahoo-option-chains.mjs'
 
 // Options regular session: pre/post-market is closed for these equity-option quotes.
 export function optionsSession(date = new Date()) {
@@ -15,7 +16,7 @@ export function optionsSession(date = new Date()) {
   const minute = Number(parts.hour) * 60 + Number(parts.minute)
   return { ...session, open: session.shouldSync && minute >= 570 && minute < session.closeHour * 60 }
 }
-export async function runSpreadScan(config, state, { cache, checkpoint = async () => {}, universeLoader = loadUsUniverse, scan = runCspScan, now = () => new Date(), connection = createScanConnection(), wait = (ms, signal) => sleep(ms, undefined, { signal }), blocked = () => false, autoBlock }) {
+export async function runSpreadScan(config, state, { cache, checkpoint = async () => {}, universeLoader = loadUsUniverse, scan = runCspScan, now = () => new Date(), connection = createScanConnection(), wait = (ms, signal) => sleep(ms, undefined, { signal }), blocked = () => false, autoBlock, yahoo = createYahooOptionClient() }) {
   const signal = config.scanSignal, filters = spreadFilters(state.filters)
   state.filters = filters
   state.rows = state.rows.filter(row => !blocked(row.symbol)).map(row => ({ ...row, dte: daysToExpiry(row.expiry, scanDate(now())), cached: true }))
@@ -64,7 +65,28 @@ export async function runSpreadScan(config, state, { cache, checkpoint = async (
         assessment = { symbol, ...liquidity, code: gate === 'unknown' ? 'VOLUME_UNAVAILABLE' : undefined, status: gate === 'unknown' ? 'missing' : passes ? incomplete ? 'partial' : rows.length ? 'match' : 'no-match' : 'filtered', source: 'cache', asOf: stored.quotedAt, ivSource: stored.ivSource, ivAsOf: stored.ivAsOf,
           reason: gate === 'unknown' ? 'Gemiddeld optievolume onbekend; geen goedgekeurde spread. Verzamel volume tijdens beursuren of schakel het volumefilter bewust uit (0).' : gate === 'below' ? `Gemiddeld optievolume ${liquidity.avgOptionVolume} onder ${filters.minAvgOptionVolume}; chain overgeslagen.` : !passes ? 'Opgeslagen koers/IV-rank voldoet niet; chain overgeslagen.' : incomplete ? 'Beschikbare oude chain gefilterd; onvolledige dekking.' : `${rows.length} spreads in opgeslagen chain; oude koers en IV-rank gebruikt.` }
       }
-      if ((!session.open || brokerUnavailable) && stored) useStored()
+      let candidates, yahooSnapshot
+      if (state.chainSource === 'yahoo' && !brokerUnavailable) {
+        state.progress = `Yahoo Finance · ${symbol} · volledige chains ophalen`
+        await checkpoint()
+        try {
+          yahooSnapshot = await yahoo.scrape(symbol, { minDte: filters.minDte, maxDte: filters.maxDte, signal })
+          candidates = yahooSpreadContracts(yahooSnapshot, filters)
+          state.yahooContracts = (state.yahooContracts || 0) + yahooSnapshot.chains.reduce((count, chain) => count + chain.puts.length, 0)
+          state.yahooRequests = (state.yahooRequests || 0) + yahooSnapshot.requests
+          state.progress = `${symbol} · Yahoo-voorselectie klaar · ${candidates.length} contracten controleren bij IBKR`
+          await checkpoint()
+        } catch (error) {
+          signal?.throwIfAborted()
+          if (error.limited) { state.state = 'paused'; state.message = error.message; state.progress = error.message; return }
+          yahooSnapshot = undefined; candidates = undefined
+          state.warnings.push(`${symbol}: Yahoo-voorselectie niet beschikbaar; volledige IBKR-scan gebruikt.`)
+        }
+      }
+      if (yahooSnapshot && !candidates.length) {
+        assessment = { symbol, status: 'filtered', source: 'yahoo', asOf: yahooSnapshot.fetchedAt, reason: 'Geen passende spreadcombinaties in de indicatieve Yahoo-chain; geen contractquotes bij IBKR aangevraagd.' }
+        state.chainsSkipped++
+      } else if (((!session.open && !yahooSnapshot) || brokerUnavailable) && stored) useStored()
       else if (brokerUnavailable) {
         assessment = { symbol, status: 'missing', source: 'none', reason: 'IBKR niet bereikbaar en geen opgeslagen optiechain beschikbaar.' }
       } else {
@@ -76,6 +98,7 @@ export async function runSpreadScan(config, state, { cache, checkpoint = async (
         }
         state.phase = 'scanning'
         await scan({ ...config, marketClosed: !session.open, nextScanRequestId: connection.nextRequestId,
+          spreadCandidateContracts: candidates, yahooFetchedAt: yahooSnapshot?.fetchedAt,
           getSpreadIv: cache.getIv?.bind(cache), saveSpreadIv: cache.saveIv?.bind(cache),
           getSpreadLiquidity: cache.getLiquidity?.bind(cache), saveSpreadLiquidity: cache.saveLiquidity?.bind(cache),
           onScanCheckpoint: async () => { merge(); await checkpoint() },
@@ -112,7 +135,7 @@ export async function runSpreadScan(config, state, { cache, checkpoint = async (
         state.progress = state.message
         return
       }
-      if (!brokerUnavailable && assessment.source !== 'cache' && state.remainingSymbols > 0) {
+      if (!brokerUnavailable && !['cache', 'yahoo'].includes(assessment.source) && state.remainingSymbols > 0) {
         const pause = brokerSymbols % 25 === 0 ? 20000 : 1000
         state.phase = 'waiting'; state.nextBatchAt = new Date(now().getTime() + pause).toISOString()
         state.progress = `Rustpauze · ${state.universeChecked} / ${state.universeCount} aandelen · volgende beoordeling over ${pause / 1000} s`

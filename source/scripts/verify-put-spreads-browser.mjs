@@ -57,10 +57,11 @@ await page.route('**/api/**', async route => {
       if (input.resume) resumePosted = true
       if (!input.resume) { assert.equal(input.selectionId, stock.id); assert.equal(input.ivSelectionId, iv.id); assert.equal(input.filters.minIvr, iv.filters.minIvr) }
       assert.deepEqual(input.symbols, input.universeMode === 'us' ? [] : ['HOOD', 'AMD'])
+      assert.equal(input.chainSource, 'yahoo')
       assert.equal(input.filters.minDte, 40)
       assert.equal(input.filters.minAvgOptionVolume, 5000)
       if (failure) { status = 503; body = { message: 'Test: broker niet beschikbaar.' } }
-      else scan = { state: running ? 'running' : 'partial', progress: 'Put spreads · HOOD', universeMode: input.universeMode, universeCount: 75, universeChecked: 2, remainingSymbols: 73, cacheHits: 1, chainsSkipped: 1, marketOpen: false, assessments: [{ symbol: 'LOW', status: 'filtered', reason: 'IV-rank te laag; optiechain overgeslagen.', source: 'cache', asOf: '2026-10-23T19:55:00Z' }], filters: spreadFilters(input.filters), rows: running ? [] : [{ ...row, cached: true }, { ...row, ...sector('AMD'), id: 'AMD:1', symbol: 'AMD', maxLoss: 500, returnOnRisk: 12 }], symbols: input.symbols, warnings: ['TEST: ontbrekende optiedata; overgeslagen.'], symbolsChecked: 2, contractsChecked: 4, finishedAt: running ? undefined : '2026-10-24T10:01:00Z' }
+      else scan = { chainSource: input.chainSource, state: running ? 'running' : 'partial', progress: 'Put spreads · HOOD', universeMode: input.universeMode, universeCount: 75, universeChecked: 2, remainingSymbols: 73, cacheHits: 1, chainsSkipped: 1, marketOpen: false, assessments: [{ symbol: 'LOW', status: 'filtered', reason: 'IV-rank te laag; optiechain overgeslagen.', source: 'cache', asOf: '2026-10-23T19:55:00Z' }], filters: spreadFilters(input.filters), rows: running ? [] : [{ ...row, cached: true }, { ...row, ...sector('AMD'), id: 'AMD:1', symbol: 'AMD', maxLoss: 500, returnOnRisk: 12 }], symbols: input.symbols, warnings: ['TEST: ontbrekende optiedata; overgeslagen.'], symbolsChecked: 2, contractsChecked: 4, finishedAt: running ? undefined : '2026-10-24T10:01:00Z' }
     }
     if (status === 200) body = scan
   } else if (path === '/api/put-spreads/stop') { scan = { ...scan, state: 'cancelled' }; body = scan }
@@ -119,7 +120,10 @@ try {
   assert.deepEqual([stockPosts, ivPosts, posts], countsBeforeFolding)
   await mkdir('data/private/spread-validation', { recursive: true })
   await page.screenshot({ path: 'data/private/spread-validation/collapsed-steps.png', fullPage: true })
+  assert.equal(await page.getByLabel('Optiechainbron', { exact: true }).inputValue(), 'ibkr')
+  await page.getByLabel('Optiechainbron', { exact: true }).selectOption('yahoo')
   await page.getByRole('button', { name: 'Optiescan starten', exact: true }).click()
+  await page.getByText('Yahoo-voorselectie + IBKR-controle', { exact: true }).waitFor()
   await page.getByText('2 / 75 aandelen gescand', { exact: true }).waitFor()
   await page.getByRole('button', { name: 'Stap 1 uitklappen', exact: true }).focus()
   await page.keyboard.press('Space')

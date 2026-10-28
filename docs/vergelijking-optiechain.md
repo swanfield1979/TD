@@ -1,5 +1,7 @@
 # Vergelijking optiechains en verbeteringen in 0.40.0
 
+Sinds 0.42.0 is Yahoo toegevoegd als optionele voorselectie met IBKR-controle; zie [Yahoo-optiechains](yahoo-optiechains.md). Onderstaande vergelijking beschrijft de eerdere 0.40.0-wijzigingen.
+
 Onderzocht op 28 oktober 2026: de door de gebruiker aangeleverde `option_chains.zip` en schermafbeelding, vergeleken met Trading Monitor 0.39.2. De externe Python-bestanden zijn alleen gelezen; er is geen externe applicatie uitgevoerd of broncode uit het archief opgenomen.
 
 ## Hoe de aangeleverde code werkt

@@ -1,5 +1,12 @@
 # Validatie
 
+## Trading Monitor 0.42.0 — Yahoo-optiechains (28 oktober 2026)
+
+- Node-scraper met normale anonieme cookie-/crumbsessie, volledige standaardcall-/putchains per geselecteerde expiratie, twee expiraties tegelijk en gepacete aanvraagstarts. Aparte private cache van tien minuten met oorspronkelijke ophaaltijden.
+- Optionele Yahoo-voorselectie van maximaal twintig spreadparen; alleen de geselecteerde benen worden bij IBKR opgevraagd. Alle uiteindelijke quotes, delta's, IV-/volumecriteria en spreadberekeningen blijven uit de bestaande brokerroute komen. Bron/tijd in details en CSV.
+- 223 Node-tests, 13 frontendtests en TypeScript/Vite-build geslaagd. Tests controleren sessie/cache, onbekende waarden, contractvalidatie, annuleren, bronbeperkingen, brokerfallback en daadwerkelijk beperkte contractaanvragen. Browserworkflow controleert Yahoo-bronkeuze en opslag/hervatten, plus de bestaande spreadworkflow op mobiel/desktop.
+- Live CLI-proef gaf HTTP 429 bij Yahoo; foutafhandeling bevestigd, succesvolle live-download en snelheid nog niet bevestigd. Geen proxy- of hostrotatie. Geen productie-installatie uitgevoerd. Zie [gebruik en beperkingen](yahoo-optiechains.md).
+
 ## Trading Monitor 0.41.0 — updateknop (28 oktober 2026)
 
 - Pagina Updates met frontend-/API-versie, expliciete controle/installatie, voortgang, herladen en verbindingsherstel. De oude webapp vereist eenmalig de handmatige update om de service te installeren.

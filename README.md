@@ -2,7 +2,7 @@
 
 Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voortgang op basis van Interactive Brokers Flex-rapporten.
 
-**Versie/status:** 0.41.0. Nieuwe pagina Updates met versiecontrole, installatieknop en zichtbare voortgang. De aparte updateservice test en bouwt vóór publicatie en blijft actief tijdens een API-herstart. Eenmalige serverinstallatie nog nodig. Lokale tests, build en browsercontrole geslaagd.
+**Versie/status:** 0.42.0. Yahoo-optiechains als snelle voorselectie met aansluitende IBKR-controle; bronkeuze in Option Scan en zelfstandige CLI-scraper. 223 Node-tests, 13 frontendtests en build geslaagd. Live Yahoo-proef kreeg HTTP 429; serverinstallatie nog niet uitgevoerd.
 
 | Map | Inhoud |
 | --- | --- |
@@ -48,6 +48,8 @@ Installeer en configureer TWS of IB Gateway handmatig voor paper en read-only AP
 [SETUP_LOGIC.md](docs/SETUP_LOGIC.md) verklaart ieder criterium en corporate-actionbeleid. [DEPLOYMENT.md](docs/DEPLOYMENT.md) bevat Linux/Windows-installatie, tests, LAN-hosting en de GitHub-serverupdate. Tests vanuit source: `backend/.venv/bin/python -m pytest backend/tests -q`, `npm run test:frontend`, `npm test`; na starten van dev:demo voert `npm run test:e2e` de browserworkflow uit. De productiebuild gebruikt `npm run build`.
 
 ## Functies
+
+- [Yahoo-optiechains](docs/yahoo-optiechains.md): snelle voorselectie met IBKR-controle en zelfstandige scraper.
 
 - [Bull-put-spreadscanner](docs/put-spreads.md): menu **Put spreads** (`#put-spreads`), filters links en spreadvergelijking met conservatieve credit, maximaal verlies en rendement op risico.
 

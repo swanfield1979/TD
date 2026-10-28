@@ -247,7 +247,9 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
           for (const expiry of chain.expirations.filter((value) => mode === 'spreads' ? daysToExpiry(value, today) >= filters.minDte && daysToExpiry(value, today) <= filters.maxDte : mode === 'leaps' ? ((daysToExpiry(value, today) >= 30 && daysToExpiry(value, today) <= 50) || (daysToExpiry(value, today) >= 300 && daysToExpiry(value, today) <= 700)) : daysToExpiry(value, today) >= 35 && daysToExpiry(value, today) <= 50)) {
             // Bounded coverage: 32 strikes nearest the requested short-strike ceiling.
             const strikes = chain.strikes.filter(value => value > 0 && value < price)
-            const selected = mode === 'spreads' ? strikes.filter(value => value <= price * (1 - filters.minBuffer / 100)).sort((a,b) => b-a).slice(0,32) : strikes
+            const selected = mode === 'spreads' && config.spreadCandidateContracts
+              ? strikes.filter(strike => config.spreadCandidateContracts.some(candidate => candidate.expiry === expiry && candidate.strike === strike))
+              : mode === 'spreads' ? strikes.filter(value => value <= price * (1 - filters.minBuffer / 100)).sort((a,b) => b-a).slice(0,32) : strikes
             for (const strike of selected) {
               const key = `${chain.tradingClass}:${expiry}:${strike}`
               if (seen.has(key)) continue
@@ -256,7 +258,9 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
             }
           }
         }
-        if (mode === 'spreads') state.coverage = 'Maximaal 32 strikes per expiratie en handelsklasse, onder de gekozen buffergrens; geen volledige marktdekking.'
+        if (mode === 'spreads') state.coverage = config.spreadCandidateContracts
+          ? 'Yahoo-voorselectie: benen van maximaal 20 hoogst gerangschikte spreadparen; alleen beschikbare standaardcontracten bij IBKR gecontroleerd. Geen volledige marktdekking.'
+          : 'Maximaal 32 strikes per expiratie en handelsklasse, onder de gekozen buffergrens; geen volledige marktdekking.'
         if (!contracts.length) throw new Error(mode === 'spreads' ? 'Geen standaardputs binnen de gekozen looptijd en buffer beschikbaar.' : mode === 'leaps' ? 'Geen standaardputs binnen 30–50 of 300–700 DTE beschikbaar.' : 'Geen standaardputketen met 35–50 dagen looptijd beschikbaar.')
         const symbolPuts = []
         let missing = 0
@@ -272,7 +276,8 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
             if (mode === 'spreads') {
               state.puts.push({ ...item.value, ...sector, symbol, right: 'P', currency: 'USD', multiplier: 100, strike: opt.strike,
                 underlyingPrice: price, expiry: opt.lastTradeDateOrContractMonth, tradingClass: opt.tradingClass, ivr, ...ivMetadata, ...liquidity,
-                quotedAt: new Date().toISOString(), marketDataType: item.value.marketDataType })
+                quotedAt: new Date().toISOString(), marketDataType: item.value.marketDataType,
+                discoverySource: config.spreadCandidateContracts ? 'Yahoo Finance' : 'IBKR', yahooFetchedAt: config.yahooFetchedAt })
               symbolPuts.push(state.puts.at(-1))
               continue
             }

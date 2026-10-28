@@ -32,6 +32,7 @@ export function bullPutSpread(short, long, today) {
   const maxProfit = credit * 100, maxLoss = (width - credit) * 100
   return { id: `${short.symbol}:${short.expiry}:${short.tradingClass}:${short.strike}:${long.strike}`, symbol: short.symbol, ...sectorMetadata(short),
     expiry: short.expiry, tradingClass: short.tradingClass, dte, underlyingPrice: short.underlyingPrice, ivr: short.ivr,
+    discoverySource: short.discoverySource, yahooFetchedAt: short.yahooFetchedAt,
     shortStrike: short.strike, longStrike: long.strike, shortBid: short.bid, shortAsk: short.ask, longBid: long.bid, longAsk: long.ask,
     credit, maxProfit, maxLoss, breakEven: short.strike - credit, returnOnRisk: maxProfit / maxLoss * 100,
     buffer: (1 - short.strike / short.underlyingPrice) * 100, otmProxy: (1 - Math.abs(short.delta)) * 100,

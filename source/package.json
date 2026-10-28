@@ -1,7 +1,7 @@
 {
   "name": "trading-monitor",
   "private": true,
-  "version": "0.41.0",
+  "version": "0.42.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -19,7 +19,8 @@
     "test:research": "node scripts/verify-research-browser.mjs",
     "test:martin": "node scripts/verify-martin-browser.mjs",
     "test:spreads": "node scripts/verify-put-spreads-browser.mjs",
-    "test:updates": "node scripts/verify-app-update-browser.mjs"
+    "test:updates": "node scripts/verify-app-update-browser.mjs",
+    "scrape:yahoo": "node scripts/scrape-yahoo-options.mjs"
   },
   "dependencies": {
     "@fluentui/react-icons": "2.0.343",

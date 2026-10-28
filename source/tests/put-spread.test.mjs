@@ -101,6 +101,13 @@ test('broker scan pairs only matching puts, checkpoints, stays read-only and can
   assert.equal(fallback.rows[0].shortDataType, 3)
   assert.equal(fallback.rows[0].longDataType, 2)
   assert.equal(active.size, 0)
+  resetScanGuards()
+  const hybrid = { ...state, rows: [], puts: [], warnings: [], assessments: [], contractsChecked: 0 }
+  await runCspScan({ clientId: 77, scanPacer: { acquire: async () => {} }, spreadCandidateContracts: [{ expiry, strike: 75 }, { expiry, strike: 65 }], yahooFetchedAt: short.quotedAt }, ['TEST'], hybrid, Fake, 'spreads')
+  assert.equal(hybrid.contractsChecked, 2)
+  assert.equal(hybrid.rows[0].discoverySource, 'Yahoo Finance')
+  assert.equal(hybrid.rows[0].yahooFetchedAt, short.quotedAt)
+  assert.equal(hybrid.rows[0].credit, .6, 'Final credit still uses IBKR quotes')
 
   for (const reason of ['stop', 'pacing']) {
     resetScanGuards()

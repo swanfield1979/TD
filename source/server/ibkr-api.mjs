@@ -21,6 +21,7 @@ import { createStockSectors } from './stock-sectors.mjs'
 import { autoBlockStock, reconcileMissingStocks } from './auto-block-stocks.mjs'
 import { fileURLToPath } from 'node:url'
 import { createAppUpdater } from './app-update.mjs'
+import { createYahooOptionClient } from './yahoo-option-chains.mjs'
 
 const scanControllers = {}
 const activeScanJobs = new Set()
@@ -204,7 +205,7 @@ async function runOptionScan(mode, symbols, state, previous) {
     const signal = scanControllers[mode].signal
     const researchConfig = { ...config, scanSignal: signal, onStockDetails: (symbol, details) => stockSectors.rememberIbkr(symbol, details) }
     const runBatch = () => runCspScan({ ...config, scanSignal: signal, ivContinueRound: mode === 'iv' && state.batchesCompleted > 0, onScanCheckpoint: saveScanResults }, symbols, state, undefined, mode)
-    if (mode === 'spreads') await runSpreadScan(researchConfig, state, { cache: spreadCache, checkpoint: saveScanResults, blocked: symbol => blockedStocks.has(symbol), autoBlock: failure => autoBlockStock(blockedStocks, failure) })
+    if (mode === 'spreads') await runSpreadScan(researchConfig, state, { cache: spreadCache, yahoo: yahooOptions, checkpoint: saveScanResults, blocked: symbol => blockedStocks.has(symbol), autoBlock: failure => autoBlockStock(blockedStocks, failure) })
     else if (mode === 'iv') await runFilteredIvScan(researchConfig, state, { cache: spreadCache, checkpoint: saveScanResults, blocked: symbol => blockedStocks.has(symbol), autoBlock: failure => autoBlockStock(blockedStocks, failure) })
     else await runBatch()
     if (mode === 'leaps' && state.rows.length === 0 && ['error', 'cancelled'].includes(state.state) && previous.rows.length) {
@@ -248,6 +249,7 @@ function isAllowedPost(request) {
 }
 
 const martinScan = await createMartinScan(resolve(process.env.MARTIN_SCAN_DIR || dirname(config.snapshotPath) + '/martin'))
+const yahooOptions = createYahooOptionClient({ directory: resolve(dirname(config.snapshotPath), 'yahoo-option-chains') })
 const blockedStocks = await createBlockedStocks(resolve(dirname(config.snapshotPath), 'blocked-stocks.json'))
 const stockSectors = await createStockSectors(resolve(dirname(config.snapshotPath), 'stock-sectors.json'), { enabled: process.env.SECTOR_LOOKUPS_DISABLED !== '1' })
 const stockFilter = await createStockFilter(resolve(dirname(config.snapshotPath), 'stock-filter'), config, { blocked: symbol => blockedStocks.has(symbol), sectors: stockSectors, autoBlock: failure => autoBlockStock(blockedStocks, failure) })
@@ -422,10 +424,12 @@ const server = createServer(async (request, response) => {
           } catch (error) { return sendJson(response, 400, { message: error.message }) }
         }
         let symbols = mode === 'leaps' ? [...shortlist] : []
-        let filters, universeMode, selection, resume = false
+        let filters, universeMode, selection, chainSource = 'ibkr', resume = false
         if (mode === 'spreads') {
           try {
             const body = await readJsonBody(request)
+            chainSource = body.chainSource ?? 'ibkr'
+            if (!['ibkr', 'yahoo'].includes(chainSource)) throw Error('Kies IBKR of Yahoo met IBKR-controle.')
             universeMode = body.universeMode ?? (Array.isArray(body.symbols) && body.symbols.length ? 'custom' : 'us')
             if (!['us', 'custom'].includes(universeMode)) throw Error('Ongeldig aandelenuniversum.')
             symbols = universeMode === 'custom' ? normalizeShortlist(body.symbols) : []
@@ -442,6 +446,7 @@ const server = createServer(async (request, response) => {
             }
             if (resume) {
               const previous = optionScans.spreads
+              if ((previous.chainSource || 'ibkr') !== chainSource) throw Error('Hervat met dezelfde chainbron of start een nieuwe scan.')
               if (filters.minAvgOptionVolume > 0 && previous.filters?.minAvgOptionVolume === undefined) throw Error('Start een nieuwe scan om het nieuwe volumefilter ook op eerdere aandelen toe te passen.')
               if (!previous.entries || previous.universeChecked >= previous.entries.length && !Number.isInteger(previous.retryFrom) || JSON.stringify(spreadFilters(previous.filters)) !== JSON.stringify(filters) || previous.universeMode !== universeMode || (universeMode === 'custom' && JSON.stringify(previous.symbols) !== JSON.stringify(symbols)))
                 throw Error('Hervatten kan alleen met dezelfde criteria en hetzelfde universum van een onvoltooide scan.')
@@ -450,7 +455,7 @@ const server = createServer(async (request, response) => {
         }
         if (mode === 'spreads' && (scanState.state === 'running' || Object.values(optionScans).some(scan => scan.state === 'running')))
           return sendJson(response, 409, { message: 'Er loopt al een optiescan. Wacht tot deze klaar is.' })
-        const state = resume ? { ...optionScans.spreads, state: 'running', message: undefined, finishedAt: undefined } : { state: 'running', filters, universeMode, rows: [], puts: [], portfolio: [], market: [], assessments: [], warnings: [], symbols,
+        const state = resume ? { ...optionScans.spreads, state: 'running', message: undefined, finishedAt: undefined } : { state: 'running', filters, universeMode, chainSource, rows: [], puts: [], portfolio: [], market: [], assessments: [], warnings: [], symbols,
           symbolsChecked: 0, contractsChecked: 0, startedAt: new Date().toISOString(), progress: 'Verbinding met IBKR maken' }
         if (selection) Object.assign(state, { entries: selection.entries, universeCount: selection.entries.length, universeName: 'Opgeslagen Stock Filter en IV Scan', stockSelectionId: selection.id, stockSelectionAt: selection.finishedAt, ivSelectionId: selection.ivSelectionId, ivSelectionAt: selection.ivSelectionAt, stockFilters: selection.filters })
         const previous = optionScans[mode]

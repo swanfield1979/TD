@@ -23,6 +23,8 @@
 .spreads-layout { display: grid; grid-template-columns: 272px minmax(0, 1fr); align-items: start; gap: 16px; }
 .spreads-filters { display: grid; gap: 12px; }
 .spreads-filters h2 { margin-bottom: 4px; }
+.spreads-source-field { display: grid; gap: 8px; font-size: 13px; }
+.spreads-yahoo-status p { color: var(--tm-text-secondary); font-size: 13px; line-height: 1.6; }
 .spreads-page input, .spreads-page textarea, .spreads-page select { color: var(--tm-text-primary); background: var(--tm-surface-2); border: 1px solid var(--tm-stroke); border-radius: var(--tm-radius-control); padding: 10px; font: inherit; min-width: 0; max-width: 100%; }
 .spreads-filters textarea { resize: vertical; width: 100%; }
 .spreads-filters fieldset { display: grid; gap: 12px; border: 0; border-top: 1px solid var(--tm-stroke); margin: 4px 0 0; padding: 12px 0 0; min-width: 0; }

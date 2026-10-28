@@ -1,5 +1,12 @@
 # Versiehistorie
 
+## 0.42.0 — Yahoo-voorselectie voor optiechains (28 oktober 2026)
+
+- Zelfstandige Node-scraper en CLI voor standaardcalls en -puts, met anonieme sessie, pacing, tienminutencache en oorspronkelijke brontijden.
+- Nieuwe bronkeuze in Option Scan: Yahoo selecteert maximaal twintig spreadparen; IBKR controleert alleen de bijbehorende benen en levert alle uiteindelijke quotes/delta's. IBKR-only blijft standaard.
+- HTTP 401/403/429 pauzeert zonder herhaalde aanvragen of permanente stockblokkering; overige bronfouten gebruiken de bestaande IBKR-route. Stoppen/hervatten en CSV-metadatavelden behouden.
+- Lokale tests en build geslaagd. Live Yahoo-proef gaf HTTP 429; geen succesvolle live-download of productie-installatie bevestigd. [Handleiding](yahoo-optiechains.md).
+
 ## 0.41.0 — updateknop in de webapp (28 oktober 2026)
 
 - Pagina Updates met controle en installatie vanaf GitHub, versie-informatie, voortgang en herstel na API-herstart.
