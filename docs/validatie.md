@@ -484,3 +484,8 @@ De eerste versie wordt gecontroleerd met:
 ## Financiële vormgeving — 28 oktober 2026 (lokaal)
 
 Build, alle 13 frontendtests, de bestaande layoutcontrole (360–3440 pixels, 200% zoom, mobiele navigatie) en `node scripts/verify-financial-browser.mjs` geslaagd vanuit `source/`. Aanvullend: zes portefeuillepagina's in licht/donker bij 375/812/1440 pixels, gedeelde tekstkleuren minimaal 4,5:1 op drie hoofdoppervlakken, toetsenbordbediening van exacte maandtabellen en verminderde beweging. Geen pagina-overloop of JavaScript-paginafouten. Screenshots visueel gecontroleerd. Broker-API afgevangen; geen live brokercontrole of serverpublicatie. Zie [financieel ontwerp](financieel-ontwerp.md).
+
+
+## Updateherkenning 0.42.3 — 28 oktober 2026
+
+De ontwerpcommit had nog versienummer 0.42.2; de updater vergelijkt stabiele versienummers en zag daardoor geen nieuwere versie. Manifest, lockfile en handmatig updatescript verhoogd naar 0.42.3. De bestaande updaterfunctie bevestigt dat 0.42.3 nieuwer is dan 0.42.2. Build en 13 frontendtests geslaagd. Eerste volledige Node-run: 222/223 door een API-starttimeout; de betreffende test en alle acht updatertests slaagden bij gerichte herhaling, vervolgens volledige run 223/223 geslaagd. Geen serverinstallatie uitgevoerd.

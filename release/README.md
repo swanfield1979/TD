@@ -1,6 +1,8 @@
 # Releases
 
-Lokale financiële ontwerpupdate van 28 oktober 2026: broncode en productiebuild gecontroleerd, nog geen afzonderlijke distributie of serverpublicatie. Pakketversie blijft 0.42.2. Zie [ontwerp en validatie](../docs/financieel-ontwerp.md).
+## Trading Monitor 0.42.3 — financieel ontwerp
+
+Financiële ontwerpupdate van 28 oktober 2026: broncode en productiebuild gecontroleerd, geen afzonderlijk installatiepakket. Versie 0.42.3 maakt de wijziging herkenbaar via Updates. Serverinstallatie nog niet uitgevoerd. Zie [ontwerp en validatie](../docs/financieel-ontwerp.md).
 
 ## Trading Monitor 0.42.2 — prettige breedte op breedschermen
 

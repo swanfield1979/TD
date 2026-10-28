@@ -1,6 +1,6 @@
 # Financieel ontwerp
 
-Lokale wijziging van 28 oktober 2026, gebaseerd op broncodeversie 0.42.2. Nog niet gepubliceerd.
+Versie 0.42.3 van 28 oktober 2026, gebaseerd op broncodeversie 0.42.2. Het hogere versienummer maakt de ontwerpupdate herkenbaar via Updates. Serverinstallatie nog niet uitgevoerd.
 
 ## Vormgeving
 
