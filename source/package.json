@@ -1,7 +1,7 @@
 {
   "name": "trading-monitor",
   "private": true,
-  "version": "0.42.1",
+  "version": "0.42.2",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -20,6 +20,7 @@
     "test:martin": "node scripts/verify-martin-browser.mjs",
     "test:spreads": "node scripts/verify-put-spreads-browser.mjs",
     "test:updates": "node scripts/verify-app-update-browser.mjs",
+    "test:layout": "node scripts/verify-layout-browser.mjs",
     "scrape:yahoo": "node scripts/scrape-yahoo-options.mjs"
   },
   "dependencies": {

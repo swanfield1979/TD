@@ -1,5 +1,11 @@
 # Validatie
 
+## Trading Monitor 0.42.2 — begrensde breedte op grote schermen (28 oktober 2026)
+
+- Centrale layoutbreedte van maximaal 1760 pixels inclusief navigatie, met gelijke buitenmarges op brede schermen. Bestaande responsive indeling op kleinere schermen behouden.
+- TypeScript/Vite-build en 13 frontendtests geslaagd. Browsercontrole van dashboard en Put spreads op 360, 768, 1440, 1920, 2560 en 3440 pixels, met gecentreerde breedte, mobiele navigatie en 200% zoom. Screenshots lokaal visueel gecontroleerd.
+- Geen wijziging aan gegevens of berekeningen. Serverinstallatie nog niet uitgevoerd; bijwerken via Updates.
+
 ## Trading Monitor 0.42.1 — bediening en quotetabel (28 oktober 2026)
 
 - Verwijderknop als eerste in de aandeelkolom, vóór het vergrootglas. Uitklappijl vergroot tot 24 pixels binnen een zichtbaar klikvlak van 44 × 44 pixels; native details-/toetsenbordbediening en TradingView-link behouden.

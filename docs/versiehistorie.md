@@ -1,5 +1,11 @@
 # Versiehistorie
 
+## 0.42.2 — gecentreerde layout op breedschermen (28 oktober 2026)
+
+- Maximale applicatiebreedte van 1760 pixels inclusief navigatie; gecentreerd op brede schermen.
+- Bestaande mobiele indeling behouden. Build, frontendtests en browsercontrole op 360–3440 pixels uitgevoerd; gegevens en berekeningen ongewijzigd.
+- Nog niet op de server geïnstalleerd.
+
 ## 0.42.1 — aandeelbediening en quote-details (28 oktober 2026)
 
 - Kruisje vóór het vergrootglas; zichtbare uitklappijl met klikvlak van 44 × 44 pixels.

@@ -1,5 +1,9 @@
 # Releases
 
+## Trading Monitor 0.42.2 — prettige breedte op breedschermen
+
+App gecentreerd met een maximale breedte van 1760 pixels inclusief navigatie. Kaarten en grafieken blijven compact op brede schermen; kleinere schermen behouden hun beschikbare ruimte. Build en frontendtests geslaagd. Broncodeversie zonder apart installatiepakket; serverinstallatie nog niet uitgevoerd. Bijwerken via Updates.
+
 ## Trading Monitor 0.42.1 — grotere uitklappijl en quotetabel
 
 Kruisje vóór het vergrootglas, ruim klikvlak voor de uitklappijl en tabelvergelijking van verkoopput en koopput. Build en frontendtests geslaagd; bijwerken via Updates. Broncodeversie zonder apart installatiepakket; serverinstallatie nog niet uitgevoerd.

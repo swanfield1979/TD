@@ -26,6 +26,7 @@
   --tm-radius-card: 12px;
   --tm-motion-fast: 160ms;
   --dashboard-grid-gap: 12px;
+  --tm-layout-max-width: 1760px;
 }
 
 :root[data-theme="dark"] {
@@ -103,6 +104,9 @@ button:focus-visible, a:focus-visible {
 
 .app-shell {
   min-height: 100vh;
+  width: 100%;
+  max-width: var(--tm-layout-max-width);
+  margin-inline: auto;
   display: grid;
   grid-template-columns: 240px minmax(0, 1fr);
 }

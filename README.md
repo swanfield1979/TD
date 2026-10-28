@@ -2,7 +2,7 @@
 
 Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voortgang op basis van Interactive Brokers Flex-rapporten.
 
-**Versie/status:** 0.42.1. Kruisje vóór het vergrootglas, grotere uitklappijl met klikvlak van 44 × 44 pixels en quotegegevens in een vergelijkingstabel voor verkoopput en koopput. Build en frontendtests geslaagd; serverinstallatie nog niet uitgevoerd.
+**Versie/status:** 0.42.2. De app is op brede schermen gecentreerd en maximaal 1760 pixels breed, inclusief navigatie. Kleinere schermen gebruiken de beschikbare breedte; grafieken en kaarten rekken niet meer onbeperkt mee. Build en frontendtests geslaagd; serverinstallatie nog niet uitgevoerd.
 
 | Map | Inhoud |
 | --- | --- |
