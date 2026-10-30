@@ -6,6 +6,7 @@ import { nyseSyncWindow } from '../shared/nyse-session.mjs'
 import { createScanConnection } from './scan-connection.mjs'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { volumeSnapshot, volumeGate } from '../shared/option-volume.mjs'
+import { usableSpreadIv } from '../shared/iv-reference.mjs'
 import { sectorMetadata } from '../shared/stock-sector.mjs'
 import { createYahooOptionClient, yahooSpreadContracts } from './yahoo-option-chains.mjs'
 
@@ -52,17 +53,19 @@ export async function runSpreadScan(config, state, { cache, checkpoint = async (
       let stored = null, assessment, rows = []
       try { stored = await cache.get(symbol) } catch (error) { state.warnings.push(`${symbol}: ${error.message}`) }
       const storedLiquidity = await cache.getLiquidity?.(symbol)
+      const ivSnapshot = usableSpreadIv(state.ivRows?.find(row => row.symbol === symbol), symbol, scanDate(now()))
       const useStored = () => {
         state.cacheHits++
         const liquidity = volumeSnapshot({}, storedLiquidity || stored, now())
         const gate = volumeGate(liquidity, filters.minAvgOptionVolume)
-        const passes = gate !== 'unknown' && gate !== 'below' && stored.underlyingPrice >= filters.minPrice && stored.underlyingPrice <= filters.maxPrice && stored.ivr >= filters.minIvr
-        rows = passes ? selectSpreads(stored.puts.map(put => ({ ...put, ...liquidity, cached: true })), scanDate(now()), filters) : []
+        const iv = ivSnapshot ? { ivr: ivSnapshot.ivr, ivPercentile: ivSnapshot.ivPercentile, ivSource: ivSnapshot.ivSource, ivAsOf: ivSnapshot.ivAsOf } : stored
+        const passes = gate !== 'unknown' && gate !== 'below' && stored.underlyingPrice >= filters.minPrice && stored.underlyingPrice <= filters.maxPrice && iv.ivr >= filters.minIvr && (!(filters.minIvPercentile > 0) || Number.isFinite(iv.ivPercentile) && iv.ivPercentile >= filters.minIvPercentile)
+        rows = passes ? selectSpreads(stored.puts.map(put => ({ ...put, ivr: iv.ivr, ivPercentile: iv.ivPercentile, ivSource: iv.ivSource, ivAsOf: iv.ivAsOf, ...liquidity, cached: true })), scanDate(now()), filters) : []
         if (!passes) state.chainsSkipped++
         const coverage = stored.filters || {}
         const incomplete = passes && (!stored.puts.length || !stored.filters || filters.minDte < coverage.minDte || filters.maxDte > coverage.maxDte || filters.minBuffer < coverage.minBuffer)
         if (incomplete) state.warnings.push(`${symbol}: opgeslagen chain dekt de verruimde looptijd/buffer niet volledig; alleen beschikbare quotes getoetst.`)
-        assessment = { symbol, ...liquidity, code: gate === 'unknown' ? 'VOLUME_UNAVAILABLE' : undefined, status: gate === 'unknown' ? 'missing' : passes ? incomplete ? 'partial' : rows.length ? 'match' : 'no-match' : 'filtered', source: 'cache', asOf: stored.quotedAt, ivSource: stored.ivSource, ivAsOf: stored.ivAsOf,
+        assessment = { symbol, ...liquidity, code: gate === 'unknown' ? 'VOLUME_UNAVAILABLE' : undefined, status: gate === 'unknown' ? 'missing' : passes ? incomplete ? 'partial' : rows.length ? 'match' : 'no-match' : 'filtered', source: 'cache', asOf: stored.quotedAt, ivSource: iv.ivSource, ivAsOf: iv.ivAsOf,
           reason: gate === 'unknown' ? 'Gemiddeld optievolume onbekend; geen goedgekeurde spread. Verzamel volume tijdens beursuren of schakel het volumefilter bewust uit (0).' : gate === 'below' ? `Gemiddeld optievolume ${liquidity.avgOptionVolume} onder ${filters.minAvgOptionVolume}; chain overgeslagen.` : !passes ? 'Opgeslagen koers/IV-rank voldoet niet; chain overgeslagen.' : incomplete ? 'Beschikbare oude chain gefilterd; onvolledige dekking.' : `${rows.length} spreads in opgeslagen chain; oude koers en IV-rank gebruikt.` }
       }
       let candidates, yahooSnapshot
@@ -98,7 +101,7 @@ export async function runSpreadScan(config, state, { cache, checkpoint = async (
         }
         state.phase = 'scanning'
         await scan({ ...config, marketClosed: !session.open, nextScanRequestId: connection.nextRequestId,
-          spreadCandidateContracts: candidates, yahooFetchedAt: yahooSnapshot?.fetchedAt,
+          spreadIvSnapshot: ivSnapshot, spreadCandidateContracts: candidates, yahooFetchedAt: yahooSnapshot?.fetchedAt,
           getSpreadIv: cache.getIv?.bind(cache), saveSpreadIv: cache.saveIv?.bind(cache),
           getSpreadLiquidity: cache.getLiquidity?.bind(cache), saveSpreadLiquidity: cache.saveLiquidity?.bind(cache),
           onScanCheckpoint: async () => { merge(); await checkpoint() },

@@ -8,7 +8,7 @@ page.setDefaultTimeout(20000); page.setDefaultNavigationTimeout(20000)
 const errors = []; page.on('pageerror', error => errors.push(error.message))
 const today = '2026-10-24'
 const sector = symbol => ({ sector: symbol === 'AMD' ? 'Technology' : 'Financials', sectorSource: 'Nasdaq', sectorAsOf: '2026-10-25T09:00:00Z' })
-const short = { symbol: 'HOOD', expiry: '20270122', tradingClass: 'HOOD', right: 'P', currency: 'USD', multiplier: 100, strike: 75, bid: 1.2, ask: 1.4, delta: -.12, underlyingPrice: 110, ivr: 45, marketDataType: 3, quotedAt: '2026-10-24T10:00:00Z' }
+const short = { symbol: 'HOOD', expiry: '20270122', tradingClass: 'HOOD', right: 'P', currency: 'USD', multiplier: 100, strike: 75, bid: 1.2, ask: 1.4, delta: -.12, underlyingPrice: 110, ivr: 45, ivPercentile: 70, marketDataType: 3, quotedAt: '2026-10-24T10:00:00Z' }
 const row = { ...bullPutSpread(short, { ...short, strike: 65, bid: .5, ask: .6, delta: -.08 }, today), ...sector('HOOD'), ivSource: 'historical-close', ivAsOf: '2026-10-23', avgOptionVolume: 10000, avgOptionVolumeAt: '2026-10-23T19:55:00Z', dayOptionVolume: 12000, dayOptionVolumeAt: '2026-10-23T19:55:00Z' }
 let scan = { state: 'idle', rows: [], warnings: [], symbolsChecked: 0, contractsChecked: 0 }
 let failure = false, running = false, posts = 0, resumePosted = false
@@ -55,7 +55,7 @@ await page.route('**/api/**', async route => {
       posts++
       const input = req.postDataJSON()
       if (input.resume) resumePosted = true
-      if (!input.resume) { assert.equal(input.selectionId, stock.id); assert.equal(input.ivSelectionId, iv.id); assert.equal(input.filters.minIvr, iv.filters.minIvr) }
+      if (!input.resume) { assert.equal(input.selectionId, stock.id); assert.equal(input.ivSelectionId, iv.id); assert.equal(input.filters.minIvr, iv.filters.minIvr); assert.equal(input.filters.minIvPercentile, iv.filters.minIvPercentile) }
       assert.deepEqual(input.symbols, input.universeMode === 'us' ? [] : ['HOOD', 'AMD'])
       assert.equal(input.chainSource, 'yahoo')
       assert.equal(input.filters.minDte, 40)
@@ -120,7 +120,7 @@ try {
   assert.deepEqual([stockPosts, ivPosts, posts], countsBeforeFolding)
   await mkdir('data/private/spread-validation', { recursive: true })
   await page.screenshot({ path: 'data/private/spread-validation/collapsed-steps.png', fullPage: true })
-  assert.equal(await page.getByLabel('Optiechainbron', { exact: true }).inputValue(), 'ibkr')
+  assert.equal(await page.getByLabel('Optiechainbron', { exact: true }).inputValue(), 'yahoo')
   await page.getByLabel('Optiechainbron', { exact: true }).selectOption('yahoo')
   await page.getByRole('button', { name: 'Optiescan starten', exact: true }).click()
   await page.getByText('Yahoo-voorselectie + IBKR-controle', { exact: true }).waitFor()
@@ -128,7 +128,7 @@ try {
   await page.getByRole('button', { name: 'Stap 1 uitklappen', exact: true }).focus()
   await page.keyboard.press('Space')
   await page.getByRole('button', { name: 'Stap 2 uitklappen', exact: true }).click()
-  assert.equal(await page.getByLabel('Minimum IV-rank', { exact: true }).inputValue(), '40')
+  assert.equal(await page.getByLabel('Minimum IV-rank', { exact: true }).inputValue(), '0')
   await page.getByText('2 / 75 aandelen gescand', { exact: true }).waitFor()
   assert.equal(await page.getByText('IV-rank te laag; optiechain overgeslagen.', { exact: true }).count(), 0)
   assert.equal(await page.getByRole('region', { name: 'Aandelenbeoordelingen' }).count(), 0)
@@ -371,7 +371,7 @@ try {
   await page.waitForFunction(() => document.querySelector('input[type="time"]')?.value === '10:15')
   await page.getByRole('button', { name: 'IV Scan starten', exact: true }).click()
   await page.waitForFunction(() => ![...document.querySelectorAll('button')].find(button => button.textContent === 'Optiescan starten')?.disabled)
-  await page.getByLabel('Minimum IV-rank', { exact: true }).fill('50')
+  await page.getByLabel('Minimum IV Percentile', { exact: true }).fill('50')
   assert.equal(await page.getByRole('button', { name: 'Optiescan starten', exact: true }).isDisabled(), true)
   iv.rows[0] = { ...iv.rows[0], sector: undefined, sectorSource: undefined, sectorAsOf: undefined }
   await page.reload()

@@ -1,5 +1,26 @@
 # Bull-put-spreadscanner
 
+## IV Percentile en hergebruik (30 oktober 2026)
+
+Lokale uitbreiding op broncode 0.42.5; nog geen serverinstallatie of distributiepakket. Nieuwe IV-scans gebruiken minimum IV Percentile 40 en minimum IV-rank 0. Beide zijn instelbaar; 0 schakelt het betreffende criterium uit. Bestaande opgeslagen IV-rankcriteria blijven behouden, met Percentile-minimum 0. Start stap 2 opnieuw voor de nieuwe berekening; stap 3 neemt beide minima over.
+
+IV Percentile = 100 × aantal geldige dagen met IV kleiner dan of gelijk aan de referentie-IV / aantal geldige dagen. Gelijke waarden tellen mee, zoals in het voorbeeld van de vriend. IV-rank blijft de positie tussen jaarminimum en jaarmaximum. De code doet geen uitspraak over betere handelsresultaten.
+
+Stap 2 gebruikt IBKR-daghistorie (`OPTION_IMPLIED_VOLATILITY`) en de laatste afgeronde dag-IV, zonder generieke IV-quote. Tijdens beursuren telt de lopende dag niet mee; dubbele datums worden ontdubbeld. De bestaande jaarcontrole blijft gelden: minstens 200 observaties, minstens 330 kalenderdagen dekking en laatste observatie hoogstens zeven dagen oud. Ongeldige of constante reeksen worden afgewezen. Het minimum van twintig dagen uit het voorbeeld vervangt deze jaarcontrole niet. Zie [IBKR historische bars](https://www.interactivebrokers.com/docs/tws-api/doc/md/historical-bars).
+
+De twee gegevenslagen gebruiken de bestaande private JSON-opslag naast de IBKR-snapshot:
+
+| Laag | Opslag | Gebruik |
+| --- | --- | --- |
+| Ruwe Yahoo-chains | `yahoo-option-chains/` | Calls en puts per aangevraagde expiratie, oorspronkelijke ophaaltijd en korte cacheduur |
+| IBKR-verrijking | `put-spread-cache/` en `scan-results.json` | IV-selectie, gecontroleerde putquotes, spreads en hervatbare voortgang; de GUI leest opgeslagen resultaten via de API |
+
+Dit zijn gescheiden gegevenslagen, geen nieuwe SQL-tabellen. Nieuwe browservoorkeuren kiezen Yahoo + IBKR-controle; een eerder opgeslagen bronkeuze blijft behouden. Yahoo selecteert maximaal twintig spreadparen per aandeel. IBKR controleert standaardcontracten en levert de uiteindelijke quotes en delta. Passende spreads buiten de voorselectie kunnen ontbreken. Yahoo-rate limits pauzeren de scan; overige Yahoo-bronfouten gebruiken de bestaande IBKR-terugval.
+
+Stap 3 ontvangt de IV-selectie van de server. Met een geldige referentiedatum van maximaal zeven dagen oud vervallen de dubbele IV-historieaanvraag en generieke IV-quote. Koers, volume en optiequotes worden nog steeds gecontroleerd. Bij gesloten markt combineren opgeslagen putquotes met de geselecteerde IV-metrieken; de oorspronkelijke quotedatums blijven behouden. Zonder bruikbare IV-selectie voldoet een oude chain zonder Percentile niet aan een actief Percentile-filter.
+
+IV Percentile staat in de spreadtabel, sortering en CSV. Ontbrekende oude waarden verschijnen als een streepje. Geen live snelheidsbenchmark uitgevoerd; tests controleren het overslaan van dubbele aanvragen. IBKR-pacing en Yahoo-rate-limitafhandeling blijven gelden. De standalone Python-uitgave blijft ongewijzigd.
+
 Trading Monitor **0.42.2**, bijgewerkt op 28 oktober 2026. Open **Put spreads** in het menu of gebruik `/#put-spreads`. Deze uitbreiding blijft binnen de bestaande lokale app.
 
 ## Bediening en quote-details in 0.42.1

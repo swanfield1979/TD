@@ -440,8 +440,8 @@ const server = createServer(async (request, response) => {
               if (stockFilter.snapshot().state === 'running') throw Error('Wacht tot de aandelenfilter klaar is.')
               selection = stockFilter.selection(body.selectionId)
               const iv = ivSelection(optionScans.iv, selection, body.ivSelectionId, symbol => blockedStocks.has(symbol))
-              selection = { ...selection, entries: iv.entries, ivSelectionId: iv.id, ivSelectionAt: iv.finishedAt }
-              filters = spreadFilters({ ...filters, minIvr: iv.filters.minIvr })
+              selection = { ...selection, entries: iv.entries, ivSelectionId: iv.id, ivSelectionAt: iv.finishedAt, ivRows: iv.ivRows }
+              filters = spreadFilters({ ...filters, minIvr: iv.filters.minIvr, minIvPercentile: iv.filters.minIvPercentile ?? 0 })
               if (filters.minPrice !== selection.filters.minPrice || filters.maxPrice !== selection.filters.maxPrice) throw Error('Koersgrenzen gewijzigd; voer eerst de aandelenfilter opnieuw uit.')
             }
             if (resume) {
@@ -457,7 +457,7 @@ const server = createServer(async (request, response) => {
           return sendJson(response, 409, { message: 'Er loopt al een optiescan. Wacht tot deze klaar is.' })
         const state = resume ? { ...optionScans.spreads, state: 'running', message: undefined, finishedAt: undefined } : { state: 'running', filters, universeMode, chainSource, rows: [], puts: [], portfolio: [], market: [], assessments: [], warnings: [], symbols,
           symbolsChecked: 0, contractsChecked: 0, startedAt: new Date().toISOString(), progress: 'Verbinding met IBKR maken' }
-        if (selection) Object.assign(state, { entries: selection.entries, universeCount: selection.entries.length, universeName: 'Opgeslagen Stock Filter en IV Scan', stockSelectionId: selection.id, stockSelectionAt: selection.finishedAt, ivSelectionId: selection.ivSelectionId, ivSelectionAt: selection.ivSelectionAt, stockFilters: selection.filters })
+        if (selection) Object.assign(state, { entries: selection.entries, universeCount: selection.entries.length, universeName: 'Opgeslagen Stock Filter en IV Scan', stockSelectionId: selection.id, stockSelectionAt: selection.finishedAt, ivSelectionId: selection.ivSelectionId, ivSelectionAt: selection.ivSelectionAt, ivRows: selection.ivRows, stockFilters: selection.filters })
         const previous = optionScans[mode]
         optionScans[mode] = state
         scanControllers[mode] = new AbortController()

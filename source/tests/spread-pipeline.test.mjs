@@ -64,7 +64,7 @@ test('IV stage scans only filtered, unblocked stocks, keeps raw IV observations 
   assert.throws(() => ivFilters({ minIvr: '40' }))
 })
 test('IV cursor survives persisted restart and resumes after cancellation; five missing series pause without losing failed cursor', () => fixture(async directory => {
-  const selection = stock(), state = makeFilteredIvState(selection, {})
+  const selection = stock(), state = makeFilteredIvState(selection, { minIvr: 40 })
   const controller = new AbortController()
   await runFilteredIvScan({ scanSignal: controller.signal }, state, options({ scan: async (_c, symbols, part) => { part.state = 'complete'; part.rows.push({ symbol: symbols[0], ivr: 60 }) }, wait: async () => { controller.abort(); controller.signal.throwIfAborted() } }))
   assert.equal(state.state, 'cancelled'); assert.equal(state.universeChecked, 1)

@@ -11,14 +11,14 @@ export function normalizeShortlist(values) {
   return [...new Set(symbols)]
 }
 
-export function ivMetrics(current, bars, today) {
+export function ivMetrics(current, bars, today, { inclusive = false } = {}) {
   const ivr = ivRank(current, bars, today)
   if (ivr === null) return null
   const history = bars.filter(bar => {
     const age = daysToExpiry(bar.date, today)
     return age >= -366 && age <= 0 && Number.isFinite(bar.close) && bar.close > 0 && bar.close < 10
   })
-  return { ivr, ivPercentile: history.filter(bar => bar.close < current).length / history.length * 100 }
+  return { ivr, ivPercentile: history.filter(bar => (inclusive ? bar.close <= current : bar.close < current)).length / history.length * 100 }
 }
 
 export function putReturnMetrics({ strike, bid, underlyingPrice, dte }) {

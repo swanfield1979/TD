@@ -1,5 +1,13 @@
 # Validatie
 
+## Put spreads: IV Percentile en IV-hergebruik (30 oktober 2026)
+
+- Volledige Node-suite: 229/229 geslaagd met `node --test --test-concurrency=1 tests/*.test.mjs`, inclusief zes gerichte controles in `tests/put-spread-percentile.test.mjs`.
+- `npm run test:frontend`: 24/24 geslaagd. `npm run build`: geslaagd.
+- `npm run test:spreads`: geslaagd voor de drie scanstappen, nieuwe standaardwaarden, doorgeven van beide IV-minima, wijziging van het Percentile-criterium, tabel/CSV, hervatten, foutafhandeling, 360–1600 pixels en 200% zoom. Geen paginafouten. Screenshot `source/data/private/spread-validation/compact.png` visueel bekeken.
+- Gerichte controles: gelijke IV-waarden tellen mee; onvoltooide dagen en dubbele datums tellen niet dubbel; ongeldige of te oude IV-snapshots worden geweigerd; hergebruik vraagt geen dubbele IV-historie of generieke IV-quote; gesloten-marktquotes behouden hun oorspronkelijke datum.
+- Geen live IBKR- of Yahoo-snelheidsbenchmark en geen serverinstallatie. Lokale uitbreiding op broncode 0.42.5; bestaande standalone Python-distributie ongewijzigd.
+
 ## Trading Monitor 0.42.2 — begrensde breedte op grote schermen (28 oktober 2026)
 
 - Centrale layoutbreedte van maximaal 1760 pixels inclusief navigatie, met gelijke buitenmarges op brede schermen. Bestaande responsive indeling op kleinere schermen behouden.

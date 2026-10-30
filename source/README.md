@@ -1,5 +1,7 @@
 # Ontwikkeling
 
+Put-spreaduitbreiding (30 oktober 2026): IV Percentile, historische dag-IV zonder generieke IV-quote, hergebruik in stap 3 en Percentile in tabel/sortering/CSV. Vanuit deze map: `node --test tests/put-spread-percentile.test.mjs`, `npm test`, `npm run test:frontend`, `npm run build`. Browser met Vite op 5197: `npm run test:spreads`. Lokale uitbreiding op 0.42.5; nog niet op de server geïnstalleerd. Zie [handleiding](../docs/put-spreads.md).
+
 Options 0.42.5: putspreads en SYNT krijgen één uitklapbare hoofdregel met netto waarden en ISO-openingsweek. Start Vite op 5197 en voer `node scripts/verify-option-groups-browser.mjs` uit. Berekeningen en splitsing van ongelijke aantallen: `npm run test:frontend`. Zie [optiecombinaties](../docs/optiecombinaties.md).
 
 Stats (vanaf 0.42.4, meegeleverd in 0.42.5): `npm run test:frontend` controleert onder meer de nieuwe resultaatberekeningen. Start Vite op 5197 en voer `node scripts/verify-stats-browser.mjs` uit voor sorteren, zoeken, jaarfilters, lege historie en beide thema's op 375/768/1440 pixels. Zie [Stats en berekeningsregels](../docs/stats.md).

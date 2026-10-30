@@ -1,5 +1,7 @@
 # Trading Monitor
 
+Lokale put-spreaduitbreiding (30 oktober 2026, broncode 0.42.5): IV Percentile als standaard IV-criterium, Yahoo → IBKR met gescheiden opslag en hergebruik van geselecteerde IV-data. Nog niet op de server geïnstalleerd. Zie [gebruik en gegevensstroom](docs/put-spreads.md#iv-percentile-en-hergebruik-30-oktober-2026).
+
 Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voortgang op basis van Interactive Brokers Flex-rapporten.
 
 Ontwerpupdate 0.42.3 (28 oktober 2026, serverinstallatie nog niet uitgevoerd): financiële werkplek met diepblauwe donkere modus, lichte modus, duidelijkere kerncijfers en tabellen met vaste positie-identificatie. Hoofdgrafieken hebben uitklapbare exacte maandbedragen. Build, 13 frontendtests en browsercontroles geslaagd. Zie [financieel ontwerp](docs/financieel-ontwerp.md). Stats is lokaal uitgebreid met cumulatief gesloten optieresultaat, resultaatanalyse en een sorteerbare prestatietabel per aandeel; zie [Stats](docs/stats.md).

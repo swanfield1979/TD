@@ -7,9 +7,11 @@ import { stockKey } from './blocked-stocks.mjs'
 import { sectorMetadata } from '../shared/stock-sector.mjs'
 
 export function ivFilters(input = {}) {
-  const minIvr = input.minIvr ?? 40
+  const minIvr = input.minIvr ?? 0
+  const minIvPercentile = input.minIvPercentile ?? (input.minIvr === undefined ? 40 : 0)
   if (typeof minIvr !== 'number' || !Number.isFinite(minIvr) || minIvr < 0 || minIvr > 100) throw Error('Minimum IV-rank moet tussen 0 en 100 liggen.')
-  return { minIvr }
+  if (typeof minIvPercentile !== 'number' || !Number.isFinite(minIvPercentile) || minIvPercentile < 0 || minIvPercentile > 100) throw Error('Minimum IV Percentile moet tussen 0 en 100 liggen.')
+  return { minIvr, minIvPercentile }
 }
 export function makeFilteredIvState(selection, filters) {
   return { id: randomUUID(), state: 'running', stockSelectionId: selection.id, stockSelectionAt: selection.finishedAt, stockFilters: selection.filters, filters: ivFilters(filters), entries: selection.entries, universeMode: selection.universeMode, symbols: selection.symbols, universeCount: selection.entries.length, universeChecked: 0, symbolsChecked: 0, contractsChecked: 0, rows: [], observations: [], failures: [], warnings: [], startedAt: new Date().toISOString(), automatic: false }
@@ -22,7 +24,7 @@ export function ivSelection(state, stock, id, blocked = () => false, now = Date.
   const stockMetadata = new Map(stock.entries.map(row => [stockKey(row.symbol), sectorMetadata(row)]))
   const rows = state.rows.filter(row => allowed.has(stockKey(row.symbol)) && !blocked(row.symbol))
   if (!rows.length) throw Error('Geen niet-geblokkeerde aandelen voldoen aan de IV-filter.')
-  return { id: state.id, finishedAt: state.finishedAt, filters: state.filters, entries: rows.map(row => ({ symbol: row.symbol, ...sectorMetadata(row), ...stockMetadata.get(stockKey(row.symbol)) })) }
+  return { ivRows: rows, id: state.id, finishedAt: state.finishedAt, filters: state.filters, entries: rows.map(row => ({ symbol: row.symbol, ...sectorMetadata(row), ...stockMetadata.get(stockKey(row.symbol)) })) }
 }
 export async function runFilteredIvScan(config, state, { cache, checkpoint = async () => {}, scan = runCspScan, connection = createScanConnection(), blocked = () => false, autoBlock, wait = (ms, signal) => sleep(ms, undefined, { signal }), now = () => new Date() }) {
   const signal = config.scanSignal
@@ -39,7 +41,7 @@ export async function runFilteredIvScan(config, state, { cache, checkpoint = asy
       if (!blocked(symbol)) {
         state.progress = `IV Scan · ${symbol} · ${state.universeChecked + 1} / ${state.entries.length}`
         const part = { state: 'running', rows: [], warnings: [], symbolsChecked: 0, contractsChecked: 0 }
-        await scan({ ...config, marketClosed: !optionsSession(now()).open, nextScanRequestId: connection.nextRequestId,
+        await scan({ ...config, historicalIvOnly: true, marketClosed: !optionsSession(now()).open, nextScanRequestId: connection.nextRequestId,
           getSpreadIv: cache.getIv?.bind(cache), saveSpreadIv: cache.saveIv?.bind(cache),
         }, [symbol], part, connection.Api, 'stock-iv')
         signal?.throwIfAborted()
@@ -48,7 +50,7 @@ export async function runFilteredIvScan(config, state, { cache, checkpoint = asy
         const row = part.rows[0] ? { ...sectorMetadata(entry), ...part.rows[0] } : null
         if (row) {
           state.observations = [...state.observations.filter(item => item.symbol !== symbol), row]
-          state.rows = state.observations.filter(item => item.ivr >= state.filters.minIvr).sort((a, b) => b.ivr - a.ivr)
+          state.rows = state.observations.filter(item => item.ivr >= state.filters.minIvr && (!(state.filters.minIvPercentile > 0) || Number.isFinite(item.ivPercentile) && item.ivPercentile >= state.filters.minIvPercentile)).sort((a, b) => (b.ivPercentile ?? -1) - (a.ivPercentile ?? -1) || b.ivr - a.ivr)
           consecutiveFailures = 0
         } else {
           const failure = { symbol, message: part.warnings.join(' · ') || 'Geen volledige IV-jaarhistorie.', ...part.failures?.[0], stage: 'iv', observedAt: now().toISOString() }

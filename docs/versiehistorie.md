@@ -1,5 +1,9 @@
 # Versiehistorie
 
+## Lokale put-spreaduitbreiding op 0.42.5 (30 oktober 2026)
+
+IV Percentile als standaardcriterium voor nieuwe scans; bestaande IV-rankcriteria behouden. Historische dag-IV zonder generieke IV-quote en hergebruik in stap 3. Percentile in spreadtabel, sortering en CSV. Bestaande private Yahoo-cache en IBKR-resultaatopslag blijven gescheiden. Geen serverinstallatie of nieuwe distributie; zie [handleiding](put-spreads.md).
+
 ## 0.42.5 — uitklapbare optiecombinaties (28 oktober 2026)
 
 - Putspreads en SYNT long/short hebben één hoofdregel met uitklapbare long- en shortbenen. Losse opties blijven apart staan.

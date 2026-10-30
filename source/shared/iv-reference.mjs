@@ -12,3 +12,11 @@ export function ivReference(current, bars, today, { completedOnly = false } = {}
   if (!last || ivRank(last.close, bars, today) === null) return null
   return { value: last.close, source: 'historical-close', asOf: last.date.replace(/^(\d{4})(\d{2})(\d{2})$/, '$1-$2-$3') }
 }
+
+// Only server-selected, dated IV observations can replace a history request.
+export function usableSpreadIv(snapshot, symbol, today) {
+  if (!snapshot || snapshot.symbol !== symbol) return null
+  const age = daysToExpiry(snapshot.ivAsOf || '', today)
+  return [snapshot.ivr, snapshot.ivPercentile].every(value => Number.isFinite(value) && value >= 0 && value <= 100)
+    && Number.isFinite(snapshot.iv) && snapshot.iv > 0 && snapshot.iv < 1000 && age >= -7 && age <= 0 ? snapshot : null
+}

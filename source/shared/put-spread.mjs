@@ -1,7 +1,7 @@
 import { daysToExpiry } from './csp-scan.mjs'
 import { sectorMetadata } from './stock-sector.mjs'
 
-export const spreadDefaults = Object.freeze({ minAvgOptionVolume: 5000, minPrice: 5, maxPrice: 150, minDte: 40, maxDte: 100, minIvr: 20, minBuffer: 25, minProfit: 15, maxLoss: 1000, minOtm: 70, maxQuoteSpread: 1 })
+export const spreadDefaults = Object.freeze({ minAvgOptionVolume: 5000, minPrice: 5, maxPrice: 150, minDte: 40, maxDte: 100, minIvr: 20, minIvPercentile: 0, minBuffer: 25, minProfit: 15, maxLoss: 1000, minOtm: 70, maxQuoteSpread: 1 })
 export function spreadFilters(input = {}) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) throw Error('Ongeldige spreadfilters.')
   const filters = { ...spreadDefaults }
@@ -12,7 +12,7 @@ export function spreadFilters(input = {}) {
     }
   }
   if (!Number.isInteger(filters.minAvgOptionVolume) || filters.minAvgOptionVolume < 0 || filters.minPrice < 0 || filters.maxPrice <= 0 || filters.minPrice > filters.maxPrice || filters.minDte < 1 || filters.maxDte > 730 || filters.minDte > filters.maxDte || !Number.isInteger(filters.minDte) || !Number.isInteger(filters.maxDte)
-    || filters.minIvr < 0 || filters.minIvr > 100 || filters.minBuffer < 0 || filters.minBuffer >= 100
+    || filters.minIvPercentile < 0 || filters.minIvPercentile > 100 || filters.minIvr < 0 || filters.minIvr > 100 || filters.minBuffer < 0 || filters.minBuffer >= 100
     || filters.minProfit < 0 || filters.maxLoss <= 0 || filters.maxLoss > 100000 || filters.minOtm < 0 || filters.minOtm > 100 || filters.maxQuoteSpread < 0)
     throw Error('Controleer de filters: DTE 1–730, percentages 0–100 en een positief maximaal verlies (tot $100.000).')
   return filters
@@ -31,7 +31,7 @@ export function bullPutSpread(short, long, today) {
   if (!Number.isFinite(dte) || dte <= 0 || credit <= 0 || credit >= width) return null
   const maxProfit = credit * 100, maxLoss = (width - credit) * 100
   return { id: `${short.symbol}:${short.expiry}:${short.tradingClass}:${short.strike}:${long.strike}`, symbol: short.symbol, ...sectorMetadata(short),
-    expiry: short.expiry, tradingClass: short.tradingClass, dte, underlyingPrice: short.underlyingPrice, ivr: short.ivr,
+    expiry: short.expiry, tradingClass: short.tradingClass, dte, underlyingPrice: short.underlyingPrice, ivr: short.ivr, ivPercentile: short.ivPercentile,
     discoverySource: short.discoverySource, yahooFetchedAt: short.yahooFetchedAt,
     shortStrike: short.strike, longStrike: long.strike, shortBid: short.bid, shortAsk: short.ask, longBid: long.bid, longAsk: long.ask,
     credit, maxProfit, maxLoss, breakEven: short.strike - credit, returnOnRisk: maxProfit / maxLoss * 100,
@@ -53,6 +53,7 @@ export function selectSpreads(puts, today, input = {}) {
     for (const short of longs) {
       const dte = daysToExpiry(short.expiry, today)
       if (!(short.underlyingPrice >= f.minPrice && short.underlyingPrice <= f.maxPrice && dte >= f.minDte && dte <= f.maxDte && short.ivr >= f.minIvr
+        && (f.minIvPercentile === 0 || Number.isFinite(short.ivPercentile) && short.ivPercentile >= f.minIvPercentile)
         && (1 - short.strike / short.underlyingPrice) * 100 + 1e-8 >= f.minBuffer && (1 - Math.abs(short.delta)) * 100 + 1e-8 >= f.minOtm)) continue
       for (const long of longs) {
         if (long.strike >= short.strike) break

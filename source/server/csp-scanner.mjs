@@ -5,7 +5,7 @@ import { selectSpreads, spreadFilters } from '../shared/put-spread.mjs'
 import { ivMetrics, leapPut, compareLeaps } from '../shared/leaps-scan.mjs'
 import { scanGuard, pacingError, disabledScanner } from './scan-guard.mjs'
 import { loadIvUniverse, SP500_URL } from './iv-universe.mjs'
-import { ivReference } from '../shared/iv-reference.mjs'
+import { ivReference, usableSpreadIv } from '../shared/iv-reference.mjs'
 import { volumeSnapshot, volumeGate } from '../shared/option-volume.mjs'
 export { SP500_URL } from './iv-universe.mjs'
 
@@ -180,7 +180,9 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
         const cachedVolume = mode === 'spreads' ? await config.getSpreadLiquidity?.(symbol) : null
         const hasCachedVolume = volumeGate(volumeSnapshot({}, cachedVolume), filters?.minAvgOptionVolume ?? 0) !== 'unknown'
           && (config.marketClosed || cachedVolume?.avgOptionVolumeAt && scanDate(new Date(cachedVolume.avgOptionVolumeAt)) === today || filters?.minAvgOptionVolume === 0)
-        const generic = mode === 'spreads' && filters.minAvgOptionVolume > 0 && !hasCachedVolume ? '100,105,106' : '106'
+        const suppliedIv = mode === 'spreads' ? config.spreadIvSnapshot : null
+        const reusableIv = usableSpreadIv(suppliedIv, symbol, today)
+        const generic = mode === 'spreads' && filters.minAvgOptionVolume > 0 && !hasCachedVolume ? (reusableIv ? '100,105' : '100,105,106') : stockIv && config.historicalIvOnly || reusableIv ? '' : '106'
         const stock = await availableQuote(contract, generic).catch(error => { if (generic.includes('105')) error.code = 'VOLUME_UNAVAILABLE'; throw error })
         const stockQuotedAt = new Date().toISOString()
         const liquidity = mode === 'spreads' ? volumeSnapshot(stock, cachedVolume) : {}
@@ -199,7 +201,10 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
         const historyKey = `${contract.conId}:${symbol}:${today}`
         const cached = guard.history.get(historyKey) ?? (research ? await config.getSpreadIv?.(symbol) : null)
         let bars
-        if (cached && (!research || ivReference(undefined, cached.bars, today)) && (cached.day === today || typeof cached.savedAt === 'number' && Date.now() - cached.savedAt < 86400000 || research && config.marketClosed && ivReference(undefined, cached.bars, today))) {
+        if (reusableIv) {
+          bars = []
+          state.ivSnapshotHits = (state.ivSnapshotHits ?? 0) + 1
+        } else if (cached && (!research || ivReference(undefined, cached.bars, today)) && (cached.day === today || typeof cached.savedAt === 'number' && Date.now() - cached.savedAt < 86400000 || research && config.marketClosed && ivReference(undefined, cached.bars, today))) {
           bars = cached.bars; state.historyCacheHits = (state.historyCacheHits ?? 0) + 1
         } else {
           let fresh
@@ -218,19 +223,21 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
             if (research) await config.saveSpreadIv?.(symbol, { bars, day: today })
           }
         }
-        const reference = research ? ivReference(stock.iv, bars, today, { completedOnly: !config.marketClosed }) : null
-        const currentIv = reference?.value ?? stock.iv
-        const ivr = ivRank(currentIv, bars, today)
+        if (research && !reusableIv) bars = [...new Map(bars.map(bar => [bar.date.replaceAll('-', ''), bar])).values()]
+          .filter(bar => !(stockIv && config.historicalIvOnly && !config.marketClosed) || daysToExpiry(bar.date, today) < 0)
+        const reference = research ? ivReference(stockIv && config.historicalIvOnly ? undefined : stock.iv, bars, today, { completedOnly: !config.marketClosed }) : null
+        const currentIv = reusableIv ? reusableIv.iv / 100 : reference?.value ?? stock.iv
+        const ivr = reusableIv?.ivr ?? ivRank(currentIv, bars, today)
         if (ivr === null) throw Object.assign(new Error('Geen bruikbare IV of recente volledige IV-jaarhistorie. Controleer beschikbaarheid in TWS en datarechten; er wordt geen IV verzonnen.'), { code: 'IV_UNAVAILABLE' })
-        const metrics = ivMetrics(currentIv, bars, today)
-        const ivMetadata = reference ? { ivSource: reference.source, ivAsOf: reference.asOf } : {}
+        const metrics = reusableIv ? { ivr, ivPercentile: reusableIv.ivPercentile } : ivMetrics(currentIv, bars, today, { inclusive: research })
+        const ivMetadata = reusableIv ? { ivSource: reusableIv.ivSource, ivAsOf: reusableIv.ivAsOf } : reference ? { ivSource: reference.source, ivAsOf: reference.asOf } : {}
         if (stockIv) {
           state.rows.push({ symbol, underlyingPrice: price, iv: currentIv * 100, ...metrics, ...ivMetadata, ...sector, marketDataType: stock.marketDataType, quotedAt: stockQuotedAt })
           return
         }
         if (mode === 'spreads') state.ivReference = { symbol, ...ivMetadata }
-        if (mode === 'spreads' ? ivr < filters.minIvr : ivr <= (mode === 'csp' ? 30 : 40)) {
-          if (mode === 'spreads') assess('filtered', `IV-rank ${ivr.toFixed(2)} lager dan ${filters.minIvr}; optiechain overgeslagen.`)
+        if (mode === 'spreads' ? ivr < filters.minIvr || filters.minIvPercentile > 0 && !(metrics?.ivPercentile >= filters.minIvPercentile) : ivr <= (mode === 'csp' ? 30 : 40)) {
+          if (mode === 'spreads') assess('filtered', `IV-rank ${ivr.toFixed(2)} / IV Percentile ${metrics.ivPercentile.toFixed(2)} voldoet niet aan de IV-criteria; optiechain overgeslagen.`)
           return
         }
         if (mode === 'iv') {
@@ -275,7 +282,7 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
             if (item.status !== 'fulfilled' || !Number.isFinite(item.value.delta) || !(item.value.bid > 0) || !Number.isFinite(item.value.ask)) { missing++; continue }
             if (mode === 'spreads') {
               state.puts.push({ ...item.value, ...sector, symbol, right: 'P', currency: 'USD', multiplier: 100, strike: opt.strike,
-                underlyingPrice: price, expiry: opt.lastTradeDateOrContractMonth, tradingClass: opt.tradingClass, ivr, ...ivMetadata, ...liquidity,
+                underlyingPrice: price, expiry: opt.lastTradeDateOrContractMonth, tradingClass: opt.tradingClass, ...metrics, ...ivMetadata, ...liquidity,
                 quotedAt: new Date().toISOString(), marketDataType: item.value.marketDataType,
                 discoverySource: config.spreadCandidateContracts ? 'Yahoo Finance' : 'IBKR', yahooFetchedAt: config.yahooFetchedAt })
               symbolPuts.push(state.puts.at(-1))
@@ -303,7 +310,7 @@ export async function runCspScan(config, symbols, state, Api = IBApi, mode = 'cs
           ensureActive()
         }
         if (mode === 'spreads') {
-          if (symbolPuts.length) await config.onSpreadSnapshot?.({ symbol, underlyingPrice: price, ivr, ...ivMetadata, ...liquidity, quotedAt: stockQuotedAt, puts: symbolPuts, chains, filters, coverage: state.coverage })
+          if (symbolPuts.length) await config.onSpreadSnapshot?.({ symbol, underlyingPrice: price, ...metrics, ...ivMetadata, ...liquidity, quotedAt: stockQuotedAt, puts: symbolPuts, chains, filters, coverage: state.coverage })
           const count = state.rows.filter(row => row.symbol === symbol).length
           assess(missing ? 'partial' : count ? 'match' : 'no-match', `${count} passende spreads; ${symbolPuts.length} putquotes; ${missing} contracten zonder volledige data.`)
         }

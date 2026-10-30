@@ -1,5 +1,7 @@
 # Releases
 
+Lokale put-spreaduitbreiding van 30 oktober 2026: IV Percentile en hergebruik van de IV-selectie. Geen afzonderlijk distributiepakket of serverinstallatie; broncode op 0.42.5. Zie [handleiding](../docs/put-spreads.md).
+
 ## Trading Monitor 0.42.5 — uitklapbare optiecombinaties en Stats
 
 Putspreads en SYNT worden eenmaal getoond met twee uitklapbare benen, netto premie/koers, gecombineerde waarden en ISO-openingsweek. Inclusief de Stats-uitbreiding met cumulatief resultaat en prestaties per aandeel. Manifest, lockfile en updatescript staan op 0.42.5 zodat Updates de versie herkent. Geen afzonderlijk installatiepakket; serverinstallatie nog niet uitgevoerd. Zie [optiecombinaties](../docs/optiecombinaties.md) en [Stats](../docs/stats.md).
