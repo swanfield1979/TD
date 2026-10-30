@@ -1,5 +1,9 @@
 # Versiehistorie
 
+## 0.42.7 — laatst opgeslagen synchronisatie (30 oktober 2026)
+
+De browser laadt de opgeslagen IBKR-snapshot onafhankelijk van de gatewaystatus, ook na opnieuw openen. Status en snapshot worden afzonderlijk opgehaald; een onbereikbaar statusendpoint blokkeert de data niet. Nieuwe serverdata verschijnen bij de volgende polling; leesfouten wissen bestaande browserdata niet. De API herstelt de laatste synchronisatiedatum na herstart. Ook Trades en Stats tonen de synchronisatiebron. Manifest, lockfile en updatescript op 0.42.7; nog geen serverinstallatie. Zie [gegevensopslag](laatste-synchronisatie.md).
+
 ## 0.42.6 — IV Percentile en put-spreadhergebruik (30 oktober 2026)
 
 IV Percentile als standaardcriterium voor nieuwe scans; bestaande IV-rankcriteria behouden. Historische dag-IV zonder generieke IV-quote en hergebruik in stap 3. Percentile in spreadtabel, sortering en CSV. Bestaande private Yahoo-cache en IBKR-resultaatopslag blijven gescheiden. Manifest, lockfile en handmatig updatescript op 0.42.6 voor herkenning door Updates. Geen serverinstallatie of afzonderlijk installatiepakket; zie [handleiding](put-spreads.md).

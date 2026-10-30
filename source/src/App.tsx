@@ -214,7 +214,7 @@ function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState<Page>(pageFromHash)
   const hasLiveSnapshot = !!summary && summary !== importedSummary
-  const showLiveFreshness = hasLiveSnapshot && currentPage !== 'stats' && currentPage !== 'trades'
+  const showLiveFreshness = hasLiveSnapshot
 
   const handleLiveSnapshot = useCallback((snapshot: Parameters<typeof mergeLiveSnapshot>[1]) => {
     setLiveSnapshot((current) => !current || snapshot.generatedAt >= current.generatedAt ? snapshot : current)
@@ -370,7 +370,7 @@ function App() {
               <span className="data-freshness__pulse" aria-hidden="true" />
               <span>
                 <strong>Bijgewerkt t/m {formatDate((showLiveFreshness ? summary : importedSummary)!.balance.toDate)}</strong>
-                <small>{showLiveFreshness ? `IBKR live · Flex-basis t/m ${formatDate(importedSummary!.balance.toDate)}` : 'Historische Flex-gegevens'}</small>
+                <small>{showLiveFreshness ? `Laatste IBKR-synchronisatie · Flex-basis t/m ${formatDate(importedSummary!.balance.toDate)}` : 'Historische Flex-gegevens'}</small>
               </span>
             </div>
           )}

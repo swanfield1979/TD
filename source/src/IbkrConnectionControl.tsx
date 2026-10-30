@@ -37,13 +37,18 @@ export default function IbkrConnectionControl({ onSnapshot }: IbkrConnectionCont
   })
   const [isAvailable, setIsAvailable] = useState(true)
   const appliedSnapshotAt = useRef<string | null>(null)
+  const [snapshotAt, setSnapshotAt] = useState<string | null>(null)
 
   const loadSnapshot = useCallback(async () => {
     const response = await fetch('/api/ibkr/snapshot', { cache: 'no-store' })
     if (!response.ok) return
     const snapshot = (await response.json()) as IbkrLiveSnapshot
-    if (snapshot.generatedAt === appliedSnapshotAt.current) return
+    if (!Number.isFinite(Date.parse(snapshot.generatedAt)) || !Number.isFinite(snapshot.netLiquidation)
+      || !Array.isArray(snapshot.positions) || typeof snapshot.currency !== 'string'
+      || !/^\d{4}-\d{2}-\d{2}$/.test(snapshot.asOfDate)) return
+    if (appliedSnapshotAt.current && snapshot.generatedAt <= appliedSnapshotAt.current) return
     appliedSnapshotAt.current = snapshot.generatedAt
+    setSnapshotAt(snapshot.generatedAt)
     onSnapshot(snapshot)
   }, [onSnapshot])
 
@@ -54,7 +59,6 @@ export default function IbkrConnectionControl({ onSnapshot }: IbkrConnectionCont
       const nextStatus = (await response.json()) as IbkrConnectionStatus
       setStatus(nextStatus)
       setIsAvailable(true)
-      if (nextStatus.state === 'connected') await loadSnapshot()
       return nextStatus
     } catch {
       setIsAvailable(false)
@@ -66,16 +70,16 @@ export default function IbkrConnectionControl({ onSnapshot }: IbkrConnectionCont
       })
       return null
     }
-  }, [loadSnapshot])
+  }, [])
 
   useEffect(() => {
-    void loadStatus()
-  }, [loadStatus])
+    void Promise.allSettled([loadStatus(), loadSnapshot()])
+  }, [loadStatus, loadSnapshot])
 
   useEffect(() => {
-    const timer = window.setInterval(() => void loadStatus(), status.isBusy ? 3_000 : 15_000)
+    const timer = window.setInterval(() => { void Promise.allSettled([loadStatus(), loadSnapshot()]) }, status.isBusy ? 3_000 : 15_000)
     return () => window.clearInterval(timer)
-  }, [loadStatus, status.isBusy])
+  }, [loadStatus, loadSnapshot, status.isBusy])
 
   const handleRefresh = async () => {
     try {
@@ -105,7 +109,7 @@ export default function IbkrConnectionControl({ onSnapshot }: IbkrConnectionCont
     }
   }
 
-  const updateTime = formatUpdateTime(status.lastUpdatedAt)
+  const updateTime = formatUpdateTime(snapshotAt ?? status.lastUpdatedAt)
   const buttonLabel = status.state === 'error' ? 'Opnieuw proberen' : status.state === 'connected' ? 'Vernieuwen' : 'Verbinden'
   const StatusIcon = status.state === 'awaiting_mfa' ? ShieldKeyholeRegular : PlugConnectedRegular
 
@@ -115,7 +119,7 @@ export default function IbkrConnectionControl({ onSnapshot }: IbkrConnectionCont
         <StatusIcon aria-hidden="true" />
         <span>
           <strong>{statusLabel[status.state]}</strong>
-          <small>{updateTime ? `Bijgewerkt ${updateTime}` : status.message}</small>
+          <small>{updateTime ? `Laatste synchronisatie ${updateTime}` : status.message}</small>
         </span>
       </div>
       <button

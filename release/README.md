@@ -1,5 +1,9 @@
 # Releases
 
+## Trading Monitor 0.42.7 — laatst opgeslagen IBKR-synchronisatie
+
+Automatisch de servergegevens laden zonder actieve gatewayverbinding, met zichtbare synchronisatiedatum en behoud bij tijdelijke leesfouten. Beschikbaar via GitHub-main en Updates; geen afzonderlijk installatiepakket. Serverinstallatie nog niet uitgevoerd. Zie [handleiding](../docs/laatste-synchronisatie.md).
+
 Trading Monitor 0.42.6 (30 oktober 2026): IV Percentile en hergebruik van de IV-selectie. Geen afzonderlijk distributiepakket of serverinstallatie; broncode op 0.42.6. Beschikbaar via de versiecontrole op GitHub-main. Zie [handleiding](../docs/put-spreads.md).
 
 ## Trading Monitor 0.42.5 — uitklapbare optiecombinaties en Stats

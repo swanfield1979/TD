@@ -68,6 +68,14 @@ const runtime = {
   isBusy: false,
 }
 
+// Restore data freshness independently of the current gateway connection.
+try {
+  const saved = JSON.parse(await readFile(config.snapshotPath, 'utf8'))
+  if (Number.isFinite(Date.parse(saved.generatedAt))) runtime.lastUpdatedAt = saved.generatedAt
+} catch (error) {
+  if (error.code !== 'ENOENT') runtime.message = 'De opgeslagen IBKR-synchronisatie kon niet worden gelezen.'
+}
+
 function publicStatus() {
   return {
     state: runtime.state,
@@ -490,8 +498,8 @@ const server = createServer(async (request, response) => {
         return sendJson(response, 200, { ...snapshot, account: snapshot.account ? 'selected' : undefined,
           executions: snapshot.executions?.map((execution) => ({ ...execution, account: 'selected' })),
         })
-      } catch {
-        return sendJson(response, 404, { message: 'Er is nog geen actuele IBKR-snapshot.' })
+      } catch (error) {
+        return sendJson(response, error.code === 'ENOENT' ? 404 : 500, { message: error.code === 'ENOENT' ? 'Er is nog geen opgeslagen IBKR-synchronisatie.' : 'De opgeslagen IBKR-synchronisatie kon niet worden gelezen.' })
       }
     }
 

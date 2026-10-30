@@ -1,5 +1,12 @@
 # Validatie
 
+## Opgeslagen IBKR-synchronisatie 0.42.7 (30 oktober 2026)
+
+- Volledige Node-suite: 230/230 geslaagd; frontendtests: 24/24; productiebuild op 0.42.7 geslaagd.
+- Nieuwe API-test controleert hetzelfde opgeslagen saldo en synchronisatietijdstip na twee serverstarts met onbereikbare gateway, behoud van het private bestand, rekeningafscherming, no-store en onderscheid tussen ontbrekend/onleesbaar bestand.
+- Browsercontrole `node scripts/verify-saved-snapshot-browser.mjs` geslaagd: offline openen/herladen, onbereikbaar statusendpoint, nieuwere serverdata via polling, behoud bij leesfouten, ontbrekende/ongeldige data en desktop/mobiel. Ook Trades en Stats tonen de synchronisatiebron. Geen gateway-refreshaanvragen vanuit het lezen. Screenshot `source/data/private/snapshot-validation/offline-saved.png` visueel bekeken.
+- Synthetische gegevens; geen live IBKR-proef of serverinstallatie uitgevoerd.
+
 ## Versieherkenning 0.42.6 (30 oktober 2026)
 
 Manifest, lockfile en handmatig updatescript verhoogd naar 0.42.6. De updater leest de versie uit `source/package.json` op GitHub-main; de eerdere push bevatte nog 0.42.5. Acht updatetests en de productiebuild op 0.42.6 geslaagd. Geen serverinstallatie uitgevoerd.
