@@ -1,5 +1,9 @@
 # Validatie
 
+## Versieherkenning 0.42.6 (30 oktober 2026)
+
+Manifest, lockfile en handmatig updatescript verhoogd naar 0.42.6. De updater leest de versie uit `source/package.json` op GitHub-main; de eerdere push bevatte nog 0.42.5. Acht updatetests en de productiebuild op 0.42.6 geslaagd. Geen serverinstallatie uitgevoerd.
+
 ## Put spreads: IV Percentile en IV-hergebruik (30 oktober 2026)
 
 - Volledige Node-suite: 229/229 geslaagd met `node --test --test-concurrency=1 tests/*.test.mjs`, inclusief zes gerichte controles in `tests/put-spread-percentile.test.mjs`.

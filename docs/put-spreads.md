@@ -2,7 +2,7 @@
 
 ## IV Percentile en hergebruik (30 oktober 2026)
 
-Lokale uitbreiding op broncode 0.42.5; nog geen serverinstallatie of distributiepakket. Nieuwe IV-scans gebruiken minimum IV Percentile 40 en minimum IV-rank 0. Beide zijn instelbaar; 0 schakelt het betreffende criterium uit. Bestaande opgeslagen IV-rankcriteria blijven behouden, met Percentile-minimum 0. Start stap 2 opnieuw voor de nieuwe berekening; stap 3 neemt beide minima over.
+Versie 0.42.6; nog geen serverinstallatie of distributiepakket. Nieuwe IV-scans gebruiken minimum IV Percentile 40 en minimum IV-rank 0. Beide zijn instelbaar; 0 schakelt het betreffende criterium uit. Bestaande opgeslagen IV-rankcriteria blijven behouden, met Percentile-minimum 0. Start stap 2 opnieuw voor de nieuwe berekening; stap 3 neemt beide minima over.
 
 IV Percentile = 100 × aantal geldige dagen met IV kleiner dan of gelijk aan de referentie-IV / aantal geldige dagen. Gelijke waarden tellen mee, zoals in het voorbeeld van de vriend. IV-rank blijft de positie tussen jaarminimum en jaarmaximum. De code doet geen uitspraak over betere handelsresultaten.
 

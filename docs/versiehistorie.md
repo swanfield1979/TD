@@ -1,8 +1,8 @@
 # Versiehistorie
 
-## Lokale put-spreaduitbreiding op 0.42.5 (30 oktober 2026)
+## 0.42.6 — IV Percentile en put-spreadhergebruik (30 oktober 2026)
 
-IV Percentile als standaardcriterium voor nieuwe scans; bestaande IV-rankcriteria behouden. Historische dag-IV zonder generieke IV-quote en hergebruik in stap 3. Percentile in spreadtabel, sortering en CSV. Bestaande private Yahoo-cache en IBKR-resultaatopslag blijven gescheiden. Geen serverinstallatie of nieuwe distributie; zie [handleiding](put-spreads.md).
+IV Percentile als standaardcriterium voor nieuwe scans; bestaande IV-rankcriteria behouden. Historische dag-IV zonder generieke IV-quote en hergebruik in stap 3. Percentile in spreadtabel, sortering en CSV. Bestaande private Yahoo-cache en IBKR-resultaatopslag blijven gescheiden. Manifest, lockfile en handmatig updatescript op 0.42.6 voor herkenning door Updates. Geen serverinstallatie of afzonderlijk installatiepakket; zie [handleiding](put-spreads.md).
 
 ## 0.42.5 — uitklapbare optiecombinaties (28 oktober 2026)
 
