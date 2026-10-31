@@ -12,9 +12,11 @@ Bij de koppeling staat **Laatste synchronisatie** met datum en tijd. De paginako
 
 Zonder eerder geslaagde synchronisatie blijft de historische Flex-basis zichtbaar. Een snapshot ouder dan de Flex-basis of met een andere valuta vervangt deze basis niet. Ontbrekende of ongeldige snapshotgegevens worden niet toegepast. Een tijdelijke leesfout wist een reeds geladen snapshot niet. Een ontbrekend bestand geeft HTTP 404; een onleesbaar bestand HTTP 500. De API verbergt het rekeningnummer in de browserrespons.
 
+Vanaf **0.42.8** toont dit blok ook **Huidige week**: de ISO-week van de huidige datum in Europe/Amsterdam. Dit staat los van de synchronisatiedatum en wordt iedere minuut opnieuw bepaald. Op 31 oktober 2026 is dat week 44.
+
 ## Installatie en controle
 
-Installeer versie **0.42.7** via **Updates → Controleren op updates → Versie 0.42.7 installeren**. Frontend en API moeten samen worden bijgewerkt. De broncodepush alleen installeert de wijziging niet op de server.
+Installeer versie **0.42.8** via **Updates → Controleren op updates → Versie 0.42.8 installeren**. Frontend en API moeten samen worden bijgewerkt. De broncodepush alleen installeert de wijziging niet op de server.
 
 Synchroniseer eenmaal succesvol en noteer het saldo en de datum. Open daarna de app opnieuw terwijl de gateway niet verbonden is: hetzelfde saldo en dezelfde synchronisatiedatum moeten zichtbaar zijn zonder op Verbinden te klikken. Bestaande serverbestanden worden hergebruikt; er is geen datamigratie nodig.
 

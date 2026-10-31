@@ -1,5 +1,9 @@
 # Versiehistorie
 
+## 0.42.8 — huidige week (31 oktober 2026)
+
+Het gegevensblok toont de huidige ISO-week op basis van Europe/Amsterdam, afzonderlijk van de datum van de laatste synchronisatie. Herberekening iedere minuut, ook bij een langdurig geopende pagina. Bestaande geteste ISO-weekberekening hergebruikt. Manifest, lockfile en updatescript op 0.42.8.
+
 ## 0.42.7 — laatst opgeslagen synchronisatie (30 oktober 2026)
 
 De browser laadt de opgeslagen IBKR-snapshot onafhankelijk van de gatewaystatus, ook na opnieuw openen. Status en snapshot worden afzonderlijk opgehaald; een onbereikbaar statusendpoint blokkeert de data niet. Nieuwe serverdata verschijnen bij de volgende polling; leesfouten wissen bestaande browserdata niet. De API herstelt de laatste synchronisatiedatum na herstart. Ook Trades en Stats tonen de synchronisatiebron. Manifest, lockfile en updatescript op 0.42.7; nog geen serverinstallatie. Zie [gegevensopslag](laatste-synchronisatie.md).

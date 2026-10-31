@@ -1,5 +1,9 @@
 # Validatie
 
+## Huidige week 0.42.8 (31 oktober 2026)
+
+Build en 24 frontendtests geslaagd; bestaande ISO-weektests dekken ook jaargrenzen. Browsercontrole `node scripts/verify-saved-snapshot-browser.mjs` geslaagd op 375 en 1440 pixels. Screenshot visueel gecontroleerd: gegevensblok bevat Huidige week: 44. Weeknummer volgt Europe/Amsterdam en wordt iedere minuut opnieuw bepaald. Geen brokerverbinding of serverinstallatie uitgevoerd.
+
 ## Opgeslagen IBKR-synchronisatie 0.42.7 (30 oktober 2026)
 
 - Volledige Node-suite: 230/230 geslaagd; frontendtests: 24/24; productiebuild op 0.42.7 geslaagd.

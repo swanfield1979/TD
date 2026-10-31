@@ -26,9 +26,13 @@ import AppUpdatePage from './pages/AppUpdatePage'
 import MartinScanPage from './pages/MartinScanPage'
 import TradingActivityCards from './TradingActivityCards'
 import IbkrConnectionControl from './IbkrConnectionControl'
+import { openingWeek } from './option-groups'
 import { mergeLiveSnapshot, resolvePortfolio } from './ibkr'
 
 const DATA_URL = '/data/portfolio-summary.json'
+const currentCalendarWeek = () => openingWeek(new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'Europe/Amsterdam', year: 'numeric', month: '2-digit', day: '2-digit',
+}).format(new Date()))
 type Page = 'dashboard' | 'stocks' | 'options' | 'goals' | 'stats' | 'trades' | 'scans' | 'leaps' | 'spreads' | 'martin' | 'updates'
 
 const pageFromHash = (): Page => {
@@ -206,6 +210,11 @@ function App() {
     document.documentElement.dataset.theme = theme
     try { localStorage.setItem('tm-theme', theme) } catch { /* Theme also works without storage. */ }
   }, [theme])
+  const [currentWeek, setCurrentWeek] = useState(currentCalendarWeek)
+  useEffect(() => {
+    const timer = window.setInterval(() => setCurrentWeek(currentCalendarWeek()), 60_000)
+    return () => window.clearInterval(timer)
+  }, [])
   const [importedSummary, setSummary] = useState<PortfolioSummary | null>(null)
   const [liveSnapshot, setLiveSnapshot] = useState<Parameters<typeof mergeLiveSnapshot>[1] | null>(null)
   const summary = useMemo(() => resolvePortfolio(importedSummary, liveSnapshot), [importedSummary, liveSnapshot])
@@ -370,6 +379,7 @@ function App() {
               <span className="data-freshness__pulse" aria-hidden="true" />
               <span>
                 <strong>Bijgewerkt t/m {formatDate((showLiveFreshness ? summary : importedSummary)!.balance.toDate)}</strong>
+                <small>Huidige week: {currentWeek}</small>
                 <small>{showLiveFreshness ? `Laatste IBKR-synchronisatie · Flex-basis t/m ${formatDate(importedSummary!.balance.toDate)}` : 'Historische Flex-gegevens'}</small>
               </span>
             </div>

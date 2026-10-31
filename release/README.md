@@ -1,5 +1,9 @@
 # Releases
 
+## Trading Monitor 0.42.8 — huidige week in gegevensblok
+
+Toont de actuele ISO-week volgens de Nederlandse datum, naast de bestaande gegevensdatum. Beschikbaar via GitHub-main en Updates; geen afzonderlijk installatiepakket. Serverinstallatie nog niet uitgevoerd.
+
 ## Trading Monitor 0.42.7 — laatst opgeslagen IBKR-synchronisatie
 
 Automatisch de servergegevens laden zonder actieve gatewayverbinding, met zichtbare synchronisatiedatum en behoud bij tijdelijke leesfouten. Beschikbaar via GitHub-main en Updates; geen afzonderlijk installatiepakket. Serverinstallatie nog niet uitgevoerd. Zie [handleiding](../docs/laatste-synchronisatie.md).

@@ -1,5 +1,7 @@
 # Trading Monitor
 
+Versie 0.42.8 (31 oktober 2026): het blok met de gegevensdatum toont ook de huidige ISO-week volgens Europe/Amsterdam. Nog niet op de server geïnstalleerd.
+
 Versie 0.42.7 (30 oktober 2026): de laatst geslaagde IBKR-synchronisatie wordt automatisch vanaf de server geladen, ook zonder gatewayverbinding. Zie [opslag en gebruik](docs/laatste-synchronisatie.md). Serverinstallatie nog niet uitgevoerd.
 
 Put-spreaduitbreiding v0.42.6 (30 oktober 2026): IV Percentile als standaard IV-criterium, Yahoo → IBKR met gescheiden opslag en hergebruik van geselecteerde IV-data. Nog niet op de server geïnstalleerd. Zie [gebruik en gegevensstroom](docs/put-spreads.md#iv-percentile-en-hergebruik-30-oktober-2026).
@@ -8,7 +10,7 @@ Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voort
 
 Ontwerpupdate 0.42.3 (28 oktober 2026, serverinstallatie nog niet uitgevoerd): financiële werkplek met diepblauwe donkere modus, lichte modus, duidelijkere kerncijfers en tabellen met vaste positie-identificatie. Hoofdgrafieken hebben uitklapbare exacte maandbedragen. Build, 13 frontendtests en browsercontroles geslaagd. Zie [financieel ontwerp](docs/financieel-ontwerp.md). Stats is lokaal uitgebreid met cumulatief gesloten optieresultaat, resultaatanalyse en een sorteerbare prestatietabel per aandeel; zie [Stats](docs/stats.md).
 
-**Versie/status:** 0.42.7. Laatst opgeslagen IBKR-gegevens automatisch beschikbaar zonder gatewayverbinding. IV Percentile en hergebruik van de put-spreadselectie. Putspreads en SYNT gegroepeerd met uitklapbare benen; ISO-openingsweek en uitgebreide Stats. Serverinstallatie nog niet uitgevoerd. Zie [optiecombinaties](docs/optiecombinaties.md). De app is op brede schermen gecentreerd en maximaal 1760 pixels breed, inclusief navigatie. Kleinere schermen gebruiken de beschikbare breedte; grafieken en kaarten rekken niet meer onbeperkt mee. Build en frontendtests geslaagd; serverinstallatie nog niet uitgevoerd.
+**Versie/status:** 0.42.8. Laatst opgeslagen IBKR-gegevens automatisch beschikbaar zonder gatewayverbinding. IV Percentile en hergebruik van de put-spreadselectie. Putspreads en SYNT gegroepeerd met uitklapbare benen; ISO-openingsweek en uitgebreide Stats. Serverinstallatie nog niet uitgevoerd. Zie [optiecombinaties](docs/optiecombinaties.md). De app is op brede schermen gecentreerd en maximaal 1760 pixels breed, inclusief navigatie. Kleinere schermen gebruiken de beschikbare breedte; grafieken en kaarten rekken niet meer onbeperkt mee. Build en frontendtests geslaagd; serverinstallatie nog niet uitgevoerd.
 
 | Map | Inhoud |
 | --- | --- |
