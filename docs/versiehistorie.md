@@ -1,5 +1,9 @@
 # Versiehistorie
 
+## 0.43.0 — 2 november 2026
+
+Nieuw menu **Single Put Spread**, tickerinvoer en rechtstreekse optiescan zonder Stock Filter/IV-selectie. Eigen API- en opslagstatus; gedeelde spreadberekeningen, caches en scanvergrendeling. Alle gevonden spreads met sortering, quotedetails, CSV en R/R-groentinten. Criteria inklapbaar, standaard 30–60 DTE. Ticker, bron en criteria apart opgeslagen in de browser. Stoppen/hervatten, waarschuwingen en herstel na API-herstart. Frontend en API samen bijwerken; serverinstallatie nog niet uitgevoerd.
+
 ## 0.42.9 — 2 november 2026
 
 Put-spreadrijen met 30–60 DTE krijgen drie oplopende groentinten bij R/R vanaf 15%, 20% en 30%. Overige rijen behouden de bestaande achtergrond. Legenda en tekstlabels in compacte/uitgebreide tabellen en alternatieven, met aparte kleuren voor beide thema’s. Geen wijziging van scanfilters of rangschikking. Serverinstallatie nog niet uitgevoerd.

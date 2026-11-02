@@ -1,5 +1,9 @@
 # Releases
 
+## Trading Monitor 0.43.0 — Single Put Spread
+
+Nieuw menu om één ticker rechtstreeks op bull-putspreads te scannen, met eigen resultaten, criteria, stoppen/hervatten en alle gevonden combinaties. Broncode via GitHub-main en de bestaande updatefunctie; geen afzonderlijk installatiepakket. Frontend en API samen bijwerken. Serverinstallatie nog niet uitgevoerd. Zie [handleiding](../docs/single-put-spread.md).
+
 ## Trading Monitor 0.42.9 — R/R-groentinten voor put spreads
 
 Drie oplopende groentinten bij 30–60 DTE: vanaf 15%, 20% en 30% R/R. Inclusief legenda en tekstlabels in lichte en donkere modus. Broncode via GitHub-main en de bestaande updatefunctie; geen afzonderlijk installatiepakket. Serverinstallatie nog niet uitgevoerd.

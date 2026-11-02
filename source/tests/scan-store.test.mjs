@@ -12,10 +12,11 @@ test('scan results and exact resume cursor survive a new store instance; running
   try{
     const store=createScanStore(path,gateway)
     assert.equal(await store.load(),null)
-    await store.save({iv:{state:'running',phase:'waiting',nextBatchAt:'2026-10-13T12:00:20Z',rows:[row],warnings:[],universeChecked:1},leaps:{state:'complete',rows:[row],warnings:[],finishedAt:row.quotedAt}},round())
+    await store.save({iv:{state:'running',phase:'waiting',nextBatchAt:'2026-10-13T12:00:20Z',rows:[row],warnings:[],universeChecked:1},leaps:{state:'complete',rows:[row],warnings:[],finishedAt:row.quotedAt},spreads:{state:'complete',rows:[row],warnings:[]},singleSpreads:{state:'running',rows:[{...row,symbol:'AMD'}],warnings:[],symbols:['AMD'],universeChecked:0,entries:[{symbol:'AMD'}]}},round())
     const restored=await createScanStore(path,gateway).load()
     assert.equal(restored.scans.iv.state,'interrupted');assert.equal(restored.scans.iv.restoredFromDisk,true);assert.equal(restored.scans.iv.phase,'interrupted');assert.equal(restored.scans.iv.nextBatchAt,undefined)
     assert.equal(restored.scans.leaps.state,'complete');assert.equal(restored.scans.leaps.rows[0].quotedAt,row.quotedAt)
+    assert.equal(restored.scans.singleSpreads.state,'interrupted');assert.equal(restored.scans.singleSpreads.rows[0].symbol,'AMD');assert.equal(restored.scans.singleSpreads.universeChecked,0);assert.equal(restored.scans.spreads.rows[0].symbol,'HOOD')
     assert.equal(restored.round.cursor,1);assert.equal(restored.round.matches.get('HOOD').ivr,60)
   }finally{await rm(directory,{recursive:true,force:true})}
 })

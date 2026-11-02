@@ -110,3 +110,6 @@
 .spreads-table .spreads-return-label { color: var(--tm-text-primary); }
 .spreads-page .spreads-table > tbody > tr[data-return-highlight] .spreads-profit { color: #06643f; }
 :root[data-theme="dark"] .spreads-page .spreads-table > tbody > tr[data-return-highlight] .spreads-profit { color: var(--tm-status-success); }
+
+.spreads-single-ticker { display: grid; gap: 8px; font-size: 13px; }
+.spreads-single-ticker input { width: 100%; text-transform: uppercase; }

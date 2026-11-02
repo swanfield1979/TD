@@ -183,6 +183,7 @@ try { shortlist = normalizeShortlist(JSON.parse(await readFile(shortlistPath, 'u
 catch (error) { if (error.code !== 'ENOENT') shortlistError = 'Shortlist kon niet worden gelezen; controleer het opgeslagen bestand voordat je opnieuw opslaat.' }
 const optionScans = {
   spreads: { state: 'idle', rows: [], warnings: [], symbolsChecked: 0, contractsChecked: 0 },
+  singleSpreads: { state: 'idle', rows: [], warnings: [], symbolsChecked: 0, contractsChecked: 0 },
   iv: { state: 'idle', rows: [], warnings: [], symbolsChecked: 0, contractsChecked: 0 },
   leaps: { state: 'idle', rows: [], warnings: [], assessments: [], symbolsChecked: 0, contractsChecked: 0 },
 }
@@ -193,7 +194,7 @@ let scanStorageError = null
 try {
   const stored = await scanStore.load()
   if (stored) {
-    for (const mode of ['iv', 'leaps', 'spreads']) if (stored.scans[mode]) optionScans[mode] = stored.scans[mode]
+    for (const mode of ['iv', 'leaps', 'spreads', 'singleSpreads']) if (stored.scans[mode]) optionScans[mode] = stored.scans[mode]
     if (stored.scans.csp) scanState = stored.scans.csp
     if (stored.round) scanGuard(config).ivRound = stored.round
   }
@@ -213,7 +214,7 @@ async function runOptionScan(mode, symbols, state, previous) {
     const signal = scanControllers[mode].signal
     const researchConfig = { ...config, scanSignal: signal, onStockDetails: (symbol, details) => stockSectors.rememberIbkr(symbol, details) }
     const runBatch = () => runCspScan({ ...config, scanSignal: signal, ivContinueRound: mode === 'iv' && state.batchesCompleted > 0, onScanCheckpoint: saveScanResults }, symbols, state, undefined, mode)
-    if (mode === 'spreads') await runSpreadScan(researchConfig, state, { cache: spreadCache, yahoo: yahooOptions, checkpoint: saveScanResults, blocked: symbol => blockedStocks.has(symbol), autoBlock: failure => autoBlockStock(blockedStocks, failure) })
+    if (mode === 'spreads' || mode === 'singleSpreads') await runSpreadScan(researchConfig, state, { cache: spreadCache, yahoo: yahooOptions, checkpoint: saveScanResults, blocked: symbol => blockedStocks.has(symbol), autoBlock: failure => autoBlockStock(blockedStocks, failure) })
     else if (mode === 'iv') await runFilteredIvScan(researchConfig, state, { cache: spreadCache, checkpoint: saveScanResults, blocked: symbol => blockedStocks.has(symbol), autoBlock: failure => autoBlockStock(blockedStocks, failure) })
     else await runBatch()
     if (mode === 'leaps' && state.rows.length === 0 && ['error', 'cancelled'].includes(state.state) && previous.rows.length) {
@@ -379,7 +380,7 @@ const server = createServer(async (request, response) => {
       if (!isAllowedPost(request)) return sendJson(response, 403, { message: 'Ongeldige aanvraag.' })
       return sendJson(response, 202, martinScan.stop())
     }
-    const stopMode = { '/api/put-spreads/stop': 'spreads', '/api/put-spreads/iv/stop': 'iv', '/api/iv-scan/stop': 'iv', '/api/leaps/stop': 'leaps', '/api/scans/stop': 'csp' }[request.url]
+    const stopMode = { '/api/single-put-spread/stop': 'singleSpreads', '/api/put-spreads/stop': 'spreads', '/api/put-spreads/iv/stop': 'iv', '/api/iv-scan/stop': 'iv', '/api/leaps/stop': 'leaps', '/api/scans/stop': 'csp' }[request.url]
     if (stopMode && request.method === 'POST') {
       if (!isAllowedPost(request)) return sendJson(response, 403, { message: 'Ongeldige aanvraag.' })
       const state = stopMode === 'csp' ? scanState : optionScans[stopMode]
@@ -405,7 +406,7 @@ const server = createServer(async (request, response) => {
         finally { shortlistSaving = false }
       }
     }
-    const mode = request.url === '/api/put-spreads' ? 'spreads' : ['/api/iv-scan', '/api/put-spreads/iv'].includes(request.url) ? 'iv' : request.url === '/api/leaps' ? 'leaps' : null
+    const mode = request.url === '/api/single-put-spread' ? 'singleSpreads' : request.url === '/api/put-spreads' ? 'spreads' : ['/api/iv-scan', '/api/put-spreads/iv'].includes(request.url) ? 'iv' : request.url === '/api/leaps' ? 'leaps' : null
     if (mode) {
       if (request.method === 'GET') {
         const rows = mode === 'leaps' ? optionScans[mode].rows : optionScans[mode].rows.filter(row => !blockedStocks.has(row.symbol)).map(stockSectors.decorate)
@@ -433,18 +434,26 @@ const server = createServer(async (request, response) => {
         }
         let symbols = mode === 'leaps' ? [...shortlist] : []
         let filters, universeMode, selection, chainSource = 'ibkr', resume = false
-        if (mode === 'spreads') {
+        if (mode === 'spreads' || mode === 'singleSpreads') {
           try {
             const body = await readJsonBody(request)
             chainSource = body.chainSource ?? 'ibkr'
             if (!['ibkr', 'yahoo'].includes(chainSource)) throw Error('Kies IBKR of Yahoo met IBKR-controle.')
-            universeMode = body.universeMode ?? (Array.isArray(body.symbols) && body.symbols.length ? 'custom' : 'us')
-            if (!['us', 'custom'].includes(universeMode)) throw Error('Ongeldig aandelenuniversum.')
-            symbols = universeMode === 'custom' ? normalizeShortlist(body.symbols) : []
-            if (universeMode === 'custom' && !symbols.length) throw Error('Vul minstens één ticker in voor een eigen lijst.')
+            if (mode === 'singleSpreads') {
+              blockedStocks.assertReadable()
+              const symbol = typeof body.symbol === 'string' ? body.symbol.trim().toUpperCase().replace(/[.-]/g, ' ') : ''
+              if (!/^[A-Z][A-Z0-9]{0,18}(?: [A-Z])?$/.test(symbol)) throw Error('Vul één geldige ticker in, bijvoorbeeld AAPL.')
+              if (blockedStocks.has(symbol)) throw Error(`${symbol} staat in Geblokkeerde Stocks. Deblokkeer het aandeel eerst via Put spreads.`)
+              symbols = normalizeShortlist([symbol]); universeMode = 'custom'
+            } else {
+              universeMode = body.universeMode ?? (Array.isArray(body.symbols) && body.symbols.length ? 'custom' : 'us')
+              if (!['us', 'custom'].includes(universeMode)) throw Error('Ongeldig aandelenuniversum.')
+              symbols = universeMode === 'custom' ? normalizeShortlist(body.symbols) : []
+              if (universeMode === 'custom' && !symbols.length) throw Error('Vul minstens één ticker in voor een eigen lijst.')
+            }
             filters = spreadFilters(body.filters)
             resume = body.resume === true
-            if (!resume) {
+            if (!resume && mode === 'spreads') {
               if (stockFilter.snapshot().state === 'running') throw Error('Wacht tot de aandelenfilter klaar is.')
               selection = stockFilter.selection(body.selectionId)
               const iv = ivSelection(optionScans.iv, selection, body.ivSelectionId, symbol => blockedStocks.has(symbol))
@@ -453,7 +462,7 @@ const server = createServer(async (request, response) => {
               if (filters.minPrice !== selection.filters.minPrice || filters.maxPrice !== selection.filters.maxPrice) throw Error('Koersgrenzen gewijzigd; voer eerst de aandelenfilter opnieuw uit.')
             }
             if (resume) {
-              const previous = optionScans.spreads
+              const previous = optionScans[mode]
               if ((previous.chainSource || 'ibkr') !== chainSource) throw Error('Hervat met dezelfde chainbron of start een nieuwe scan.')
               if (filters.minAvgOptionVolume > 0 && previous.filters?.minAvgOptionVolume === undefined) throw Error('Start een nieuwe scan om het nieuwe volumefilter ook op eerdere aandelen toe te passen.')
               if (!previous.entries || previous.universeChecked >= previous.entries.length && !Number.isInteger(previous.retryFrom) || JSON.stringify(spreadFilters(previous.filters)) !== JSON.stringify(filters) || previous.universeMode !== universeMode || (universeMode === 'custom' && JSON.stringify(previous.symbols) !== JSON.stringify(symbols)))
@@ -461,10 +470,11 @@ const server = createServer(async (request, response) => {
             }
           } catch (error) { return sendJson(response, 400, { message: error.message }) }
         }
-        if (mode === 'spreads' && (scanState.state === 'running' || Object.values(optionScans).some(scan => scan.state === 'running')))
+        if ((mode === 'spreads' || mode === 'singleSpreads') && (scansBusy() || weeklySchedule.isRunning()))
           return sendJson(response, 409, { message: 'Er loopt al een optiescan. Wacht tot deze klaar is.' })
-        const state = resume ? { ...optionScans.spreads, state: 'running', message: undefined, finishedAt: undefined } : { state: 'running', filters, universeMode, chainSource, rows: [], puts: [], portfolio: [], market: [], assessments: [], warnings: [], symbols,
+        const state = resume ? { ...optionScans[mode], state: 'running', message: undefined, finishedAt: undefined } : { state: 'running', filters, universeMode, chainSource, rows: [], puts: [], portfolio: [], market: [], assessments: [], warnings: [], symbols,
           symbolsChecked: 0, contractsChecked: 0, startedAt: new Date().toISOString(), progress: 'Verbinding met IBKR maken' }
+        if (mode === 'singleSpreads' && !resume) Object.assign(state, { entries: symbols.map(symbol => ({ symbol })), universeName: 'Eén aandeel', universeCount: 1, remainingSymbols: 1 })
         if (selection) Object.assign(state, { entries: selection.entries, universeCount: selection.entries.length, universeName: 'Opgeslagen Stock Filter en IV Scan', stockSelectionId: selection.id, stockSelectionAt: selection.finishedAt, ivSelectionId: selection.ivSelectionId, ivSelectionAt: selection.ivSelectionAt, ivRows: selection.ivRows, stockFilters: selection.filters })
         const previous = optionScans[mode]
         optionScans[mode] = state

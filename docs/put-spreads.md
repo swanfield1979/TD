@@ -1,5 +1,9 @@
 # Bull-put-spreadscanner
 
+## Eén aandeel scannen (0.43.0)
+
+Gebruik het nieuwe menu **Single Put Spread** voor een rechtstreekse optiescan van één ticker, zonder eerst Stock Filter en IV Scan uit te voeren. De aparte pagina toont alle gevonden spreads, gebruikt de bestaande berekeningen en groentinten en bewaart eigen resultaten. De drie stappen op deze Put-spreadpagina blijven beschikbaar. Zie [Single Put Spread](single-put-spread.md).
+
 ## Groentinten voor rendement op risico (0.42.9)
 
 Vanaf 2 november 2026 kleuren hoofdrijen in zowel het aandelenoverzicht als de alternatieve spreads volgens deze richtlijn:

@@ -1,5 +1,11 @@
 # Validatie
 
+## 0.43.0 — Single Put Spread (2 november 2026)
+
+Productiebuild, `npm test` (230 tests in de huidige werkmap, inclusief eerder aanwezige lokale tests) en 24 frontendtests geslaagd. API-regressie uitgebreid met directe single-scan zonder Stock Filter/IV-ID’s, precies één ticker, IBKR-notatie voor aandelenklassen, Origin-controle, filters, geblokkeerde ticker, wederzijdse scanvergrendeling, stoppen, onafhankelijke bulkresultaten en herstel na API-herstart. Opslagtest controleert aparte single/bulkresultaten en herstel van een actieve single-scan als onderbroken.
+
+`npm run test:single-spread` controleert met fictieve marktdata menu/deeplink, lege/ongeldige ticker, direct scannen zonder stock/IV-verzoeken, alle combinaties, inklapbare criteria, groentinten, sorteren, quotedetails, CSV, lichte/donkere modus, 375/1600 pixels, aparte browservoorkeuren en resultaten bij paginawisseling/herladen, API-fout, stoppen/hervatten en lege resultaten. Geen paginafouten. Screenshots lokaal onder `source/data/private/single-spread-validation/`; visueel gecontroleerd. Bestaande `npm run test:spreads` geslaagd. Geen live brokerproef of serverinstallatie.
+
 ## 0.42.9 — R/R-groentinten (2 november 2026)
 
 Vanuit `source/`: productiebuild en 24 frontendtests geslaagd. Bestaande `npm run test:spreads` geslaagd, inclusief de drie scanstappen, sorteren, CSV, alternatieven, schermbreedtes 360–1600 pixels en 200% zoom. Aanvullende lokale Playwright-controle met fictieve spreads: R/R-grenzen 15/20/30%, waarden vlak onder grenzen, DTE 29/30/60/61, begrensde intensiteit boven 30%, compacte/uitgebreide weergave en alternatieve spreads. Lichte en donkere modus visueel gecontroleerd; tekst-, link- en winstkleur op alle drie de achtergronden minimaal 4,5:1 contrast. Screenshots en tijdelijk controlescript staan uitsluitend onder `source/data/private/spread-validation/`. Geen live orders of serverinstallatie.

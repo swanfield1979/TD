@@ -33,9 +33,10 @@ const DATA_URL = '/data/portfolio-summary.json'
 const currentCalendarWeek = () => openingWeek(new Intl.DateTimeFormat('en-CA', {
   timeZone: 'Europe/Amsterdam', year: 'numeric', month: '2-digit', day: '2-digit',
 }).format(new Date()))
-type Page = 'dashboard' | 'stocks' | 'options' | 'goals' | 'stats' | 'trades' | 'scans' | 'leaps' | 'spreads' | 'martin' | 'updates'
+type Page = 'dashboard' | 'stocks' | 'options' | 'goals' | 'stats' | 'trades' | 'scans' | 'leaps' | 'spreads' | 'singleSpread' | 'martin' | 'updates'
 
 const pageFromHash = (): Page => {
+  if (window.location.hash === '#single-put-spread' || (!window.location.hash && window.location.pathname === '/single-put-spread')) return 'singleSpread'
   if (window.location.hash === '#updates') return 'updates'
   if (window.location.hash === '#put-spreads' || (!window.location.hash && window.location.pathname === '/put-spreads')) return 'spreads'
   if (window.location.hash === '#martin' || (!window.location.hash && window.location.pathname === '/martin')) return 'martin'
@@ -60,6 +61,7 @@ const pageTitles: Record<Page, string> = {
   scans: 'Scans',
   leaps: 'Leaps',
   spreads: 'Put spreads',
+  singleSpread: 'Single Put Spread',
   martin: 'Martin-scan',
   updates: 'Updates',
 }
@@ -329,6 +331,9 @@ function App() {
           <a className={`nav-item${currentPage === 'spreads' ? ' nav-item--active' : ''}`} href="#put-spreads" aria-current={currentPage === 'spreads' ? 'page' : undefined}>
             <ArrowSwapRegular aria-hidden="true" /><span>Put spreads</span>
           </a>
+          <a className={`nav-item${currentPage === 'singleSpread' ? ' nav-item--active' : ''}`} href="#single-put-spread" aria-current={currentPage === 'singleSpread' ? 'page' : undefined}>
+            <TargetArrowRegular aria-hidden="true" /><span>Single Put Spread</span>
+          </a>
           <a className={`nav-item${currentPage === 'leaps' ? ' nav-item--active' : ''}`} href="#leaps" aria-current={currentPage === 'leaps' ? 'page' : undefined}>
             <ArrowSwapRegular aria-hidden="true" /><span>Leaps</span>
           </a>
@@ -389,7 +394,8 @@ function App() {
         {isMobile && <IbkrConnectionControl onSnapshot={handleLiveSnapshot} />}
 
         {currentPage === 'updates' && <AppUpdatePage />}
-        {currentPage === 'spreads' && <PutSpreadPage />}
+        {currentPage === 'spreads' && <PutSpreadPage key="spreads" />}
+        {currentPage === 'singleSpread' && <PutSpreadPage key="single-spread" single />}
         {currentPage === 'scans' && <ScansPage />}
         {currentPage === 'martin' && <MartinScanPage />}
         {currentPage === 'leaps' && <OptionResearchPage mode="leaps" />}

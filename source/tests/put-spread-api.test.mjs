@@ -9,7 +9,7 @@ import { join } from 'node:path'
 import { once } from 'node:events'
 import { createServer } from 'node:net'
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms))
-test('spread API validates inputs, enforces origin and scan lock, supports stop and restores its filters', { timeout: 20000 }, async () => {
+test('spread API validates inputs, enforces origin and scan lock, supports stop and restores its filters', { timeout: 30000 }, async () => {
   const directory = await mkdtemp(join(tmpdir(), 'tm-spreads-'))
   const socket = createServer().listen(0, '127.0.0.1'); await once(socket, 'listening')
   const port = socket.address().port; await new Promise(resolve => socket.close(resolve))
@@ -91,5 +91,43 @@ test('spread API validates inputs, enforces origin and scan lock, supports stop 
     await block('AIOK', false)
     await stop(); await start()
     assert.equal((await (await fetch(`${origin}/api/put-spreads/blocked`)).json()).entries.some(row => row.symbol === 'AIOK'), false, 'Old failure must not undo explicit unblock on restart')
+    // The single-ticker route bypasses Stock Filter/IV selection but has its own durable state.
+    const singleUrl = `${origin}/api/single-put-spread`
+    const singlePost = body => fetch(singleUrl, { method: 'POST', headers, body: JSON.stringify(body) })
+    const original = await (await fetch(`${origin}/api/put-spreads`)).json()
+    assert.equal((await (await fetch(singleUrl)).json()).state, 'idle')
+    assert.equal((await fetch(singleUrl, { method: 'POST', body: '{}' })).status, 403)
+    assert.equal((await fetch(`${singleUrl}/stop`, { method: 'POST' })).status, 403)
+    for (const body of [{}, { symbol: '' }, { symbol: ['AMD'] }, { symbols: ['AMD', 'HOOD'] }, { symbol: 'AMD,HOOD' }, { symbol: 'AMD HOOD' }, { symbol: '../bad' }, { symbol: 'AMD', filters: { maxLoss: -1 } }, { symbol: 'AMD', chainSource: 'unknown' }, { symbol: 'AMD', resume: true }]) {
+      assert.equal((await singlePost(body)).status, 400, JSON.stringify(body))
+    }
+    await block('HOOD', true)
+    const blockedSingle = await singlePost({ symbol: 'HOOD' })
+    assert.equal(blockedSingle.status, 400)
+    assert.match((await blockedSingle.json()).message, /Geblokkeerde Stocks/)
+    const single = await singlePost({ symbol: ' brk.b ', chainSource: 'ibkr', filters: { minDte: 30, maxDte: 60, maxLoss: 800 } })
+    assert.equal(single.status, 202)
+    const startedSingle = await single.json()
+    assert.deepEqual(startedSingle.symbols, ['BRK B'])
+    assert.deepEqual(startedSingle.entries, [{ symbol: 'BRK B' }])
+    assert.equal(startedSingle.universeMode, 'custom')
+    assert.equal(startedSingle.universeCount, 1)
+    assert.equal(startedSingle.stockSelectionId, undefined)
+    assert.equal(startedSingle.ivSelectionId, undefined)
+    assert.equal((await post({ symbols: ['AMD'], selectionId: selection.id, ivSelectionId: 'iv-selection' })).status, 409)
+    assert.equal((await fetch(`${origin}/api/stock-filter`, { method: 'POST', headers, body: '{}' })).status, 409)
+    assert.equal((await fetch(`${singleUrl}/stop`, { method: 'POST', headers })).status, 202)
+    let singleState
+    for (let i = 0; i < 100; i++) { singleState = await (await fetch(singleUrl)).json(); if (singleState.state !== 'running') break; await pause(30) }
+    assert.equal(singleState.state, 'cancelled')
+    const unchanged = await (await fetch(`${origin}/api/put-spreads`)).json()
+    for (const key of ['state', 'symbols', 'filters', 'rows', 'startedAt']) assert.deepEqual(unchanged[key], original[key], key)
+    await pause(100); await stop(); await start()
+    const restoredSingle = await (await fetch(singleUrl)).json()
+    assert.equal(restoredSingle.restoredFromDisk, true)
+    assert.deepEqual(restoredSingle.symbols, ['BRK B'])
+    assert.equal(restoredSingle.filters.maxLoss, 800)
+    assert.equal(restoredSingle.state, 'cancelled')
+
   } finally { if (child?.exitCode === null) await stop(); await rm(directory, { recursive: true, force: true }) }
 })
