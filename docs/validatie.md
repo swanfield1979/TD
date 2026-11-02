@@ -1,5 +1,9 @@
 # Validatie
 
+## 0.42.9 — R/R-groentinten (2 november 2026)
+
+Vanuit `source/`: productiebuild en 24 frontendtests geslaagd. Bestaande `npm run test:spreads` geslaagd, inclusief de drie scanstappen, sorteren, CSV, alternatieven, schermbreedtes 360–1600 pixels en 200% zoom. Aanvullende lokale Playwright-controle met fictieve spreads: R/R-grenzen 15/20/30%, waarden vlak onder grenzen, DTE 29/30/60/61, begrensde intensiteit boven 30%, compacte/uitgebreide weergave en alternatieve spreads. Lichte en donkere modus visueel gecontroleerd; tekst-, link- en winstkleur op alle drie de achtergronden minimaal 4,5:1 contrast. Screenshots en tijdelijk controlescript staan uitsluitend onder `source/data/private/spread-validation/`. Geen live orders of serverinstallatie.
+
 ## Huidige week 0.42.8 (31 oktober 2026)
 
 Build en 24 frontendtests geslaagd; bestaande ISO-weektests dekken ook jaargrenzen. Browsercontrole `node scripts/verify-saved-snapshot-browser.mjs` geslaagd op 375 en 1440 pixels. Screenshot visueel gecontroleerd: gegevensblok bevat Huidige week: 44. Weeknummer volgt Europe/Amsterdam en wordt iedere minuut opnieuw bepaald. Geen brokerverbinding of serverinstallatie uitgevoerd.

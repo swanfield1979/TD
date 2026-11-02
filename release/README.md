@@ -1,5 +1,9 @@
 # Releases
 
+## Trading Monitor 0.42.9 — R/R-groentinten voor put spreads
+
+Drie oplopende groentinten bij 30–60 DTE: vanaf 15%, 20% en 30% R/R. Inclusief legenda en tekstlabels in lichte en donkere modus. Broncode via GitHub-main en de bestaande updatefunctie; geen afzonderlijk installatiepakket. Serverinstallatie nog niet uitgevoerd.
+
 ## Trading Monitor 0.42.8 — huidige week in gegevensblok
 
 Toont de actuele ISO-week volgens de Nederlandse datum, naast de bestaande gegevensdatum. Beschikbaar via GitHub-main en Updates; geen afzonderlijk installatiepakket. Serverinstallatie nog niet uitgevoerd.

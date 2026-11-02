@@ -1,5 +1,9 @@
 # Versiehistorie
 
+## 0.42.9 — 2 november 2026
+
+Put-spreadrijen met 30–60 DTE krijgen drie oplopende groentinten bij R/R vanaf 15%, 20% en 30%. Overige rijen behouden de bestaande achtergrond. Legenda en tekstlabels in compacte/uitgebreide tabellen en alternatieven, met aparte kleuren voor beide thema’s. Geen wijziging van scanfilters of rangschikking. Serverinstallatie nog niet uitgevoerd.
+
 ## 0.42.8 — huidige week (31 oktober 2026)
 
 Het gegevensblok toont de huidige ISO-week op basis van Europe/Amsterdam, afzonderlijk van de datum van de laatste synchronisatie. Herberekening iedere minuut, ook bij een langdurig geopende pagina. Bestaande geteste ISO-weekberekening hergebruikt. Manifest, lockfile en updatescript op 0.42.8.

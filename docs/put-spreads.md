@@ -1,5 +1,18 @@
 # Bull-put-spreadscanner
 
+## Groentinten voor rendement op risico (0.42.9)
+
+Vanaf 2 november 2026 kleuren hoofdrijen in zowel het aandelenoverzicht als de alternatieve spreads volgens deze richtlijn:
+
+| Looptijd | R/R vóór kosten | Rijachtergrond |
+| --- | --- | --- |
+| 30–60 DTE, inclusief grenzen | 15% tot minder dan 20% | Lichtgroen |
+| 30–60 DTE, inclusief grenzen | 20% tot minder dan 30% | Groener |
+| 30–60 DTE, inclusief grenzen | Vanaf 30% | Feller groen; intensiteit begrensd |
+| Andere looptijd, R/R onder 15% of ontbrekende/ongeldige waarden | — | Bestaande rijachtergrond |
+
+De grenswaarden gebruiken de ongeronde R/R over de looptijd, niet Jaar-R/R. Legenda en tekstlabels bij de R/R-cel verklaren de kleuren. Beide thema’s gebruiken aangepaste achtergronden; hover blijft zichtbaar. Uitklapbare quotetabellen houden hun eigen stijl. De kleur geeft uitsluitend de verhouding maximale winst/maximaal verlies aan, geen winstkans, verwachte opbrengst of koopadvies. Scanfilters, sortering en CSV blijven gelijk. Serverinstallatie nog niet uitgevoerd.
+
 ## IV Percentile en hergebruik (30 oktober 2026)
 
 Versie 0.42.6; nog geen serverinstallatie of distributiepakket. Nieuwe IV-scans gebruiken minimum IV Percentile 40 en minimum IV-rank 0. Beide zijn instelbaar; 0 schakelt het betreffende criterium uit. Bestaande opgeslagen IV-rankcriteria blijven behouden, met Percentile-minimum 0. Start stap 2 opnieuw voor de nieuwe berekening; stap 3 neemt beide minima over.

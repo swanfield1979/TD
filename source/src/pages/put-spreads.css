@@ -95,3 +95,18 @@
 
 .spreads-assessment-reason { white-space: normal; min-width: 260px; max-width: 420px; text-align: left !important; }
 .spreads-block-reason { white-space: normal; min-width: 180px; max-width: 360px; overflow-wrap: anywhere; }
+
+/* R/R-richtlijn voor 30–60 DTE; alleen de hoofdrij, ook in de alternatieven. */
+.spreads-page [data-return-highlight="light"] { --spread-return-bg: #edf7ef; }
+.spreads-page [data-return-highlight="medium"] { --spread-return-bg: #dff1e3; }
+.spreads-page [data-return-highlight="strong"] { --spread-return-bg: #cdebd6; }
+:root[data-theme="dark"] .spreads-page [data-return-highlight="light"] { --spread-return-bg: #18302d; }
+:root[data-theme="dark"] .spreads-page [data-return-highlight="medium"] { --spread-return-bg: #1c3d32; }
+:root[data-theme="dark"] .spreads-page [data-return-highlight="strong"] { --spread-return-bg: #204735; }
+.spreads-page .spreads-table > tbody > tr[data-return-highlight] { background: var(--spread-return-bg); }
+.spreads-page .spreads-table > tbody > tr[data-return-highlight]:hover { background: var(--spread-return-bg); outline: 1px solid var(--tm-stroke-strong); outline-offset: -1px; }
+.spreads-return-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.spreads-return-key { background: var(--spread-return-bg); color: var(--tm-text-primary); border: 1px solid var(--tm-stroke); border-radius: var(--tm-radius-control); padding: 3px 6px; }
+.spreads-table .spreads-return-label { color: var(--tm-text-primary); }
+.spreads-page .spreads-table > tbody > tr[data-return-highlight] .spreads-profit { color: #06643f; }
+:root[data-theme="dark"] .spreads-page .spreads-table > tbody > tr[data-return-highlight] .spreads-profit { color: var(--tm-status-success); }
