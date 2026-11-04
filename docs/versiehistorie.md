@@ -1,5 +1,13 @@
 # Versiehistorie
 
+## 0.43.1 — 4 november 2026
+
+Handelsdetails toont dit en vorig kalenderjaar met nettoresultaat, short/long opties, aandelen en jaarlijkse premiedetails. Gemiddeld per maand en overige jaarstatistieken blijven behouden. Flex-import bevat beide jaren; Gateway-resultaten worden per kalenderjaar toegevoegd zonder dubbeltelling. Inclusief driebenige groepering van SYNT long met passende short call. Zie [jaaroverzicht](jaaroverzicht.md) en [optiecombinaties](optiecombinaties.md). Serverinstallatie nog niet uitgevoerd.
+
+## Lokale aanpassing — 4 november 2026 (basis 0.43.0)
+
+Options groepeert een resterende short call op hetzelfde aandeel en dezelfde expiratie, met strike gelijk aan of hoger dan de synthetische strike, bij SYNT long. Eén uitklapbare hoofdregel met drie benen en gezamenlijke netto bedragen. Ongelijke aantallen behouden een afzonderlijke restpositie; brokerdata en contracttotalen blijven behouden. Nog niet op de server geïnstalleerd. Zie [optiecombinaties](optiecombinaties.md).
+
 ## 0.43.0 — 2 november 2026
 
 Nieuw menu **Single Put Spread**, tickerinvoer en rechtstreekse optiescan zonder Stock Filter/IV-selectie. Eigen API- en opslagstatus; gedeelde spreadberekeningen, caches en scanvergrendeling. Alle gevonden spreads met sortering, quotedetails, CSV en R/R-groentinten. Criteria inklapbaar, standaard 30–60 DTE. Ticker, bron en criteria apart opgeslagen in de browser. Stoppen/hervatten, waarschuwingen en herstel na API-herstart. Frontend en API samen bijwerken; serverinstallatie nog niet uitgevoerd.

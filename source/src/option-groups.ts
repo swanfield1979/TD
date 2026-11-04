@@ -3,7 +3,7 @@ import type { OptionHolding, OptionStrategy } from './types'
 export type OptionGroupStrategy = 'PUT_SPREAD' | 'SYNT_LONG' | 'SYNT_SHORT'
 export type OptionDisplayRow = { id: string; kind: 'single'; holding: OptionHolding } | {
   id: string; kind: 'group'; strategy: OptionGroupStrategy; symbol: string; expiry: string;
-  quantity: number; legs: [OptionHolding, OptionHolding];
+  quantity: number; legs: OptionHolding[];
   averageOpenPrice: number | null; currentPrice: number | null; currentValue: number | null; difference: number | null;
 }
 const right = (holding: OptionHolding) => ({ CALL: 'C', PUT: 'P' }[holding.optionRight ?? ''] ?? holding.optionRight)
@@ -29,6 +29,17 @@ function part(holding: OptionHolding, quantity: number): OptionHolding {
   }
 }
 
+function group(strategy: OptionGroupStrategy, quantity: number, legs: OptionHolding[]): Extract<OptionDisplayRow, { kind: 'group' }> {
+  const netPrice = (field: 'averageOpenPrice' | 'currentPrice') => legs.some(leg => leg[field] === null)
+    ? null : legs.reduce((sum, leg) => sum - Math.sign(leg.quantity) * leg[field]!, 0)
+  const total = (field: 'currentValue' | 'difference') => legs.some(leg => leg[field] === null)
+    ? null : legs.reduce((sum, leg) => sum + leg[field]!, 0)
+  return { id: `${strategy}-${legs.map(leg => leg.conid).join('-')}`, kind: 'group', strategy,
+    symbol: legs[0].symbol, expiry: legs[0].expiry!, quantity, legs,
+    averageOpenPrice: netPrice('averageOpenPrice'), currentPrice: netPrice('currentPrice'),
+    currentValue: total('currentValue'), difference: total('difference') }
+}
+
 export function groupOptionHoldings(holdings: OptionHolding[]): OptionDisplayRow[] {
   // Work on a copy; quantities and valuations in the source data remain unchanged.
   const available = holdings.map(holding => ({ holding, remaining: Math.abs(holding.quantity) }))
@@ -52,14 +63,7 @@ export function groupOptionHoldings(holdings: OptionHolding[]): OptionDisplayRow
         if (!b) break
         const quantity = Math.min(a.remaining, b.remaining)
         const legs: [OptionHolding, OptionHolding] = [part(a.holding, quantity), part(b.holding, quantity)]
-        const netPrice = (field: 'averageOpenPrice' | 'currentPrice') => legs.some(leg => leg[field] === null)
-          ? null : legs.reduce((sum, leg) => sum - Math.sign(leg.quantity) * leg[field]!, 0)
-        const total = (field: 'currentValue' | 'difference') => legs.some(leg => leg[field] === null)
-          ? null : legs.reduce((sum, leg) => sum + leg[field]!, 0)
-        rows.push({ id: `${strategy}-${a.holding.conid}-${b.holding.conid}`, kind: 'group', strategy,
-          symbol: a.holding.symbol, expiry: a.holding.expiry!, quantity, legs,
-          averageOpenPrice: netPrice('averageOpenPrice'), currentPrice: netPrice('currentPrice'),
-          currentValue: total('currentValue'), difference: total('difference') })
+        rows.push(group(strategy, quantity, legs))
         a.remaining -= quantity; b.remaining -= quantity
       }
     }
@@ -67,6 +71,27 @@ export function groupOptionHoldings(holdings: OptionHolding[]): OptionDisplayRow
   // Synthetic exposure takes precedence over vertical puts; never reuse matched contracts.
   combine('SYNT_LONG', (a, b) => right(a) === 'C' && a.quantity > 0 && right(b) === 'P' && b.quantity < 0 && a.strike === b.strike)
   combine('SYNT_SHORT', (a, b) => right(a) === 'C' && a.quantity < 0 && right(b) === 'P' && b.quantity > 0 && a.strike === b.strike)
+  // A remaining short call can cover a synthetic long. Allocate at most one per set.
+  for (const row of [...rows]) {
+    if (row.kind !== 'group' || row.strategy !== 'SYNT_LONG') continue
+    const longCall = row.legs[0]
+    const candidates = available.filter(entry => entry.remaining > 0 && comparable(longCall, entry.holding)
+      && right(entry.holding) === 'C' && entry.holding.quantity < 0 && entry.holding.strike! >= longCall.strike!)
+      .sort((a, b) => Number(!!longCall.openedAt && b.holding.openedAt === longCall.openedAt)
+        - Number(!!longCall.openedAt && a.holding.openedAt === longCall.openedAt)
+        || a.holding.strike! - b.holding.strike! || a.holding.conid.localeCompare(b.holding.conid))
+    if (!candidates.length) continue
+    let remaining = row.quantity
+    rows.splice(rows.indexOf(row), 1)
+    for (const entry of candidates) {
+      if (remaining <= 0) break
+      const quantity = Math.min(remaining, entry.remaining)
+      rows.push(group(row.strategy, quantity, [...row.legs.map(leg => part(leg, quantity)), part(entry.holding, quantity)]))
+      entry.remaining -= quantity
+      remaining -= quantity
+    }
+    if (remaining > 0) rows.push(group(row.strategy, remaining, row.legs.map(leg => part(leg, remaining))))
+  }
   combine('PUT_SPREAD', (a, b) => right(a) === 'P' && a.quantity < 0 && right(b) === 'P' && b.quantity > 0 && a.strike !== b.strike)
   for (const entry of available) if (entry.remaining > 0) rows.push({ id: `single-${entry.holding.conid}`, kind: 'single', holding: part(entry.holding, entry.remaining) })
   const sortKey = (row: OptionDisplayRow) => row.kind === 'group'

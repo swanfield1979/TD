@@ -1,17 +1,17 @@
 # Optiecombinaties in Options
 
-Versie 0.42.5 van 28 oktober 2026. Inclusief de Stats-uitbreiding; serverinstallatie nog niet uitgevoerd.
+Geïntroduceerd in versie 0.42.5; lokaal uitgebreid op 4 november 2026 (basisversie 0.43.0). Inclusief de Stats-uitbreiding; serverinstallatie nog niet uitgevoerd.
 
 ## Gebruik
 
-Options toont passende putspreads en synthetische posities als één hoofdregel. Klik op de pijl bij de ticker om de twee benen er direct onder te tonen. De knop werkt ook met Enter en Spatie en meldt de open/dicht-status aan hulpsoftware. Combinaties beginnen ingeklapt; de keuze blijft tijdens het gebruik van deze pagina in het geheugen.
+Options toont passende putspreads en synthetische posities als één hoofdregel. Klik op de pijl bij de ticker om alle twee of drie benen er direct onder te tonen. De knop werkt ook met Enter en Spatie en meldt de open/dicht-status aan hulpsoftware. Combinaties beginnen ingeklapt; de keuze blijft tijdens het gebruik van deze pagina in het geheugen.
 
 De hoofdregel behoudt de belangrijkste waarden:
 
-- Aantal **sets**; één set bestaat uit twee contractbenen. De samenvattingskaarten en totaalregel blijven de oorspronkelijke aantallen contracten tellen.
-- Beide strikes, met long/short-aanduiding als ze verschillen.
+- Aantal **sets**; één set bestaat uit twee contractbenen, of drie bij SYNT long + short call. De samenvattingskaarten en totaalregel blijven de oorspronkelijke aantallen contracten tellen.
+- Alle strikes, met long/short-aanduiding als ze verschillen.
 - **Week 44**, bijvoorbeeld, vóór de openingsdatum. Dit is een ISO-weeknummer; maandag is de eerste weekdag. Het weeknummer staat ook bij losse posities en uitgeklapte benen. Bij verschillende openingsdatums blijven beide datums en weken zichtbaar.
-- Gemeenschappelijke expiratie en resterende looptijd. Gekozen DTE blijft per been zichtbaar als de twee waarden verschillen.
+- Gemeenschappelijke expiratie en resterende looptijd. Gekozen DTE blijft per been zichtbaar als de waarden verschillen.
 - Netto gemiddelde openingspremie per set: shortpremie minus longpremie. Positief is credit, negatief is debet.
 - Netto actuele sluitprijs per set: shortprijs minus longprijs. Positief betekent netto betalen bij sluiten; negatief betekent netto ontvangen. Dit is een combinatie van de bestaande positieprijzen, geen uitvoerbare bid/ask-quote of ordervoorstel.
 - Marktwaarde en winst/verlies zijn de som van de toegewezen benen. Bij ontbrekende waarden staat een streepje; er wordt geen schijnbaar volledig resultaat berekend. De hoofdregel toont geen gecombineerd winstpercentage omdat de benen verschillende grondslagen kunnen hebben. De bestaande percentages blijven zichtbaar bij de benen.
@@ -22,11 +22,12 @@ De weergave herkent posities uit de beschikbare open benen, zonder de onderligge
 
 1. **SYNT long:** long call en short put, zelfde aandeel, strike en expiratie.
 2. **SYNT short:** short call en long put, zelfde aandeel, strike en expiratie.
-3. **Put Spread:** short put en long put op hetzelfde aandeel en dezelfde expiratie, met verschillende strikes. Dit omvat credit- en debetvarianten.
+3. **SYNT long + short call:** een resterende short call op hetzelfde aandeel en dezelfde expiratie, met strike gelijk aan of hoger dan de synthetische strike, wordt als derde been aan SYNT long gekoppeld. Maximaal één short call per synthetische set. De openingsdatum mag afwijken, zoals bij SPCX: synthetisch 140 geopend op 9 oktober en short call 180 geopend op 4 november, beide met expiratie 19 maart 2027.
+4. **Put Spread:** short put en long put op hetzelfde aandeel en dezelfde expiratie, met verschillende strikes. Dit omvat credit- en debetvarianten.
 
-SYNT wordt eerst gematcht. Een toegewezen contract wordt niet opnieuw in een putspread gebruikt. Bij meerdere kandidaten krijgen dezelfde openingsdatum, vervolgens de kleinste strikeafstand en tot slot de contract-ID voorrang. De koppeling is een deterministische indeling van de huidige blootstelling; er is geen bewijs van een oorspronkelijke combinatieorder nodig. Onbekende strikes/expiraties of niet-passende benen worden niet gegroepeerd.
+De tweebenige SYNT long/short-posities worden eerst gematcht; daarna worden resterende passende short calls aan SYNT long toegewezen. Een toegewezen contract wordt niet opnieuw in een putspread gebruikt. Bij meerdere kandidaten krijgen dezelfde openingsdatum, vervolgens de kleinste strikeafstand en tot slot de contract-ID voorrang. De koppeling is een deterministische indeling van de huidige blootstelling; er is geen bewijs van een oorspronkelijke combinatieorder nodig. Onbekende strikes/expiraties of niet-passende benen worden niet gegroepeerd.
 
-Per koppeling wordt het kleinste beschikbare aantal toegewezen. Bij drie short puts en één passende long put ontstaat één spreadset plus twee losse short puts. Marktwaarde en resultaat worden evenredig verdeeld; prijs, openingsdatum en DTE blijven op de oorspronkelijke basis staan. De invoer wordt niet gemuteerd. Een resterend been krijgt zijn zelfstandige long/short-call/putlabel.
+Per koppeling wordt het kleinste beschikbare aantal toegewezen. Bij drie synthetische sets en één short call ontstaat één driebenige set plus twee tweebenige sets; bij één synthetische set en drie short calls blijven twee short calls apart. De hoofdregel telt premie, sluitprijs, marktwaarde en resultaat van alle toegewezen benen mee. Bij drie short puts en één passende long put ontstaat één spreadset plus twee losse short puts. Marktwaarde en resultaat worden evenredig verdeeld; prijs, openingsdatum en DTE blijven op de oorspronkelijke basis staan. De invoer wordt niet gemuteerd. Een resterend been krijgt zijn zelfstandige long/short-call/putlabel.
 
 De bestaande CSP-reservering, vrij besteedbaar geld, contracttotalen en financiële berekeningen zijn niet gewijzigd. De UI-groepering is geen nieuwe margincalculatie.
 

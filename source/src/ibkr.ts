@@ -82,10 +82,30 @@ function mergeLiveResults(summary: PortfolioSummary, snapshot: IbkrLiveSnapshot,
     }
   }
 
+  const annualTradingResults = [liveYear, String(Number(liveYear) - 1)].flatMap(year => {
+    const imported = summary.annualTradingResults?.find(row => row.year === year)
+    const months = year === summary.yearProfit.toDate.slice(0, 4)
+      ? (summary.monthlyTradingResults ?? []).filter(row => row.month.startsWith(`${year}-`)) : []
+    if (!imported && !months.length && year !== liveYear) return []
+    const live = [...liveByMonth.entries()].filter(([month]) => month.startsWith(`${year}-`)).map(([, value]) => value)
+    const sum = (field: 'premium' | 'longOptions' | 'stockSales') => round(
+      (imported ? imported[field] ?? 0 : months.reduce((total, row) => total + (row[field] ?? 0), 0))
+      + live.reduce((total, row) => total + row[field], 0))
+    const premium = sum('premium'), longOptions = sum('longOptions'), stockSales = sum('stockSales')
+    const value = round(premium + longOptions + stockSales)
+    const liveNet = round(live.reduce((total, row) => total + row.premium, 0))
+    const details = imported?.premiumDetails
+    return [{ year, premium, longOptions, stockSales, value, direction: direction(value),
+      fromDate: `${year}-01-01`, toDate: year === liveYear ? snapshot.asOfDate : `${year}-12-31`,
+      premiumDetails: details ? { ...details, liveNet: liveNet || undefined, net: round(details.net + liveNet) } : undefined,
+    }]
+  })
+
   return {
     currentMonthProfit,
     previousMonthProfit,
     monthlyTradingResults,
+    annualTradingResults,
     yearProfit: { value: yearValue, fromDate: yearStart, toDate: snapshot.asOfDate, direction: direction(yearValue) },
     averageMonthlyProfit: {
       value: round(yearValue / Math.max(1, currentMonthNumber)), fromDate: yearStart,

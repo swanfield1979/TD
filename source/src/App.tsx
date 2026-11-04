@@ -12,7 +12,7 @@ import {
   TargetArrowRegular,
 } from '@fluentui/react-icons'
 import type { MetricDirection, PortfolioMetric, PortfolioSummary } from './types'
-import { AnnualGoal, MonthDetail, NetMonthlyResults, PortfolioTrend } from './DashboardPanels'
+import { AnnualGoal, YearDetails, NetMonthlyResults, PortfolioTrend } from './DashboardPanels'
 import PortfolioAllocationCard from './PortfolioAllocationCard'
 import StocksPage from './StocksPage'
 import OptionsPage from './OptionsPage'
@@ -445,10 +445,7 @@ function App() {
               <AnnualGoal summary={summary} />
             </div>
             <h2 className="details-heading">Handelsdetails <span>{summary.yearProfit.toDate.slice(0, 4)}</span></h2>
-            <div className="monitor-row monitor-row--months">
-              <MonthDetail label="Deze maand" result={summary.currentMonthProfit} premium={summary.premiumPeriods?.currentMonth} currency={summary.currency} premiumCurrency={summary.premiumCurrency ?? summary.currency} />
-              <MonthDetail label="Vorige maand" result={summary.previousMonthProfit} premium={summary.premiumPeriods?.previousMonth} currency={summary.currency} premiumCurrency={summary.premiumCurrency ?? summary.currency} />
-            </div>
+            <YearDetails summary={summary} />
             <section className="activity-grid" aria-label="Handelsstatistieken">
               <StatCard
                 label="Gemiddeld per maand"

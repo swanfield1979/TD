@@ -1,5 +1,9 @@
 # Releases
 
+## Trading Monitor 0.43.1 — jaarkaarten en SPCX-groepering
+
+Beschikbaar als [GitHub-broncode](https://github.com/swanfield1979/TD); geen afzonderlijk installatiepakket. Herimporteer de bestaande Flex-historie voor complete jaarbedragen, zie [update-instructies](../docs/jaaroverzicht.md). Manifest, lockfile en handmatig updatescript op 0.43.1. Serverinstallatie nog niet uitgevoerd.
+
 ## Trading Monitor 0.43.0 — Single Put Spread
 
 Nieuw menu om één ticker rechtstreeks op bull-putspreads te scannen, met eigen resultaten, criteria, stoppen/hervatten en alle gevonden combinaties. Broncode via GitHub-main en de bestaande updatefunctie; geen afzonderlijk installatiepakket. Frontend en API samen bijwerken. Serverinstallatie nog niet uitgevoerd. Zie [handleiding](../docs/single-put-spread.md).

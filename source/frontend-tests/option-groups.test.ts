@@ -67,4 +67,46 @@ describe('optiecombinaties en openingsweek', () => {
     expect(openingWeek('2024-12-30')).toBe(1)
     expect(openingWeek('invalid')).toBeNull()
   })
+  const spcx = (sets = 1, calls = 1) => [
+    leg('spcx-long', { symbol: 'SPCX', quantity: sets, optionRight: 'C', strike: 140, expiry: '2027-03-19', openedAt: '2026-10-09', chosenDte: 161, averageOpenPrice: 30, currentPrice: 8, currentValue: 800 * sets, difference: -2200 * sets }),
+    leg('spcx-put', { symbol: 'SPCX', quantity: -sets, strike: 140, expiry: '2027-03-19', openedAt: '2026-10-09', chosenDte: 161, averageOpenPrice: 3.01, currentPrice: 11.65, currentValue: -1164.77 * sets, difference: -863.87 * sets }),
+    leg('spcx-cover', { symbol: 'SPCX', quantity: -calls, optionRight: 'CALL', strike: 180, expiry: '2027-03-19', openedAt: '2026-11-04', chosenDte: 135, averageOpenPrice: 5.27, currentPrice: 5.27, currentValue: -527.19 * calls, difference: -.23 * calls }),
+  ]
+  it('groepeert de SPCX-call 180 met de SYNT long 140, inclusief alle netto waarden', () => {
+    const holdings = spcx(), copy = structuredClone(holdings)
+    const rows = groupOptionHoldings(holdings)
+    expect(rows).toHaveLength(1)
+    expect(rows[0]).toMatchObject({ strategy: 'SYNT_LONG', quantity: 1 })
+    if (rows[0].kind !== 'group') throw Error('Expected group')
+    expect(rows[0].legs.map(leg => leg.conid)).toEqual(['spcx-long', 'spcx-put', 'spcx-cover'])
+    expect(rows[0].averageOpenPrice).toBeCloseTo(-21.72)
+    expect(rows[0].currentPrice).toBeCloseTo(8.92)
+    expect(rows[0].currentValue).toBeCloseTo(-891.96)
+    expect(rows[0].difference).toBeCloseTo(-3064.10)
+    expect(holdings).toEqual(copy)
+    expect(groupOptionHoldings([...holdings].reverse())).toEqual(rows)
+  })
+  it('behoudt resterende synthetische sets en overtollige short calls met hun waarden', () => {
+    for (const holdings of [spcx(3, 1), spcx(1, 3)]) {
+      const rows = groupOptionHoldings(holdings)
+      expect(rows).toHaveLength(2)
+      const parts = rows.flatMap(row => row.kind === 'group' ? row.legs : [row.holding])
+      for (const holding of holdings) {
+        const assigned = parts.filter(part => part.conid === holding.conid)
+        expect(assigned.reduce((sum, part) => sum + part.quantity, 0)).toBe(holding.quantity)
+        for (const field of ['currentValue', 'difference'] as const)
+          expect(assigned.reduce((sum, part) => sum + part[field]!, 0)).toBeCloseTo(holding[field]!)
+      }
+    }
+  })
+  it('koppelt geen ongeschikte calls en behoudt ontbrekende koersen', () => {
+    for (const overrides of [{ expiry: '2027-04-16' }, { symbol: 'OTHER' }, { strike: 130 }, { strike: null }, { quantity: 1 }]) {
+      const holdings = spcx()
+      Object.assign(holdings[2], overrides)
+      expect(groupOptionHoldings(holdings)).toHaveLength(2)
+    }
+    const holdings = spcx()
+    Object.assign(holdings[2], { currentPrice: null, currentValue: null, difference: null })
+    expect(groupOptionHoldings(holdings)[0]).toMatchObject({ currentPrice: null, currentValue: null, difference: null })
+  })
 })

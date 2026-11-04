@@ -1,5 +1,13 @@
 # Validatie
 
+## 0.43.1 — jaaroverzicht (4 november 2026)
+
+`npm test` (231 tests in de huidige werkmap, inclusief eerder aanwezige lokale tests), 27 frontendtests en productiebuild geslaagd vanuit `source/`. Jaarregressies dekken 2025/2026, aandelen, premiedetails, maandgemiddelde, Gateway-aanvulling zonder dubbeltelling, jaarwisseling en oudere imports. Bestaande Flex-historie lokaal opnieuw ingelezen. Browsercontrole met fictieve data: beide jaarkaarten, premiedetails, maandgemiddelde, beide thema’s, 375/1440 pixels zonder pagina-overloop of paginafouten. Screenshot visueel gecontroleerd. Optiegroeperingscontrole opnieuw geslaagd. Zie [jaaroverzicht](jaaroverzicht.md). Serverinstallatie nog niet uitgevoerd.
+
+## SYNT long met short call — 4 november 2026
+
+Vanuit `source/`: `npm run test:frontend` (27 tests), `npm run build` en `node scripts/verify-option-groups-browser.mjs` geslaagd. Nieuwe regressies dekken SPCX 140/180 met expiratie 19 maart 2027, drie benen, netto bedragen, resthoeveelheden, behoud van marktwaarde/resultaat, ongeschikte calls, ontbrekende koersen en invoer zonder mutatie. Browsercontrole dekt drie uitgeklapte benen, afzonderlijke openingsweken/DTE, toetsenbordbediening, ongewijzigde totalen en beide thema’s op 375/768/1440 pixels zonder pagina-overloop of paginafouten. Desktop-screenshot visueel gecontroleerd. Fictieve gegevens; serverinstallatie nog niet uitgevoerd.
+
 ## 0.43.0 — Single Put Spread (2 november 2026)
 
 Productiebuild, `npm test` (230 tests in de huidige werkmap, inclusief eerder aanwezige lokale tests) en 24 frontendtests geslaagd. API-regressie uitgebreid met directe single-scan zonder Stock Filter/IV-ID’s, precies één ticker, IBKR-notatie voor aandelenklassen, Origin-controle, filters, geblokkeerde ticker, wederzijdse scanvergrendeling, stoppen, onafhankelijke bulkresultaten en herstel na API-herstart. Opslagtest controleert aparte single/bulkresultaten en herstel van een actieve single-scan als onderbroken.

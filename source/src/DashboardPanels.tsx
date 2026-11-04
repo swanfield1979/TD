@@ -83,11 +83,28 @@ export function AnnualGoal({ summary }: { summary: PortfolioSummary }) {
   </section>
 }
 
-export function MonthDetail({ label, result, premium, currency, premiumCurrency }: {
-  label: string; result: MonthlyTradingResult; premium?: PremiumPeriod; currency: string; premiumCurrency: string;
+export function YearDetails({ summary }: { summary: PortfolioSummary }) {
+  const currentYear = summary.yearProfit.toDate.slice(0, 4)
+  return <div className="monitor-row monitor-row--months">{[currentYear, String(Number(currentYear) - 1)].map((year, index) => {
+    const label = index === 0 ? 'Dit jaar' : 'Vorig jaar'
+    const annual = summary.annualTradingResults?.find(row => row.year === year)
+    // Older imports still have a complete monthly breakdown for their current year.
+    const months = (summary.monthlyTradingResults ?? []).filter(row => row.month.startsWith(`${year}-`))
+    const sum = (field: 'premium' | 'longOptions' | 'stockSales') => Number(months.reduce((total, row) => total + (row[field] ?? 0), 0).toFixed(2))
+    const result = annual ?? (year === currentYear && months.length ? {
+      ...summary.yearProfit, premium: sum('premium'), longOptions: sum('longOptions'), stockSales: sum('stockSales'),
+    } : null)
+    return result ? <MonthDetail key={year} label={label} periodLabel={year} result={result} premium={annual?.premiumDetails}
+      currency={summary.currency} premiumCurrency={summary.premiumCurrency ?? summary.currency} />
+      : <article key={year} className="monitor-panel month-detail"><h2>{label} · {year}</h2><strong className="month-detail__value">—</strong><p className="monitor-note">Importeer de Flex-historie opnieuw voor het jaaroverzicht van {year}.</p></article>
+  })}</div>
+}
+
+export function MonthDetail({ label, periodLabel, result, premium, currency, premiumCurrency }: {
+  label: string; periodLabel?: string; result: MonthlyTradingResult; premium?: PremiumPeriod; currency: string; premiumCurrency: string;
 }) {
   const month = premium?.month ?? result.toDate.slice(0, 7)
-  const monthLabel = new Intl.DateTimeFormat('nl-NL', { month: 'long', year: 'numeric' }).format(new Date(`${month}-01T12:00:00`))
+  const monthLabel = periodLabel ?? new Intl.DateTimeFormat('nl-NL', { month: 'long', year: 'numeric' }).format(new Date(`${month}-01T12:00:00`))
   return <article className="monitor-panel month-detail">
     <h2>{label} · {monthLabel}</h2><strong className={`month-detail__value metric--${result.direction}`}>{money(result.value, currency, true)}</strong><span className="monitor-note">Nettoresultaat</span>
     <div className="month-detail__columns"><dl><div><dt>Short opties</dt><dd className={`metric--${direction(result.premium)}`}>{money(result.premium, premiumCurrency, true)}</dd></div><div><dt>Long opties</dt><dd className={`metric--${direction(result.longOptions ?? 0)}`}>{money(result.longOptions ?? 0, premiumCurrency, true)}</dd></div><div><dt>Aandelen</dt><dd className={`metric--${direction(result.stockSales)}`}>{money(result.stockSales, currency, true)}</dd></div></dl>

@@ -62,19 +62,19 @@ function GroupRow({ row, currency, asOfDate, expanded, controls, onToggle }: {
 }) {
   const daysRemaining = daysBetween(asOfDate, row.expiry)
   const expiryStatus = daysRemaining < 0 ? 'expired' : daysRemaining <= 7 ? 'urgent' : daysRemaining <= 30 ? 'soon' : 'normal'
-  const label = row.strategy === 'PUT_SPREAD' ? 'Put Spread' : strategyLabels[row.strategy]
+  const label = row.strategy === 'PUT_SPREAD' ? 'Put Spread' : `${strategyLabels[row.strategy]}${row.legs.length === 3 ? ' + short call' : ''}`
   const legLabel = (leg: OptionHolding) => `${leg.quantity < 0 ? 'Short' : 'Long'} ${['P', 'PUT'].includes(leg.optionRight ?? '') ? 'put' : 'call'}`
   const values = (field: 'strike' | 'chosenDte', format: (value: number) => string) => {
-    if (row.legs[0][field] === row.legs[1][field]) return row.legs[0][field] === null ? <UnavailableValue /> : format(row.legs[0][field]!)
+    if (row.legs.every(leg => leg[field] === row.legs[0][field])) return row.legs[0][field] === null ? <UnavailableValue /> : format(row.legs[0][field]!)
     return <span className="option-group-values">{row.legs.map(leg => <span key={leg.conid}><small>{legLabel(leg)}</small>{leg[field] === null ? <UnavailableValue /> : format(leg[field]!)}</span>)}</span>
   }
   return <tr className={`options-table__row--group${row.strategy.startsWith('SYNT') ? ' options-table__row--synthetic' : ''}`}>
-    <th scope="row"><button type="button" className="option-group-toggle" aria-expanded={expanded} aria-controls={controls} onClick={onToggle} aria-label={`${label} ${row.symbol}, ${row.expiry}, ${row.legs.map(leg => leg.strike).join('/')}, ${expanded ? 'inklappen' : 'uitklappen'}`}><ChevronDownRegular aria-hidden="true" /><span><strong>{row.symbol}</strong><small>{label} · 2 benen</small></span></button></th>
+    <th scope="row"><button type="button" className="option-group-toggle" aria-expanded={expanded} aria-controls={controls} onClick={onToggle} aria-label={`${label} ${row.symbol}, ${row.expiry}, ${row.legs.map(leg => leg.strike).join('/')}, ${expanded ? 'inklappen' : 'uitklappen'}`}><ChevronDownRegular aria-hidden="true" /><span><strong>{row.symbol}</strong><small>{label} · {row.legs.length} benen</small></span></button></th>
     <td><span className={`option-strategy option-strategy--${row.strategy === 'PUT_SPREAD' ? 'spread' : 'synthetic'}`}><MergeRegular aria-hidden="true" />{label}</span></td>
-    <td>{row.strategy === 'PUT_SPREAD' ? 'Put / Put' : 'Call / Put'}</td>
-    <td className="options-table__number"><span className="option-position"><strong>{numberFormatter.format(row.quantity)}</strong><small>{row.quantity === 1 ? 'set' : 'sets'} · 2 benen</small></span></td>
+    <td>{row.legs.map(leg => ['P', 'PUT'].includes(leg.optionRight ?? '') ? 'Put' : 'Call').join(' / ')}</td>
+    <td className="options-table__number"><span className="option-position"><strong>{numberFormatter.format(row.quantity)}</strong><small>{row.quantity === 1 ? 'set' : 'sets'} · {row.legs.length} benen</small></span></td>
     <td className="options-table__number">{values('strike', value => formatCurrency(value, currency))}</td>
-    <td>{row.legs[0].openedAt === row.legs[1].openedAt ? <OpeningDate value={row.legs[0].openedAt} /> : <span className="option-group-dates">{row.legs.map(leg => <span key={leg.conid}><small>{legLabel(leg)}</small><OpeningDate value={leg.openedAt} /></span>)}</span>}</td>
+    <td>{row.legs.every(leg => leg.openedAt === row.legs[0].openedAt) ? <OpeningDate value={row.legs[0].openedAt} /> : <span className="option-group-dates">{row.legs.map(leg => <span key={leg.conid}><small>{legLabel(leg)}</small><OpeningDate value={leg.openedAt} /></span>)}</span>}</td>
     <td><span className={`option-expiry option-expiry--${expiryStatus}`}><strong>{formatDate(row.expiry)}</strong><small>{daysRemaining < 0 ? `${Math.abs(daysRemaining)} dagen verlopen` : `${daysRemaining} dagen resterend`}</small></span></td>
     <td className="options-table__number">{values('chosenDte', value => `${numberFormatter.format(value)} dagen`)}</td>
     <td className="options-table__number">{row.averageOpenPrice === null ? <UnavailableValue /> : <span className="option-net-price">{formatCurrency(row.averageOpenPrice, currency)}<small>{row.averageOpenPrice > 0 ? 'netto credit' : row.averageOpenPrice < 0 ? 'netto debet' : 'netto'} per set</small></span>}</td>
@@ -221,7 +221,7 @@ export default function OptionsPage({ holdings, currency, asOfDate, reservedCash
         <header className="positions-data__header">
           <div>
             <h2 id="options-table-title">Open optieposities</h2>
-            <p>Putspreads en SYNT staan eenmaal in het overzicht. Klap een combinatie uit om beide benen te zien; de hoofdregel toont netto bedragen per set.</p>
+            <p>Putspreads en SYNT staan eenmaal in het overzicht. Klap een combinatie uit om alle benen te zien; de hoofdregel toont netto bedragen per set.</p>
           </div>
           <span className={`positions-data__status${hasCompleteLiveValues ? ' positions-data__status--live' : ''}`}>
             {hasCompleteLiveValues ? 'Actuele IBKR-posities' : 'Koersen beschikbaar na IBKR-refresh'}

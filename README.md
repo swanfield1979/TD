@@ -1,5 +1,9 @@
 # Trading Monitor
 
+Versie **0.43.1** (4 november 2026): Handelsdetails toont **Dit jaar · 2026** en **Vorig jaar · 2025** met jaarbedragen; gemiddelde per maand en overige jaarstatistieken blijven behouden. Inclusief SPCX short call bij SYNT long. Build, 27 frontendtests en browsercontroles geslaagd. Herimporteer de bestaande historie; zie [jaaroverzicht en update](docs/jaaroverzicht.md). Serverinstallatie nog niet uitgevoerd.
+
+Lokale aanpassing (4 november 2026, basisversie 0.43.0): een passende short call staat nu als derde been bij **SYNT long + short call**, inclusief gecombineerde netto waarden. Zie [optiecombinaties](docs/optiecombinaties.md). Build, 27 frontendtests en browsercontrole geslaagd; serverinstallatie nog niet uitgevoerd.
+
 Versie 0.43.0 (2 november 2026): nieuw menu **Single Put Spread** voor rechtstreeks scannen van één ticker. Alle gevonden combinaties, eigen resultaten/voorkeuren, instelbare criteria en bestaande R/R-groentinten. Zie [gebruik en installatie](docs/single-put-spread.md). Serverinstallatie nog niet uitgevoerd.
 
 Versie 0.42.9 (2 november 2026): put-spreadrijen kleuren bij 30–60 DTE oplopend groen vanaf 15%, 20% en 30% rendement op maximaal risico. Met legenda en tekstlabels in beide thema’s. Zie [put spreads](docs/put-spreads.md#groentinten-voor-rendement-op-risico-0429). Serverinstallatie nog niet uitgevoerd.
@@ -14,7 +18,7 @@ Lokaal portfolio-dashboard voor het volgen van saldo, handelsresultaten en voort
 
 Ontwerpupdate 0.42.3 (28 oktober 2026, serverinstallatie nog niet uitgevoerd): financiële werkplek met diepblauwe donkere modus, lichte modus, duidelijkere kerncijfers en tabellen met vaste positie-identificatie. Hoofdgrafieken hebben uitklapbare exacte maandbedragen. Build, 13 frontendtests en browsercontroles geslaagd. Zie [financieel ontwerp](docs/financieel-ontwerp.md). Stats is lokaal uitgebreid met cumulatief gesloten optieresultaat, resultaatanalyse en een sorteerbare prestatietabel per aandeel; zie [Stats](docs/stats.md).
 
-**Versie/status:** 0.43.0. Laatst opgeslagen IBKR-gegevens automatisch beschikbaar zonder gatewayverbinding. IV Percentile en hergebruik van de put-spreadselectie. Putspreads en SYNT gegroepeerd met uitklapbare benen; ISO-openingsweek en uitgebreide Stats. Serverinstallatie nog niet uitgevoerd. Zie [optiecombinaties](docs/optiecombinaties.md). De app is op brede schermen gecentreerd en maximaal 1760 pixels breed, inclusief navigatie. Kleinere schermen gebruiken de beschikbare breedte; grafieken en kaarten rekken niet meer onbeperkt mee. Build en frontendtests geslaagd; serverinstallatie nog niet uitgevoerd.
+**Versie/status:** 0.43.1. Laatst opgeslagen IBKR-gegevens automatisch beschikbaar zonder gatewayverbinding. IV Percentile en hergebruik van de put-spreadselectie. Putspreads en SYNT gegroepeerd met uitklapbare benen; ISO-openingsweek en uitgebreide Stats. Serverinstallatie nog niet uitgevoerd. Zie [optiecombinaties](docs/optiecombinaties.md). De app is op brede schermen gecentreerd en maximaal 1760 pixels breed, inclusief navigatie. Kleinere schermen gebruiken de beschikbare breedte; grafieken en kaarten rekken niet meer onbeperkt mee. Build en frontendtests geslaagd; serverinstallatie nog niet uitgevoerd.
 
 | Map | Inhoud |
 | --- | --- |

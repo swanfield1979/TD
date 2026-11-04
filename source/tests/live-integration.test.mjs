@@ -11,7 +11,7 @@ after(() => server.close())
 const { resolvePortfolio } = await server.ssrLoadModule('/src/ibkr.ts')
 const { default: GoalsPage } = await server.ssrLoadModule('/src/GoalsPage.tsx')
 const { DailyProfitCard } = await server.ssrLoadModule('/src/App.tsx')
-const { AnnualGoal, MonthDetail, NetMonthlyResults } = await server.ssrLoadModule('/src/DashboardPanels.tsx')
+const { AnnualGoal, MonthDetail, YearDetails, NetMonthlyResults } = await server.ssrLoadModule('/src/DashboardPanels.tsx')
 const summary = createPortfolioSummary({
   equityXml: '<EquitySummaryByReportDateInBase reportDate="2025-12-31" total="1000"/><EquitySummaryByReportDateInBase reportDate="2026-09-23" total="1000"/><EquitySummaryByReportDateInBase reportDate="2026-09-24" total="1100"/>',
   tradesXml: '', optionXml: '',
@@ -227,4 +227,49 @@ test('Goals toont saldovoortgang ook als rendement negatief is', () => {
   assert.match(html, /width:72\./)
   assert.match(html, /-3\.606,41/)
   assert.match(html, /van het jaardoel bereikt/)
+})
+
+
+test('jaarkaarten tonen beide volledige kalenderjaren met premiedetails en behouden maandgemiddelde', () => {
+  const annual = createPortfolioSummary({
+    equityXml: '<EquitySummaryByReportDateInBase reportDate="2024-12-31" total="1000"/><EquitySummaryByReportDateInBase reportDate="2025-12-31" total="1000"/><EquitySummaryByReportDateInBase reportDate="2026-10-31" total="1000"/><EquitySummaryByReportDateInBase reportDate="2026-11-04" total="1100"/>',
+    tradesXml: [
+      '<Trade assetCategory="OPT" conid="old" dateTime="2025-02-01" quantity="-1" tradePrice="5" ibCommission="-1" openCloseIndicator="O" putCall="P"/>',
+      '<Trade assetCategory="OPT" conid="old" dateTime="2025-06-01" quantity="1" tradePrice="1" ibCommission="-1" openCloseIndicator="C" putCall="P"/>',
+      '<Trade assetCategory="OPT" conid="new" dateTime="2026-01-01" quantity="-1" tradePrice="8" ibCommission="-1" openCloseIndicator="O" putCall="P"/>',
+      '<Trade assetCategory="OPT" conid="new" dateTime="2026-09-01" quantity="1" tradePrice="2" ibCommission="-1" openCloseIndicator="C" putCall="P"/>',
+      '<Trade assetCategory="STK" conid="stock" dateTime="2026-10-01" quantity="-1" fifoPnlRealized="50" openCloseIndicator="C"/>',
+    ].join(''), optionXml: '',
+  })
+  assert.equal(annual.annualTradingResults[0].value, 648)
+  assert.equal(annual.annualTradingResults[0].premium, 598)
+  assert.equal(annual.annualTradingResults[0].stockSales, 50)
+  assert.equal(annual.annualTradingResults[1].value, 398)
+  assert.equal(annual.annualTradingResults[1].premiumDetails.received, 500)
+  const html = renderToStaticMarkup(createElement(YearDetails, { summary: annual }))
+  assert.match(html, /Dit jaar · 2026/)
+  assert.match(html, /Vorig jaar · 2025/)
+  assert.match(html, /648,00/)
+  assert.match(html, /398,00/)
+  assert.doesNotMatch(html, /Deze maand|Vorige maand|november|oktober/)
+  assert.equal(annual.averageMonthlyProfit.monthCount, 11)
+  assert.equal(annual.averageMonthlyProfit.value, 58.91)
+  const live = { ...snapshot, asOfDate: '2026-11-06', positions: [], executions: [{
+    execId: 'annual-close.01', account: 'A', conid: 'annual', dateTime: '2026-11-05T15:00:00', quantity: 1,
+    price: .2, symbol: 'TEST', name: 'TEST PUT', assetCategory: 'OPT', currency: 'USD',
+    multiplier: 100, optionRight: 'P', strike: 16, expiry: '20261218', realizedPNL: 78,
+  }] }
+  const merged = resolvePortfolio(annual, live)
+  assert.equal(merged.annualTradingResults[0].value, 726)
+  assert.equal(merged.annualTradingResults[0].premiumDetails.liveNet, 78)
+  assert.equal(merged.annualTradingResults[1].value, 398)
+  assert.deepEqual(resolvePortfolio(annual, live).annualTradingResults, merged.annualTradingResults)
+  const rollover = resolvePortfolio(annual, { ...snapshot, positions: [], asOfDate: '2027-01-02', executions: [] })
+  assert.equal(rollover.annualTradingResults[0].year, '2027')
+  assert.equal(rollover.annualTradingResults[0].value, 0)
+  assert.equal(rollover.annualTradingResults[1].value, 648)
+  const legacy = { ...annual, annualTradingResults: undefined }
+  const legacyHtml = renderToStaticMarkup(createElement(YearDetails, { summary: legacy }))
+  assert.match(legacyHtml, /648,00/)
+  assert.match(legacyHtml, /Importeer de Flex-historie opnieuw/)
 })
