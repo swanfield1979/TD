@@ -7,7 +7,7 @@ Beschikbaar vanaf Trading Monitor **0.41.0**. Open **Updates** in het menu of `/
 De oude webapp kan deze uitbreiding nog niet zelf installeren. Voer eenmalig uit:
 
 ```bash
-cd /home/gerard/TD &&
+cd /opt/trading-monitor &&
 git pull --ff-only &&
 cd source &&
 bash deploy/update-options.sh

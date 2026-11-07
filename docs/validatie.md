@@ -89,7 +89,7 @@ Manifest, lockfile en handmatig updatescript verhoogd naar 0.42.6. De updater le
 - Browserregressie met vijf SE-kandidaten: één overzichtsregel met 8,81%; vergrootglas opent exact vier overige spreads, hoogste resterende rendement 4,17%. Sortering op maximale winst houdt de overzichtskandidaat uitgesloten.
 - Rode X naast de ticker via toegankelijke naam Verwijder SE bedienbaar; blokkering verwijdert SE uit de scan en toont Deblokkeer SE in de blokkeerlijst. Detail getest op 360–1600 pixels. Bestaande browserworkflow slaagt zonder runtimefouten.
 - Productiebuild geslaagd. Screenshots se-best.png en se-alternatives.png staan lokaal in source/data/private/spread-validation/.
-- Read-only HTTP-controle van 192.168.1.22: de geleverde bundle index-D7RYZBqu.js bevat de groepering uit 0.39.0 nog niet. Updatescript bleek vastgezet op 0.38.1; vereiste versie en succesmelding aangepast naar 0.39.1. Frontend toont v0.39.1 in de tabelkop. Geen serverinstallatie uitgevoerd.
+- Read-only HTTP-controle van trading-monitor.example.test: de geleverde bundle index-D7RYZBqu.js bevat de groepering uit 0.39.0 nog niet. Updatescript bleek vastgezet op 0.38.1; vereiste versie en succesmelding aangepast naar 0.39.1. Frontend toont v0.39.1 in de tabelkop. Geen serverinstallatie uitgevoerd.
 
 
 ## Trading Monitor 0.39.0 — beste spread per aandeel (26 oktober 2026)
@@ -297,8 +297,8 @@ Manifest, lockfile en handmatig updatescript verhoogd naar 0.42.6. De updater le
 - 43 pytest-tests geslaagd, waaronder zes deterministische setupfixtures, dubbele bars, CSV, filters, disconnected/cached-herstart, health en verbod op orderfuncties in de scanner. Eén deprecation warning uit Starlette/httpx; geen testfouten.
 - 13 Vitest-tests geslaagd, inclusief alle vijf Nederlandse statuslabels; 94 Git-gevolgde Node-regressietests geslaagd.
 - TypeScript/Vite-productiebuild geslaagd. Playwright-smoketest geslaagd op desktop en 390px mobiel met echte FastAPI/SQLite, testbroker, CSV-import, synchronisatie, filtering, sortering en details/chart.
-- Productie gestart met npm run serve:lan op 0.0.0.0:8000. Health en scannerpagina opnieuw gecontroleerd via localhost en 192.168.1.48. Geen productie-demodata of automatische brokerfallback.
-- Documentatie SETUP_LOGIC.md, IBKR.md en DEPLOYMENT.md toegevoegd; brokerinterface expliciet gemaakt. Echte IBKR-verbinding, tweede fysiek LAN-apparaat en installatie op 192.168.1.22 blijven onbevestigd.
+- Productie gestart met npm run serve:lan op 0.0.0.0:8000. Health en scannerpagina opnieuw gecontroleerd via localhost en client.example.test. Geen productie-demodata of automatische brokerfallback.
+- Documentatie SETUP_LOGIC.md, IBKR.md en DEPLOYMENT.md toegevoegd; brokerinterface expliciet gemaakt. Echte IBKR-verbinding, tweede fysiek LAN-apparaat en installatie op trading-monitor.example.test blijven onbevestigd.
 
 ## Versie 0.27.2 — koers- en scannerterugval (lokaal)
 
@@ -505,7 +505,7 @@ De eerste versie wordt gecontroleerd met:
 - Detectiekern en echte HTTP-API getest, inclusief origin-/configvalidatie en foutmelding bij onbereikbare Gateway.
 - Browsercontrole met echte lokale API voor laden/validatie; geïsoleerde OHLC-testfixtures voor resultaten, details, sortering, filters, zoeken en CSV. Desktop 1440 px en mobiel 390 px gecontroleerd, inclusief menubediening en geen pagina-overloop. Geen browserexceptions.
 - Tests en TypeScript/Vite-productiebuild geslaagd. Reproduceerbare browsercontrole: `node scripts/verify-breakout-browser.mjs` vanuit source (Playwright en Edge vereist).
-- Geen live marktdata of installatie op 192.168.1.22 bevestigd. Verspreiding via GitHub; serverupdate met `bash deploy/update-breakout.sh`. Zie [handleiding](breakout-scanner.md).
+- Geen live marktdata of installatie op trading-monitor.example.test bevestigd. Verspreiding via GitHub; serverupdate met `bash deploy/update-breakout.sh`. Zie [handleiding](breakout-scanner.md).
 
 ## Breakout 0.29.0 — 12 oktober 2026
 
@@ -519,7 +519,7 @@ De eerste versie wordt gecontroleerd met:
 
 - 32 pytest-tests en zeven Vitest-tests geslaagd; 94 bestaande Node-tests behouden. Extra tests voor API-contract, instellingen/pacingpersistente herstart, structured errors, detailroutes/ambiguïteit, alle returnperioden, basisduur, MA-/contractieregels, pivotlows/tolerantie, ontbrekende sessies en read-only env.
 - Playwright: echte CSV/HTTP/SQLite/analyseflow, checklist, detail-/bars-API, bedrijfsnaamzoeken, uitgebreide tabel en responsive grafiek. Productiebuild geslaagd.
-- Productiecommando gestart op 0.0.0.0:8000; frontend, scanner-API en portefeuilleproxy bereikbaar via localhost en eigen 192.168.1.48 LAN-adres, browser gecontroleerd. Ontwikkel/demo-start gecontroleerd met expliciete DEMO-labels. Geen tweede fysiek LAN-apparaat, live IBKR of installatie op 192.168.1.22 bevestigd.
+- Productiecommando gestart op 0.0.0.0:8000; frontend, scanner-API en portefeuilleproxy bereikbaar via localhost en eigen client.example.test LAN-adres, browser gecontroleerd. Ontwikkel/demo-start gecontroleerd met expliciete DEMO-labels. Geen tweede fysiek LAN-apparaat, live IBKR of installatie op trading-monitor.example.test bevestigd.
 - Systemd alleen handmatig; updateprocedure vraagt vooraf geïnstalleerde service. Zie [LAN/API-handleiding](breakout-lan.md).
 
 ## Financiële vormgeving — 28 oktober 2026 (lokaal)
@@ -540,3 +540,7 @@ Build, alle 223 Node-tests en alle 17 frontendtests geslaagd, inclusief vier nie
 ## Options en Stats 0.42.5 — 28 oktober 2026
 
 Build, alle 223 Node-tests en alle 24 frontendtests geslaagd. Zeven nieuwe groeperingstests controleren het SMCI-voorbeeld, netto waarden, behoud van aantallen/bedragen, SYNT-prioriteit, debetposities, onbekende gegevens en ISO-weken. Options-browsercontrole met expliciete testbenen geslaagd voor in-/uitklappen, toetsenbord, openingsweken, hoofdregelwaarden en ongewijzigde totalen in beide thema's op 375/768/1440 pixels. Tijdens ontwikkeling gevonden mobiele overloop van uitgeklapte tabelgroepen opgelost met layout containment; hercontrole geslaagd. Ook Stats-browsercontrole, algemene financiële browsercontrole en layoutcontrole op 360–3440 pixels/200% zoom geslaagd. Screenshots visueel gecontroleerd. Broker-API afgevangen; geen live brokerorders of serverinstallatie. Manifest, lockfile en handmatig updatescript op 0.42.5. Zie [optiecombinaties](optiecombinaties.md).
+
+## Privacyonderhoud — 7 november 2026
+
+Persoonlijke servergebruiker, installatiepaden en interne LAN-adressen uit de huidige bestanden vervangen door algemene voorbeelden; expliciete lokale configuratie blijft leidend. De geschiedenis is niet herschreven. Elf gerichte Node-tests slagen (app-updates, opgeslagen IBKR-snapshot, put-spread-API en Leaps-API). `git diff --cached --check` slaagt. Zie [privacy](privacy.md).

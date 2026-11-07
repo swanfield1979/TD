@@ -1,6 +1,6 @@
 # Breakout 0.30.0 — starten en API-contract
 
-De Nederlandse scanner gebruikt een gezamenlijke origin voor React en FastAPI. Er is geen permissieve CORS-configuratie. Productie bindt standaard aan `0.0.0.0:8000`; het startcommando print de gevonden lokale LAN-URL's. Gebruik uitsluitend het eigen LAN en configureer geen publieke portforwarding. De bestaande Nginx-server op 192.168.1.22 blijft een alternatief op poort 80.
+De Nederlandse scanner gebruikt een gezamenlijke origin voor React en FastAPI. Er is geen permissieve CORS-configuratie. Productie bindt standaard aan `0.0.0.0:8000`; het startcommando print de gevonden lokale LAN-URL's. Gebruik uitsluitend het eigen LAN en configureer geen publieke portforwarding. De bestaande Nginx-server op trading-monitor.example.test blijft een alternatief op poort 80.
 
 ## Linux-installatie en één startcommando
 
@@ -85,7 +85,7 @@ Ontbrekende verwachte VS-sessies binnen het momentumvenster worden gemeld en het
 
 ## Optionele systemd-installatie
 
-De servicefile wordt **niet automatisch geïnstalleerd**. Voor een bestaande checkout op `/home/gerard/TD` kan de beheerder na dependency-installatie zelf uitvoeren:
+De servicefile wordt **niet automatisch geïnstalleerd**. Voor een bestaande checkout op `/opt/trading-monitor` kan de beheerder na dependency-installatie zelf uitvoeren:
 
 ```bash
 sudo cp deploy/systemd/trading-monitor-breakout.service /etc/systemd/system/
@@ -97,4 +97,4 @@ Deze optionele service bindt alleen aan localhost:8788 achter de bestaande Nginx
 
 ## Gecontroleerde status
 
-43 pytest-tests, 13 Vitest-tests, 94 bestaande Node-regressietests en de Playwright-smoketest slagen. Productiebuild en echte FastAPI/SQLite-workflow gecontroleerd. Het productiecommando is gestart op 0.0.0.0:8000; HTTP en browser op het lokale LAN-adres werken met de echte `app.main`, correcte Cached-labels en zonder demo. Live IBKR-data, toegang vanaf een tweede fysiek apparaat en plaatsing op 192.168.1.22 zijn nog niet bevestigd. Zie ook [volledige installatie](DEPLOYMENT.md), [IBKR-configuratie](IBKR.md) en [setupberekeningen](SETUP_LOGIC.md).
+43 pytest-tests, 13 Vitest-tests, 94 bestaande Node-regressietests en de Playwright-smoketest slagen. Productiebuild en echte FastAPI/SQLite-workflow gecontroleerd. Het productiecommando is gestart op 0.0.0.0:8000; HTTP en browser op het lokale LAN-adres werken met de echte `app.main`, correcte Cached-labels en zonder demo. Live IBKR-data, toegang vanaf een tweede fysiek apparaat en plaatsing op trading-monitor.example.test zijn nog niet bevestigd. Zie ook [volledige installatie](DEPLOYMENT.md), [IBKR-configuratie](IBKR.md) en [setupberekeningen](SETUP_LOGIC.md).

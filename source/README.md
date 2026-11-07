@@ -106,3 +106,7 @@ Controles: `npm test`, `npm run test:frontend`, `npm run build`; subapp backend:
 ## Scanneracceptatie en handleidingen
 
 43 backendtests en 13 frontendtests geslaagd; deterministische fixtures vereisen geen IBKR. Volledige installatie-, test- en LAN-commando's staan in [DEPLOYMENT.md](../docs/DEPLOYMENT.md); [IBKR.md](../docs/IBKR.md) beschrijft paper/API-instellingen en [SETUP_LOGIC.md](../docs/SETUP_LOGIC.md) alle criteria. Zie [validatie](../docs/validatie.md) voor de daadwerkelijke browser- en productiecontrole.
+
+## Lokale configuratie
+
+Gebruik je eigen servicegebruiker, installatiepad en LAN-origin; zie [privacy en configuratie](../docs/privacy.md). De standaard origin is lokaal (`http://127.0.0.1`).

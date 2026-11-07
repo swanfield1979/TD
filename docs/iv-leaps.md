@@ -94,7 +94,7 @@ cd source
 bash deploy/update-options.sh
 ```
 
-Het script vereist de reeds bestaande `trading-monitor-api.service` en de bijbehorende `WorkingDirectory` voor deze checkout. Het installeert geen services automatisch. Het voert npm-installatie, regressietests, frontendtests en productiebuild uit, bewaart een webroot-/Nginx-back-up, publiceert frontend, werkt Nginx bij en herstart de bestaande Node-API. Een aanwezige historische Python-service wordt herstart voor de bijgewerkte LAN-proxy; die service is niet nodig voor de nieuwe routes achter Nginx. Bestaande `/var/lib/trading-monitor/`-data blijven bewaard. Open `http://192.168.1.22/#iv` of `#leaps` en vernieuw met Ctrl+F5.
+Het script vereist de reeds bestaande `trading-monitor-api.service` en de bijbehorende `WorkingDirectory` voor deze checkout. Het installeert geen services automatisch. Het voert npm-installatie, regressietests, frontendtests en productiebuild uit, bewaart een webroot-/Nginx-back-up, publiceert frontend, werkt Nginx bij en herstart de bestaande Node-API. Een aanwezige historische Python-service wordt herstart voor de bijgewerkte LAN-proxy; die service is niet nodig voor de nieuwe routes achter Nginx. Bestaande `/var/lib/trading-monitor/`-data blijven bewaard. Open `http://trading-monitor.example.test/#iv` of `#leaps` en vernieuw met Ctrl+F5.
 
 Bij gebruik van `npm run serve:lan`: sluit het bestaande proces, pull de repository, voer `npm ci` vanuit source uit en start `npm run serve:lan` opnieuw. Dat bouwt frontend en start de bijgewerkte APIs. Voor een andere webroot of service-opzet pas je het script aan; zie ook [installatie](installatie.md).
 

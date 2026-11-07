@@ -36,4 +36,4 @@ curl --fail --silent --show-error http://127.0.0.1/api/stock-filter
 curl --fail --silent --show-error http://127.0.0.1/api/put-spreads/iv
 curl --fail --silent --show-error http://127.0.0.1/api/put-spreads/blocked
 curl --fail --silent --show-error http://127.0.0.1/api/put-spreads/schedule
-printf '\nTrading Monitor 0.43.1 geplaatst. Back-up: %s\nOpen http://192.168.1.22/#put-spreads, #martin of #leaps en vernieuw met Ctrl+F5.\n' "$backup_dir"
+printf '\nTrading Monitor 0.43.1 geplaatst. Back-up: %s\nOpen http://trading-monitor.example.test/#put-spreads, #martin of #leaps en vernieuw met Ctrl+F5.\n' "$backup_dir"

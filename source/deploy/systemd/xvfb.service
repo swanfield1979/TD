@@ -4,8 +4,8 @@ After=network.target
 
 [Service]
 Type=simple
-User=gerard
-Group=gerard
+User=trading-monitor
+Group=trading-monitor
 ExecStart=/usr/bin/Xvfb :10 -screen 0 1280x800x24 -nolisten tcp
 Restart=always
 RestartSec=3

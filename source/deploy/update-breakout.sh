@@ -36,4 +36,4 @@ sudo systemctl is-active --quiet trading-monitor-api.service
 curl --fail --silent --show-error http://127.0.0.1/ -o /dev/null
 curl --fail --silent --show-error --retry 10 --retry-all-errors --retry-delay 1 http://127.0.0.1/api/breakout
 curl --fail --silent --show-error http://127.0.0.1/api/health
-printf '\nTrading Monitor 0.30.0 geplaatst. Back-up: %s/webroot\nOpen http://192.168.1.22/#breakout en vernieuw met Ctrl+F5.\nScanner standaard paper (4002), los van de bestaande portefeuilleverbinding.\n' "$backup_dir"
+printf '\nTrading Monitor 0.30.0 geplaatst. Back-up: %s/webroot\nOpen http://trading-monitor.example.test/#breakout en vernieuw met Ctrl+F5.\nScanner standaard paper (4002), los van de bestaande portefeuilleverbinding.\n' "$backup_dir"

@@ -107,3 +107,7 @@ Installeer en configureer TWS of IB Gateway handmatig voor paper en read-only AP
 - [Architectuur](docs/architectuur.md)
 - [Validatie](docs/validatie.md)
 - [Versiehistorie](docs/versiehistorie.md)
+
+## Privacy
+
+Persoonlijke servergegevens zijn uit de huidige bestanden verwijderd. Zie [privacy en lokale configuratie](docs/privacy.md).

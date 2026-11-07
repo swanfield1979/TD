@@ -27,7 +27,7 @@ Versie 0.26.2 wijzigt de historische resultaatberekening. Voer daarom na het oph
 Nadat de gewijzigde broncode op de server staat, voer via PuTTY uit:
 
 ```bash
-cd /home/gerard/TD/source
+cd /opt/trading-monitor/source
 npm ci
 npm run import:flex
 npm test
@@ -118,7 +118,7 @@ Voer het hele blok uit op de bestaande Linux-server. Bij een fout stopt het blok
 ```bash
 (
 set -e
-cd /home/gerard/TD
+cd /opt/trading-monitor
 test "$(git branch --show-current)" = "main"
 git pull --ff-only origin main
 cd source
@@ -140,7 +140,7 @@ printf '\nTrading Monitor 0.24.0 bijgewerkt. Webroot-back-up: %s/webroot\n' "$ba
 )
 ```
 
-De documentroot is hier expliciet `/var/www/trading-monitor/`; `--delete` geldt uitsluitend voor deze map. Nginx hoeft bij deze update niet te worden herladen. Open daarna `http://192.168.1.22/` en vernieuw de browser met **Ctrl+F5**. Controleer Dashboard, Stocks, Options, Goals, Stats en Trades. De IBKR-status kan na de API-herstart eerst niet verbonden zijn; gebruik indien nodig **Verbinden** en bevestig IB Key op de telefoon.
+De documentroot is hier expliciet `/var/www/trading-monitor/`; `--delete` geldt uitsluitend voor deze map. Nginx hoeft bij deze update niet te worden herladen. Open daarna `http://trading-monitor.example.test/` en vernieuw de browser met **Ctrl+F5**. Controleer Dashboard, Stocks, Options, Goals, Stats en Trades. De IBKR-status kan na de API-herstart eerst niet verbonden zijn; gebruik indien nodig **Verbinden** en bevestig IB Key op de telefoon.
 
 Voor terugzetten van alleen de frontend: gebruik het exacte back-uppad dat het blok toont en synchroniseer de inhoud van de map `webroot/` terug naar `/var/www/trading-monitor/`. De back-up bevat private dashboarddata en blijft uitsluitend op de server.
 
@@ -155,12 +155,12 @@ De koppeling bestaat uit vier lokaal afgeschermde onderdelen:
 
 ### Vereisten
 
-- IB Gateway 1050 staat in `/home/gerard/Jts/ibgateway/1050`.
+- IB Gateway 1050 staat in `/home/trading-monitor/Jts/ibgateway/1050`.
 - IBC staat in `/opt/ibc` en bevat `/opt/ibc/gatewaystart.sh`.
 - In `gatewaystart.sh` staat `TWS_MAJOR_VRSN=1050`.
 - De Gateway gebruikt **Read-Only API**.
 - Gebruik poort `4001` voor een live Gateway of `4002` voor paper trading, tenzij de Gateway zelf anders is ingesteld.
-- IBC `config.ini` bevat de logininstellingen en is uitsluitend leesbaar voor `gerard` (`chmod 600`). Zet dit bestand nooit in Git.
+- IBC `config.ini` bevat de logininstellingen en is uitsluitend leesbaar voor `trading-monitor` (`chmod 600`). Zet dit bestand nooit in Git.
 
 IBC kan de aanmelding starten, maar de IB Key-bevestiging moet altijd handmatig in IBKR Mobile worden goedgekeurd.
 
@@ -183,16 +183,16 @@ Wanneer IBC elders staat, pas `WorkingDirectory` en `ExecStart` in `deploy/syste
 ### 3. Installeer de configuratie
 
 ```bash
-cd /home/gerard/TD/source
+cd /opt/trading-monitor/source
 
-sudo install -d -o root -g gerard -m 0750 /etc/trading-monitor
+sudo install -d -o root -g trading-monitor -m 0750 /etc/trading-monitor
 sudo cp deploy/trading-monitor/ibkr.env.example /etc/trading-monitor/ibkr.env
-sudo chown root:gerard /etc/trading-monitor/ibkr.env
+sudo chown root:trading-monitor /etc/trading-monitor/ibkr.env
 sudo chmod 0640 /etc/trading-monitor/ibkr.env
 sudo nano /etc/trading-monitor/ibkr.env
 ```
 
-Controleer in `ibkr.env` vooral `IBKR_PORT` en `IBKR_ALLOWED_ORIGINS`. De origin moet exact overeenkomen met het adres waarmee de browser de website opent, bijvoorbeeld `http://192.168.1.22`.
+Controleer in `ibkr.env` vooral `IBKR_PORT` en `IBKR_ALLOWED_ORIGINS`. De origin moet exact overeenkomen met het adres waarmee de browser de website opent, bijvoorbeeld `http://trading-monitor.example.test`.
 
 ### 4. Installeer de services en beperkte sudo-regel
 
@@ -214,7 +214,7 @@ sudo systemctl enable --now trading-monitor-api.service
 ### 5. Werk Nginx en de website bij
 
 ```bash
-cd /home/gerard/TD/source
+cd /opt/trading-monitor/source
 npm ci
 npm test
 npm run build
@@ -232,7 +232,7 @@ curl http://127.0.0.1:8787/api/ibkr/status
 sudo systemctl status trading-monitor-api.service --no-pager
 ```
 
-Open daarna `http://192.168.1.22/` en klik linksonder op **Verbinden**. Bevestig binnen drie minuten de melding in IBKR Mobile. Na een geslaagde API-handshake veranderen de status en knop naar **IBKR verbonden** en **Vernieuwen**.
+Open daarna `http://trading-monitor.example.test/` en klik linksonder op **Verbinden**. Bevestig binnen drie minuten de melding in IBKR Mobile. Na een geslaagde API-handshake veranderen de status en knop naar **IBKR verbonden** en **Vernieuwen**.
 
 Bij een fout:
 
@@ -266,7 +266,7 @@ Lokaal: start `npm run dev` en in een tweede terminal vanuit `source/` de API me
 Voer op de bestaande Linux-webserver uit:
 
 ```bash
-cd /home/gerard/TD
+cd /opt/trading-monitor
 git pull --ff-only origin main
 cd source
 bash deploy/update-breakout.sh
@@ -274,6 +274,10 @@ bash deploy/update-breakout.sh
 
 Vereist Node.js 22.12+, 24 of 26+ (geen Node 25) en Python 3.12+ met venv/pip. Installeer op Ubuntu/Debian waar beschikbaar eerst `sudo apt install python3.12 python3.12-venv`; bij een andere Python-installatie: `BREAKOUT_PYTHON_BIN=/pad/naar/python bash deploy/update-breakout.sh`.
 
-Het script vereist een vooraf handmatig geïnstalleerde scanner-service. Het voert tests/build uit, maakt een webroot- en Nginx-back-up, installeert Python-dependencies, herstart de bestaande service en routeert de API via Nginx. Het installeert of activeert geen systemd-service. Alternatief: één productiecommando `npm run serve:lan`. Zie [LAN/start/API en handmatige service-installatie](breakout-lan.md). De bestaande API blijft op 8787. De checkout moet de bestaande API-installatiemap zijn; dit wordt vóór publicatie gecontroleerd. Geen nieuwe Flex-import vereist. Instellingen: `/etc/trading-monitor/breakout.env` (optioneel; voorbeeld in source/deploy/trading-monitor). Standaard is Paper Gateway op 4002 met client-ID 109. Open `http://192.168.1.22/#breakout`, vernieuw met Ctrl+F5, configureer de werkelijke TWS/Gateway-poort en verbind de scanner. Een live portefeuilleverbinding op 4001 maakt de aparte paperscanner niet automatisch bereikbaar.
+Het script vereist een vooraf handmatig geïnstalleerde scanner-service. Het voert tests/build uit, maakt een webroot- en Nginx-back-up, installeert Python-dependencies, herstart de bestaande service en routeert de API via Nginx. Het installeert of activeert geen systemd-service. Alternatief: één productiecommando `npm run serve:lan`. Zie [LAN/start/API en handmatige service-installatie](breakout-lan.md). De bestaande API blijft op 8787. De checkout moet de bestaande API-installatiemap zijn; dit wordt vóór publicatie gecontroleerd. Geen nieuwe Flex-import vereist. Instellingen: `/etc/trading-monitor/breakout.env` (optioneel; voorbeeld in source/deploy/trading-monitor). Standaard is Paper Gateway op 4002 met client-ID 109. Open `http://trading-monitor.example.test/#breakout`, vernieuw met Ctrl+F5, configureer de werkelijke TWS/Gateway-poort en verbind de scanner. Een live portefeuilleverbinding op 4001 maakt de aparte paperscanner niet automatisch bereikbaar.
 
 Controle: `systemctl status trading-monitor-breakout.service`, `journalctl -u trading-monitor-breakout.service -n 60 --no-pager` en `curl --fail http://127.0.0.1/api/health`. Controleer daarna CSV-import, syncvoortgang en peildatum met echte IBKR-data. Back-ups bevatten mogelijk privédata en blijven op de server. Voor rollback: eerdere Git-commit herstellen, oude webroot/Nginx-back-up terugzetten en relevante services herstarten; behoud de SQLite-database. Live installatie is vanuit deze werkomgeving niet bevestigd.
+
+## Algemene installatievoorbeelden
+
+De gebruiker `trading-monitor`, checkout `/opt/trading-monitor` en hostnamen onder `example.test` zijn voorbeelden. Pas ze voor installatie aan je eigen omgeving aan. Configureer LAN-origins expliciet; zie [privacy en lokale configuratie](privacy.md).

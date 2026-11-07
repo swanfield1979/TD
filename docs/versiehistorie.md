@@ -599,3 +599,7 @@ IV Percentile als standaardcriterium voor nieuwe scans; bestaande IV-rankcriteri
 - Donkere responsieve navigatie met Trading Monitor-logo.
 - Saldo, winst 2026, huidige maand, vorige maand en gemiddeld per maand.
 - Lokale, privacybewuste import van IBKR Flex XML-rapporten.
+
+## Privacyonderhoud — 7 november 2026
+
+Persoonlijke servergegevens uit huidige broncode en documentatie verwijderd; voorbeelden en lokale standaard-origins gebruiken algemene waarden. Geen versieverhoging of serverinstallatie. Oude commits blijven behouden. Zie [configuratiegevolgen](privacy.md).

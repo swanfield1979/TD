@@ -5,11 +5,11 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-User=gerard
-Group=gerard
-WorkingDirectory=/home/gerard/TD/source
+User=trading-monitor
+Group=trading-monitor
+WorkingDirectory=/opt/trading-monitor/source
 EnvironmentFile=/etc/trading-monitor/ibkr.env
-ExecStart=/bin/bash /home/gerard/TD/source/server/start-api.sh
+ExecStart=/bin/bash /opt/trading-monitor/source/server/start-api.sh
 Restart=on-failure
 RestartSec=5
 StateDirectory=trading-monitor

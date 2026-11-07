@@ -9,7 +9,7 @@ if (!window.shouldSync) {
 const host = process.env.IBKR_API_HOST || '127.0.0.1'
 const port = Number(process.env.IBKR_API_PORT || 8787)
 const origin = process.env.IBKR_REFRESH_ORIGIN
-  || (process.env.IBKR_ALLOWED_ORIGINS || 'http://192.168.1.22').split(',')[0].trim()
+  || (process.env.IBKR_ALLOWED_ORIGINS || 'http://127.0.0.1').split(',')[0].trim()
 const url = `http://${host}:${port}/api/ibkr/refresh`
 
 let response

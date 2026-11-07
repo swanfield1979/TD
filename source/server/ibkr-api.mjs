@@ -55,7 +55,7 @@ const config = {
   stockVolumeMultiplier: Number(process.env.IBKR_STOCK_VOLUME_MULTIPLIER || 1),
   serviceUnit: process.env.IBKR_SYSTEMD_UNIT || 'ibc-gateway.service',
   snapshotPath: resolve(process.env.IBKR_SNAPSHOT_PATH || '/var/lib/trading-monitor/live-snapshot.json'),
-  allowedOrigins: new Set((process.env.IBKR_ALLOWED_ORIGINS || 'http://192.168.1.22').split(',').map((value) => value.trim())),
+  allowedOrigins: new Set((process.env.IBKR_ALLOWED_ORIGINS || 'http://127.0.0.1').split(',').map((value) => value.trim())),
   mfaTimeoutMs: Number(process.env.IBKR_MFA_TIMEOUT_MS || 180_000),
 }
 

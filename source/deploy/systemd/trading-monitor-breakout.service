@@ -4,13 +4,13 @@ After=network-online.target
 Wants=network-online.target
 
 [Service]
-User=gerard
-Group=gerard
-WorkingDirectory=/home/gerard/TD/source/backend
+User=trading-monitor
+Group=trading-monitor
+WorkingDirectory=/opt/trading-monitor/source/backend
 Environment=BREAKOUT_DATABASE_PATH=/var/lib/trading-monitor/breakout.sqlite
-Environment=BREAKOUT_ALLOWED_ORIGINS=http://192.168.1.22
+Environment=BREAKOUT_ALLOWED_ORIGINS=http://127.0.0.1
 EnvironmentFile=-/etc/trading-monitor/breakout.env
-ExecStart=/home/gerard/TD/source/backend/.venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8788
+ExecStart=/opt/trading-monitor/source/backend/.venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8788
 Restart=on-failure
 RestartSec=5
 TimeoutStopSec=30

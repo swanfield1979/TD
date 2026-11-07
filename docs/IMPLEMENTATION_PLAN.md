@@ -8,4 +8,4 @@
 6. Backend-, frontend- en regressietests uitvoeren, productie bouwen, demo-E2E en echte productie-health/LAN-pagina controleren.
 7. Nederlandse documentatie en GitHub-update leveren; werkelijke serverdeployment en IBKR-toegang afzonderlijk verifiëren zodra die omgeving beschikbaar is.
 
-Stappen 1–5 zijn geïmplementeerd. De afsluitende validatieresultaten staan in [validatie.md](validatie.md). Stap 7 geeft geen installatieclaim voor 192.168.1.22 zonder controle op die server.
+Stappen 1–5 zijn geïmplementeerd. De afsluitende validatieresultaten staan in [validatie.md](validatie.md). Stap 7 geeft geen installatieclaim voor trading-monitor.example.test zonder controle op die server.

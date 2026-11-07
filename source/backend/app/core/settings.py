@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     database_path: Path = (
         Path(__file__).resolve().parents[3] / "data" / "private" / "breakout.sqlite"
     )
-    allowed_origins: str = "http://192.168.1.22,http://127.0.0.1:5173"
+    allowed_origins: str = "http://127.0.0.1,http://127.0.0.1:5173"
     broker_host: str = Field(
         default="127.0.0.1",
         validation_alias=AliasChoices("BREAKOUT_BROKER_HOST", "IBKR_HOST"),

@@ -6,8 +6,8 @@ Requires=xvfb.service
 
 [Service]
 Type=simple
-User=gerard
-Group=gerard
+User=trading-monitor
+Group=trading-monitor
 WorkingDirectory=/opt/ibc
 Environment=DISPLAY=:10
 # Inline houdt IBC op de voorgrond zodat systemd het proces kan bewaken.

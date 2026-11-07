@@ -5,11 +5,11 @@ After=network-online.target trading-monitor-api.service
 
 [Service]
 Type=oneshot
-User=gerard
-Group=gerard
-WorkingDirectory=/home/gerard/TD/source
+User=trading-monitor
+Group=trading-monitor
+WorkingDirectory=/opt/trading-monitor/source
 EnvironmentFile=/etc/trading-monitor/ibkr.env
-ExecStart=/usr/bin/node /home/gerard/TD/source/scripts/sync-ibkr-hourly.mjs
+ExecStart=/usr/bin/node /opt/trading-monitor/source/scripts/sync-ibkr-hourly.mjs
 UMask=0077
 PrivateTmp=true
 PrivateDevices=true
