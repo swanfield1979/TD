@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { spawn } from 'node:child_process'
-import { mkdtemp, readFile, rm } from 'node:fs/promises'
+import { mkdtemp, readFile, writeFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { once } from 'node:events'
@@ -60,4 +60,50 @@ test('real API records startup, app and scheduled requests, excludes rejected re
     assert.equal(restored.storageError, null)
     assert.doesNotMatch(await readFile(join(directory, 'log.json'), 'utf8'), /sudo|password|account|PRIVATE/)
   } finally { await stop(); await rm(directory, { recursive: true, force: true }) }
+})
+
+test('stop API interrupts a live pending broker socket, requires valid origin, preserves snapshot and supports retry', { timeout: 20000 }, async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'tm-sync-stop-'))
+  const clients = new Set()
+  const gateway = createServer(socket => { clients.add(socket); socket.on('error', () => {}); socket.on('close', () => clients.delete(socket)) }).listen(0, '127.0.0.1')
+  await once(gateway, 'listening')
+  const reserve = createServer().listen(0, '127.0.0.1'); await once(reserve, 'listening')
+  const port = reserve.address().port; await new Promise(resolve => reserve.close(resolve))
+  const origin = `http://127.0.0.1:${port}`, path = join(directory, 'snapshot.json')
+  const saved = JSON.stringify({ account: 'PRIVATE-TEST', generatedAt: '2026-11-07T08:00:00Z' })
+  await writeFile(path, saved)
+  const headers = { Origin: origin, 'X-Requested-With': 'trading-monitor' }
+  const child = spawn(process.execPath, ['server/ibkr-api.mjs'], { stdio: 'ignore', env: { ...process.env,
+    IBKR_API_HOST: '127.0.0.1', IBKR_API_PORT: String(port), IBKR_HOST: '127.0.0.1', IBKR_PORT: String(gateway.address().port),
+    IBKR_ALLOWED_ORIGINS: origin, IBKR_SNAPSHOT_PATH: path, IBKR_SYNC_LOG_PATH: join(directory, 'log.json'),
+    SCAN_RESULTS_PATH: join(directory, 'scans.json'), LEAPS_SHORTLIST_PATH: join(directory, 'shortlist.json'),
+    IBKR_SYSTEMD_UNIT: 'trading-monitor-nonexistent-test.service', PUT_SPREAD_SCHEDULE_DISABLED: '1', SECTOR_LOOKUPS_DISABLED: '1',
+  } })
+  try {
+    for (let i = 0; i < 150; i++) {
+      try { const r = await fetch(`${origin}/api/ibkr/status`); if (r.ok && (await r.json()).canStop) break } catch {}
+      await pause(30)
+    }
+    assert.equal((await fetch(`${origin}/api/ibkr/stop`, { method: 'POST' })).status, 403)
+    for (let attempt = 0; attempt < 2; attempt++) {
+      if (attempt) assert.equal((await fetch(`${origin}/api/ibkr/refresh`, { method: 'POST', headers })).status, 202)
+      const response = await fetch(`${origin}/api/ibkr/stop`, { method: 'POST', headers })
+      assert.equal(response.status, 200)
+      const status = await response.json()
+      assert.equal(status.stopped, true); assert.equal(status.state, 'stopped')
+      assert.equal(status.isBusy, false); assert.equal(status.canStop, false)
+      assert.equal(await readFile(path, 'utf8'), saved)
+    }
+    const events = (await (await fetch(`${origin}/api/ibkr/logs`)).json()).entries
+    assert.equal(events.filter(e => e.event === 'cancelled').length, 2)
+    assert.equal(events.filter(e => e.event === 'stop_requested').length, 2)
+    assert.equal(events.filter(e => e.event === 'gateway_start').length, 0)
+    const idle = await (await fetch(`${origin}/api/ibkr/stop`, { method: 'POST', headers })).json()
+    assert.equal(idle.stopped, false)
+  } finally {
+    const done = once(child, 'exit'); child.kill(); await done
+    for (const socket of clients) socket.destroy()
+    await new Promise(resolve => gateway.close(resolve))
+    await rm(directory, { recursive: true, force: true })
+  }
 })

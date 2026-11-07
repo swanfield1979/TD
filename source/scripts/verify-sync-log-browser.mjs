@@ -8,12 +8,24 @@ page.setDefaultTimeout(15000)
 const errors = []
 page.on('pageerror', error => errors.push(error.message))
 let failure = false
+let status = { state: 'offline', isBusy: false, canStop: false, lastUpdatedAt: null, message: 'IBKR Gateway is niet verbonden.' }
+let stopFailure = false, releaseStop, stopPosts = 0, holdStop = false
 let data = { entries: [], retained: 0, limit: 5000, storageError: null }
-await page.route('**/api/**', route => {
+await page.route('**/api/**', async route => {
   const path = new URL(route.request().url()).pathname
   if (path === '/api/ibkr/logs') return route.fulfill({ status: failure ? 503 : 200, json: failure ? {} : data })
+  if (path === '/api/ibkr/stop') {
+    stopPosts++
+    assert.equal(route.request().headers()['x-requested-with'], 'trading-monitor')
+    if (stopFailure) return route.fulfill({ status: 503, json: { message: 'Test: stoppen tijdelijk niet beschikbaar.' } })
+    if (holdStop) await new Promise(resolve => { releaseStop = resolve })
+    status = { ...status, state: 'stopped', isBusy: false, canStop: false, message: 'Lopende synchronisatie gestopt. Gateway en automatische planning blijven actief.' }
+    data.entries.unshift({ sessionId: 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa', source: 'scheduled', event: 'cancelled', at: '2026-11-07T09:00:04Z', message: 'Lopende synchronisatie door een stopverzoek onderbroken.' })
+    data.retained++
+    return route.fulfill({ json: { ...status, stopped: true } })
+  }
   if (path === '/api/ibkr/snapshot') return route.fulfill({ status: 404, json: {} })
-  return route.fulfill({ json: { state: 'offline', isBusy: false } })
+  return route.fulfill({ json: status })
 })
 await page.route('**/data/portfolio-summary.json', route => route.fulfill({ status: 404, json: {} }))
 async function refresh() { await page.getByRole('button', { name: 'Logboek vernieuwen', exact: true }).click() }
@@ -46,6 +58,29 @@ try {
   await page.getByRole('button', { name: 'Logboek vernieuwen', exact: true }).focus()
   await page.keyboard.press('Enter')
   await page.getByRole('button', { name: 'Logboek vernieuwen', exact: true }).waitFor()
+  await mkdir('data/private/sync-log-validation', { recursive: true })
+  status = { ...status, state: 'awaiting_mfa', isBusy: true, canStop: true }
+  await page.reload()
+  const stop = page.getByRole('button', { name: 'Synchronisatie stoppen', exact: true })
+  await stop.waitFor()
+  await page.locator('.ibkr-control').screenshot({ path: 'data/private/sync-log-validation/stop-desktop.png', animations: 'disabled' })
+  await page.setViewportSize({ width: 360, height: 1000 })
+  await stop.waitFor()
+  await page.locator('.ibkr-control').screenshot({ path: 'data/private/sync-log-validation/stop-mobile.png', animations: 'disabled' })
+  await page.setViewportSize({ width: 1440, height: 1000 })
+  await stop.waitFor()
+  stopFailure = true; await stop.click()
+  await page.getByRole('alert').getByText('Test: stoppen tijdelijk niet beschikbaar.', { exact: true }).waitFor()
+  stopFailure = false; holdStop = true
+  await stop.focus(); await page.keyboard.press('Enter')
+  await page.getByRole('button', { name: 'Stoppen…', exact: true }).waitFor()
+  assert.equal(await page.getByRole('button', { name: 'Stoppen…', exact: true }).isDisabled(), true)
+  while (!releaseStop) await new Promise(resolve => setTimeout(resolve, 10))
+  releaseStop()
+  await page.getByText('Synchronisatie gestopt', { exact: true }).waitFor()
+  assert.equal(stopPosts, 2, 'Only one retry request, no duplicates while stopping')
+  assert.equal(await stop.count(), 0)
+  await page.getByRole('cell', { name: 'Gestopt', exact: true }).waitFor()
   await mkdir('data/private/sync-log-validation', { recursive: true })
   await page.screenshot({ path: 'data/private/sync-log-validation/desktop.png', fullPage: true, animations: 'disabled' })
   for (const width of [360, 768, 1024, 1440]) {

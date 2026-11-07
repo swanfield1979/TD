@@ -46,7 +46,7 @@ Publiceer frontend en Node-API samen en herstart de API. De uurlijkse service ve
 bash deploy/update-options.sh
 ```
 
-Controleer versie **0.43.2**, open **Logboek** en controleer de API-opstartsessie. Klik alleen als je wilt synchroniseren op **Verbinden/Vernieuwen**; deze poging moet als Appverzoek verschijnen. Een normaal uitgevoerde uurlijkse taak verschijnt als Uurlijkse taak. Deze versie is lokaal getest, niet op de productieserver geïnstalleerd en niet met een echte IBKR-login getest.
+Controleer versie **0.43.3**, open **Logboek** en controleer de API-opstartsessie. Klik alleen als je wilt synchroniseren op **Verbinden/Vernieuwen**; deze poging moet als Appverzoek verschijnen. Een normaal uitgevoerde uurlijkse taak verschijnt als Uurlijkse taak. Deze versie is lokaal getest, niet op de productieserver geïnstalleerd en niet met een echte IBKR-login getest.
 
 Ontwikkelcontroles vanuit `source/`:
 
@@ -58,3 +58,13 @@ npm run build
 # In een aparte terminal: npm run dev -- --port 5197 --strictPort
 npm run test:sync-log
 ```
+
+## Synchronisatie stoppen vanaf 0.43.3
+
+Tijdens een lopende synchronisatie verschijnt **Synchronisatie stoppen** bij de IBKR-status, ook voor automatisch gestarte sessies. Op mobiel staat deze status onder de paginatitel. De knop onderbreekt de gegevensaanvraag of de wachttijd op verbinding/IB Key. De app sluit de socket van deze synchronisatie en bewaart de laatst opgeslagen snapshot. De knop toont **Stoppen…** totdat de server bevestigt dat de sessie is gestopt. In Logboek verschijnen **Stop aangevraagd** en **Gestopt**, met hetzelfde sessie-ID en de oorspronkelijke bron.
+
+Als de sessie al atomair wordt opgeslagen of afgerond, is stoppen niet meer mogelijk. De knop is dan uitgeschakeld; bij een gelijktijdige aanvraag meldt de API dat afronding al bezig is. Een herhaald stopverzoek start geen extra werk. Bij een fout blijft de lopende status zichtbaar en kan stoppen opnieuw worden geprobeerd. Een nieuwe synchronisatie kan daarna via Verbinden/Vernieuwen worden gestart.
+
+Deze knop stopt alleen de huidige app-synchronisatie. IB Gateway/IBC worden niet afgesloten, andere scans worden niet gestopt, de automatische planning blijft actief en een eerder verstuurd IB Key-verzoek kan niet worden ingetrokken. Een latere geplande synchronisatie kan dus opnieuw beginnen. Het stopverzoek gebruikt dezelfde origincontrole als synchroniseren; dit voegt geen gebruikersauthenticatie toe.
+
+Technisch: `POST /api/ibkr/stop` gebruikt dezelfde vereiste headers als de refresh-route. De publieke status bevat `canStop`; de app gebruikt dit om stoppen tijdens afronden te voorkomen. Stoppen zonder actieve sessie is een onschadelijke actie en levert geen nieuwe loggebeurtenis op. Stop- en synchronisatielogging blijven bewaard na API-herstart.

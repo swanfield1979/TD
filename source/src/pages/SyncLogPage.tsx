@@ -5,7 +5,7 @@ import './sync-log.css'
 const sources: Record<string, string> = { manual: 'Appverzoek', scheduled: 'Uurlijkse taak', startup: 'API-opstart', background: 'Achtergrondcontrole' }
 const events: Record<string, string> = {
   started: 'Gestart', gateway_start: 'Gateway-start aangevraagd', awaiting_mfa: 'Wachten op verbinding / IB Key',
-  completed: 'Geslaagd', offline: 'Offline', failed: 'Mislukt', timed_out: 'Verlopen', skipped: 'Overgeslagen', interrupted: 'Onderbroken',
+  stop_requested: 'Stop aangevraagd', cancelled: 'Gestopt', completed: 'Geslaagd', offline: 'Offline', failed: 'Mislukt', timed_out: 'Verlopen', skipped: 'Overgeslagen', interrupted: 'Onderbroken',
 }
 interface LogEntry { sessionId: string; at: string; source: string; event: string; message: string }
 interface LogData { entries: LogEntry[]; retained: number; limit: number; storageError: string | null }

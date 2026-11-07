@@ -1,5 +1,10 @@
 # Releases
 
+## Trading Monitor 0.43.3 — synchronisatie onderbreken
+
+Beschikbaar als [GitHub-broncode](https://github.com/swanfield1979/TD); geen afzonderlijk installatiepakket voor deze webappversie. Stopknop voor ophalen en wachten op IB Key; stopverzoeken en onderbrekingen worden opgeslagen in Logboek. Manifest, lockfile en updatescript op 0.43.3. Zie [installatie en grenzen](../docs/synchronisatielogboek.md#synchronisatie-stoppen-vanaf-0433). Lokaal getest; serverinstallatie nog niet uitgevoerd.
+
+
 ## Trading Monitor 0.43.2 — synchronisatielogboek
 
 Beschikbaar als [GitHub-broncode](https://github.com/swanfield1979/TD); geen afzonderlijk installatiepakket voor deze webappversie. Handmatige en automatische sessies, Gateway-startverzoeken en resultaten staan in het persistente Logboek. Manifest, lockfile en updatescript op 0.43.2. Zie [gebruik en serverupdate](../docs/synchronisatielogboek.md). Lokaal getest; serverinstallatie nog niet uitgevoerd.

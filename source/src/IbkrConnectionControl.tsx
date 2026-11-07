@@ -3,6 +3,7 @@ import {
   ArrowClockwiseRegular,
   PlugConnectedRegular,
   ShieldKeyholeRegular,
+  StopRegular,
 } from '@fluentui/react-icons'
 import type { IbkrConnectionStatus, IbkrLiveSnapshot } from './types'
 
@@ -16,6 +17,8 @@ const statusLabel: Record<IbkrConnectionStatus['state'], string> = {
   awaiting_mfa: 'IB Key bevestigen',
   connected: 'IBKR verbonden',
   error: 'Koppeling mislukt',
+  stopping: 'Synchronisatie stoppen…',
+  stopped: 'Synchronisatie gestopt',
 }
 
 function formatUpdateTime(value: string | null) {
@@ -36,6 +39,8 @@ export default function IbkrConnectionControl({ onSnapshot }: IbkrConnectionCont
     isBusy: false,
   })
   const [isAvailable, setIsAvailable] = useState(true)
+  const [stopping, setStopping] = useState(false)
+  const [stopError, setStopError] = useState('')
   const appliedSnapshotAt = useRef<string | null>(null)
   const [snapshotAt, setSnapshotAt] = useState<string | null>(null)
 
@@ -82,6 +87,7 @@ export default function IbkrConnectionControl({ onSnapshot }: IbkrConnectionCont
   }, [loadStatus, loadSnapshot, status.isBusy])
 
   const handleRefresh = async () => {
+    setStopError('')
     try {
       setStatus((current) => ({
         ...current,
@@ -109,6 +115,19 @@ export default function IbkrConnectionControl({ onSnapshot }: IbkrConnectionCont
     }
   }
 
+  const handleStop = async () => {
+    setStopping(true); setStopError('')
+    try {
+      const response = await fetch('/api/ibkr/stop', {
+        method: 'POST', headers: { 'X-Requested-With': 'trading-monitor' },
+      })
+      const body = await response.json().catch(() => null)
+      if (!response.ok) throw Error(body?.message || (response.status === 404 ? 'Werk de server bij om synchronisaties te kunnen stoppen.' : 'Synchronisatie kon niet worden gestopt. Probeer opnieuw.'))
+      setStatus(body as IbkrConnectionStatus)
+    } catch (error) { setStopError((error as Error).message) }
+    finally { setStopping(false) }
+  }
+
   const updateTime = formatUpdateTime(snapshotAt ?? status.lastUpdatedAt)
   const buttonLabel = status.state === 'error' ? 'Opnieuw proberen' : status.state === 'connected' ? 'Vernieuwen' : 'Verbinden'
   const StatusIcon = status.state === 'awaiting_mfa' ? ShieldKeyholeRegular : PlugConnectedRegular
@@ -119,18 +138,24 @@ export default function IbkrConnectionControl({ onSnapshot }: IbkrConnectionCont
         <StatusIcon aria-hidden="true" />
         <span>
           <strong>{statusLabel[status.state]}</strong>
-          <small>{updateTime ? `Laatste synchronisatie ${updateTime}` : status.message}</small>
+          <small>{status.state === 'stopped' || status.state === 'stopping' ? status.message : updateTime ? `Laatste synchronisatie ${updateTime}` : status.message}</small>
         </span>
       </div>
       <button
         type="button"
         onClick={() => void handleRefresh()}
-        disabled={status.isBusy || !isAvailable}
+        disabled={status.isBusy || stopping || !isAvailable}
         title={!isAvailable ? 'Installeer eerst de IBKR-backendservice' : status.message}
       >
         <ArrowClockwiseRegular className={status.isBusy ? 'ibkr-control__spinner' : undefined} aria-hidden="true" />
         <span>{status.isBusy ? 'Even wachten' : buttonLabel}</span>
       </button>
+      {status.isBusy && <button type="button" onClick={() => void handleStop()} disabled={stopping || status.canStop === false || !isAvailable}
+        title={status.canStop === false ? 'De sessie wordt al afgerond of gestopt.' : 'Onderbreek alleen de lopende synchronisatie.'}>
+        <StopRegular aria-hidden="true" /><span>{stopping || status.state === 'stopping' ? 'Stoppen…' : 'Synchronisatie stoppen'}</span>
+      </button>}
+      {status.isBusy && <p className="ibkr-control__note">Stoppen onderbreekt deze sessie. Gateway en automatische planning blijven actief; een verstuurd IB Key-verzoek blijft mogelijk zichtbaar.</p>}
+      {stopError && <p className="ibkr-control__note" role="alert">{stopError}</p>}
     </section>
   )
 }

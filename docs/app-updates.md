@@ -63,3 +63,7 @@ Unit-/integratietests simuleren versiecontrole, begrensde opdrachten, dubbele ac
 ## Synchronisatielogboek vanaf 0.43.2
 
 Na installatie via Updates verschijnt het menu **Logboek**. Werk frontend en API samen bij; geen Flex-herimport nodig. Zie [gebeurtenissen, opslag en beperkingen](synchronisatielogboek.md).
+
+## Synchronisatie stoppen vanaf 0.43.3
+
+Deze update voegt de stopknop bij de IBKR-status toe. Publiceer frontend en API samen en herstart de API. Geen Flex-herimport nodig. Zie [werking en grenzen](synchronisatielogboek.md#synchronisatie-stoppen-vanaf-0433).

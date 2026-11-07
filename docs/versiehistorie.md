@@ -1,5 +1,10 @@
 # Versiehistorie
 
+## 0.43.3 — 7 november 2026
+
+Nieuwe knop **Synchronisatie stoppen** tijdens een lopende IBKR-synchronisatie, ook bij een automatisch gestarte sessie. Onderbreekt ophalen en IB Key-wachttijd, sluit de bijbehorende API-socket en bewaart de bestaande snapshot. Stopverzoek en onderbreking komen in Logboek. Bij reeds begonnen atomair opslaan wordt de sessie eerst afgerond. Gateway en automatische planning blijven actief. Zie [gebruik en installatie](synchronisatielogboek.md#synchronisatie-stoppen-vanaf-0433). Serverinstallatie nog niet uitgevoerd.
+
+
 ## 0.43.2 — 7 november 2026
 
 Nieuw menu Logboek: tijdstip, bron, sessie-ID en resultaat van handmatige en automatische IBKR-synchronisaties. Gateway-startverzoeken en wachten op verbinding/IB Key zijn zichtbaar. Private, begrensde opslag overleeft API-herstarts; onderbroken sessies en opslagfouten worden gemeld. Achtergrondcontroles blijven zonder Gateway-aanmelding. Snapshot-opslagfouten starten geen extra aanmelding. Zie [gebruik en installatie](synchronisatielogboek.md). Serverinstallatie nog niet uitgevoerd.

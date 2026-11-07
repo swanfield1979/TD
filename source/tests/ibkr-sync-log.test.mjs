@@ -5,6 +5,8 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createSyncLog } from '../server/sync-log.mjs'
 import { createIbkrSynchronizer } from '../server/ibkr-sync.mjs'
+import { EventEmitter, getEventListeners } from 'node:events'
+import { collectSnapshot } from '../server/gateway-client.mjs'
 
 async function fixture(fn) {
   const dir = await mkdtemp(join(tmpdir(), 'tm-sync-log-'))
@@ -91,4 +93,97 @@ test('retention is bounded, unfinished sessions are marked interrupted, corrupt 
   const file = join(dir, 'not-a-directory'); await writeFile(file, 'x')
   log = await createSyncLog({ path: join(file, 'log.json') }); await runner(log).sync('manual')
   assert.ok((await log.snapshot()).storageError)
+}))
+
+test('stop cancels pending data collection, logs once, preserves saved data and permits a new session', async () => fixture(async path => {
+  const log = await createSyncLog({ path })
+  let entered, blocked = true
+  const started = new Promise(resolve => { entered = resolve })
+  const current = runner(log, { collectSnapshot: async ({ signal }) => {
+    if (!blocked) return { generatedAt: '2026-11-07T12:00:00Z' }
+    entered()
+    return new Promise((resolve, reject) => signal.addEventListener('abort', () => reject(signal.reason), { once: true }))
+  } })
+  assert.deepEqual(await current.sync.stop(), { stopped: false, reason: 'idle' })
+  const task = current.sync('scheduled'); await started
+  assert.equal(current.sync.canStop(), true)
+  const [first, second] = await Promise.all([current.sync.stop(), current.sync.stop()])
+  await task
+  assert.deepEqual(first, { stopped: true }); assert.deepEqual(second, { stopped: true })
+  assert.equal(current.runtime.state, 'stopped'); assert.equal(current.runtime.isBusy, false)
+  assert.equal(current.sync.canStop(), false)
+  assert.equal(current.saved.length, 0)
+  assert.deepEqual(current.calls, [], 'Cancellation cannot fall through into a Gateway login')
+  assert.deepEqual((await log.snapshot()).entries.map(e => e.event), ['cancelled', 'stop_requested', 'started'])
+  blocked = false; await current.sync('manual')
+  assert.equal(current.runtime.state, 'connected'); assert.equal(current.saved.length, 1)
+}))
+
+test('stop interrupts IB Key wait immediately and cannot falsely cancel an atomic snapshot commit', async () => fixture(async path => {
+  const log = await createSyncLog({ path })
+  const current = runner(log, { config: { mfaTimeoutMs: 180000 }, collectSnapshot: async () => { throw Error('offline') } })
+  const task = current.sync('manual')
+  while (current.runtime.state !== 'awaiting_mfa') await new Promise(resolve => setTimeout(resolve, 1))
+  const before = Date.now(); await current.sync.stop(); await task
+  assert.ok(Date.now() - before < 1000, 'Does not wait for the five-second retry timer')
+  assert.equal(current.runtime.state, 'stopped')
+  assert.equal((await log.snapshot()).entries[0].event, 'cancelled')
+  let release, saving
+  const entered = new Promise(resolve => { saving = resolve })
+  const committing = runner(log, { saveSnapshot: async () => { saving(); await new Promise(resolve => { release = resolve }) } })
+  const commit = committing.sync('manual'); await entered
+  assert.equal(committing.sync.canStop(), false)
+  assert.deepEqual(await committing.sync.stop(), { stopped: false, reason: 'finishing' })
+  release(); await commit
+  assert.equal(committing.runtime.state, 'connected')
+  assert.equal((await log.snapshot()).entries[0].event, 'completed')
+}))
+
+test('stopping before the first broker request and restarting an unfinished stop are recorded safely', async () => fixture(async path => {
+  const log = await createSyncLog({ path })
+  const current = runner(log)
+  const task = current.sync('manual')
+  await current.sync.stop(); await task
+  assert.equal(current.saved.length, 0); assert.deepEqual(current.calls, [])
+  const pending = log.begin('scheduled'); await pending.saved
+  await log.record(pending.sessionId, 'scheduled', 'stop_requested')
+  const restored = await createSyncLog({ path })
+  assert.equal((await restored.snapshot()).entries[0].event, 'interrupted')
+}))
+
+test('snapshot cancellation disconnects the IB socket and removes its abort listener', async () => {
+  let instance, constructed = 0
+  class PassiveApi extends EventEmitter {
+    constructor() { super(); instance = this; constructed++ }
+    connect() { this.emit('connected') }
+    reqManagedAccts() { this.requests = (this.requests || 0) + 1 }
+    disconnect() { this.disconnected = true }
+  }
+  const controller = new AbortController()
+  const pending = collectSnapshot({ signal: controller.signal }, 12000, PassiveApi)
+  assert.equal(getEventListeners(controller.signal, 'abort').length, 1)
+  controller.abort()
+  await assert.rejects(pending, { name: 'AbortError' })
+  assert.equal(instance.disconnected, true)
+  instance.emit('connected')
+  assert.doesNotThrow(() => instance.emit('managedAccounts', 'PRIVATE-TEST'))
+  assert.equal(instance.requests, 1, 'Late callbacks cannot start new broker requests after stop')
+  assert.equal(getEventListeners(controller.signal, 'abort').length, 0)
+  await assert.rejects(collectSnapshot({ signal: controller.signal }, 12000, PassiveApi), { name: 'AbortError' })
+  assert.equal(constructed, 1, 'An already cancelled session never opens a broker socket')
+})
+
+test('stop also aborts a pending Gateway start command without continuing into IB Key wait', async () => fixture(async path => {
+  const log = await createSyncLog({ path })
+  let entered
+  const ready = new Promise(resolve => { entered = resolve })
+  const current = runner(log, { collectSnapshot: async () => { throw Error('offline') },
+    startGatewayService: signal => new Promise((resolve, reject) => {
+      entered(); signal.addEventListener('abort', () => reject(signal.reason), { once: true })
+    }),
+  })
+  const task = current.sync('scheduled'); await ready
+  await current.sync.stop(); await task
+  assert.equal(current.runtime.state, 'stopped')
+  assert.deepEqual((await log.snapshot()).entries.map(e => e.event), ['cancelled', 'stop_requested', 'gateway_start', 'started'])
 }))

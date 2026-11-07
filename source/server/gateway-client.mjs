@@ -8,6 +8,9 @@ const EXECUTIONS_REQUEST_ID = 800_000
 
 export function collectSnapshot(config, timeoutMs = 12_000, Api = IBApi) {
   return new Promise((resolveSnapshot, rejectSnapshot) => {
+    const signal = config.signal
+    if (signal?.aborted) return rejectSnapshot(new DOMException('Synchronisatie gestopt.', 'AbortError'))
+    function onAbort() { finish(new DOMException('Synchronisatie gestopt.', 'AbortError')) }
     const accountValues = new Map()
     const positions = new Map()
     const quoteRequests = new Map()
@@ -25,16 +28,15 @@ export function collectSnapshot(config, timeoutMs = 12_000, Api = IBApi) {
     const finish = (error, snapshot) => {
       if (settled) return
       settled = true
+      signal?.removeEventListener('abort', onAbort)
       clearTimeout(timeout)
       clearTimeout(quoteTimeout)
       clearTimeout(commissionTimeout)
-      try {
-        for (const requestId of quoteRequests.keys()) ib.cancelMktData(requestId)
-        if (activeAccount) ib.reqAccountUpdates(false, activeAccount)
-        ib.disconnect()
-      } catch {
-        // De socket kan al gesloten zijn; opruimen blijft best-effort.
+      for (const requestId of quoteRequests.keys()) {
+        try { ib.cancelMktData(requestId) } catch { /* Continue with socket cleanup. */ }
       }
+      if (activeAccount) { try { ib.reqAccountUpdates(false, activeAccount) } catch { /* Best effort. */ } }
+      try { ib.disconnect() } catch { /* The socket may already be closed. */ }
       if (error) rejectSnapshot(error)
       else resolveSnapshot(snapshot)
     }
@@ -57,6 +59,7 @@ export function collectSnapshot(config, timeoutMs = 12_000, Api = IBApi) {
     }
 
     const requestPreviousCloses = () => {
+      if (settled) return
       const stockPositions = [...positions.values()].filter((position) => position.position !== 0 && position.assetCategory === 'STK' && position.contract)
       if (stockPositions.length === 0) { positionsReady = true; return createSnapshot() }
 
@@ -80,9 +83,11 @@ export function collectSnapshot(config, timeoutMs = 12_000, Api = IBApi) {
     }
 
     const timeout = setTimeout(() => finish(new Error('Geen tijdige reactie van IB Gateway.')), timeoutMs)
+    signal?.addEventListener('abort', onAbort, { once: true })
 
-    ib.on(EventName.connected, () => ib.reqManagedAccts())
+    ib.on(EventName.connected, () => { if (!settled) ib.reqManagedAccts() })
     ib.on(EventName.managedAccounts, (accountsList) => {
+      if (settled) return
       const accounts = accountsList.split(',').map((value) => value.trim()).filter(Boolean)
       if (accounts.length === 0) return finish(new Error('IBKR heeft geen toegankelijke rekening teruggegeven.'))
       activeAccount = accounts[0]
@@ -137,6 +142,7 @@ export function collectSnapshot(config, timeoutMs = 12_000, Api = IBApi) {
       requestPreviousCloses()
     })
     ib.on(EventName.tickPrice, (requestId, tickType, price) => {
+      if (settled) return
       const position = quoteRequests.get(requestId)
       if (!position || !PREVIOUS_CLOSE_TICK_TYPES.has(tickType) || !Number.isFinite(price) || price <= 0) return
       position.previousClose = price
@@ -162,6 +168,7 @@ export function collectSnapshot(config, timeoutMs = 12_000, Api = IBApi) {
     })
 
     try {
+      if (signal?.aborted) return onAbort()
       ib.connect(config.clientId)
     } catch (error) {
       finish(error)

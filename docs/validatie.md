@@ -551,3 +551,11 @@ Persoonlijke servergebruiker, installatiepaden en interne LAN-adressen uit de hu
 - Nieuwe module- en echte HTTP-API-tests controleren alle vier bronnen, persistentie na herstart, onderbroken sessies, Gateway-start/IB Key, verlopen sessies, dubbele aanvragen, retentie, corrupte opslag en veilige foutteksten. Offline tests starten geen echte Gateway.
 - Browsercontrole `npm run test:sync-log`: nieuwe gebeurtenissen verschijnen via polling; geen portfoliodata vereist. Filters, sessiezoeken, leeg/error/verouderd/opslagfout, tijdzone, toetsenbord, 360–1440 pixels en 200% desktopzoom gecontroleerd. Desktop- en mobiele screenshots visueel beoordeeld. Geen page-errors.
 - Geen echte IBKR-login of serverinstallatie uitgevoerd. Zelfstandige IBC/systemd-herstarts vallen buiten het app-logboek; zie [grenzen en installatie](synchronisatielogboek.md).
+
+## 0.43.3 — synchronisatie stoppen (7 november 2026)
+
+- 242 Node-tests en 27 frontendtests in de lokale werkmap geslaagd; productiebuild geslaagd.
+- Nieuwe tests controleren stoppen voor ophalen, tijdens een echte lokale testsocket en tijdens IB Key-wachten; socketopruiming, late callbacks, herhaalde stopverzoeken, bescherming van de laatst opgeslagen snapshot, een nieuwe sessie en weigeren van stoppen tijdens atomair opslaan. Ongeldige stopaanvragen worden afgewezen; een onafgemaakt stopverzoek wordt na herstart als onderbroken gemarkeerd. Geen echte Gateway gestart.
+- Bestaande put-spread-API-test wacht nu op afronding van de opstartsynchronisatie voordat acties worden verwacht die een vrije API vereisen. Dit verwijdert een timingafhankelijkheid zonder de scanvergrendeling te versoepelen.
+- Browsercontrole uitgebreid met stopknop, toetsenbordbediening, fout en retry, uitschakeling tijdens stoppen, resultaat en zichtbaarheid van Gestopt in Logboek. Donker/licht, mobiel en desktop, 360–1440 pixels en desktopzoom gecontroleerd; geen page-errors.
+- Geen productieserverinstallatie of echte IBKR-login uitgevoerd. Gateway, planning en al verstuurde IB Key-meldingen worden niet beeindigd. Zie [gebruik](synchronisatielogboek.md#synchronisatie-stoppen-vanaf-0433).

@@ -3,7 +3,8 @@ import { createSyncLog } from './sync-log.mjs'
 import { createIbkrSynchronizer } from './ibkr-sync.mjs'
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
-import { spawnSync } from 'node:child_process'
+import { execFile } from 'node:child_process'
+import { promisify } from 'node:util'
 import { collectSnapshot } from './gateway-client.mjs'
 import { withPreviousBalance } from './ibkr-domain.mjs'
 import { mergeExecutions } from '../shared/gateway-trades.mjs'
@@ -25,6 +26,7 @@ import { fileURLToPath } from 'node:url'
 import { createAppUpdater } from './app-update.mjs'
 import { createYahooOptionClient } from './yahoo-option-chains.mjs'
 
+const executeGatewayCommand = promisify(execFile)
 const scanControllers = {}
 const activeScanJobs = new Set()
 let scanState = { state: 'idle', portfolio: [], market: [], warnings: [], progress: '', symbolsChecked: 0, contractsChecked: 0 }
@@ -84,6 +86,7 @@ function publicStatus() {
     message: runtime.message,
     lastUpdatedAt: runtime.lastUpdatedAt,
     isBusy: runtime.isBusy,
+    canStop: synchronize.canStop(),
   }
 }
 
@@ -91,16 +94,10 @@ function setStatus(state, message, extra = {}) {
   Object.assign(runtime, { state, message, ...extra })
 }
 
-function startGatewayService() {
-  const result = spawnSync('/usr/bin/sudo', [
-    '-n',
-    '/usr/bin/systemctl',
-    'start',
-    config.serviceUnit,
-  ], { encoding: 'utf8', timeout: 10_000 })
-
-  if (result.error) throw result.error
-  if (result.status !== 0) throw new Error((result.stderr || result.stdout || 'Gateway kon niet worden gestart.').trim())
+async function startGatewayService(signal) {
+  await executeGatewayCommand('/usr/bin/sudo', [
+    '-n', '/usr/bin/systemctl', 'start', config.serviceUnit,
+  ], { encoding: 'utf8', timeout: 10_000, signal })
 }
 
 async function saveSnapshot(snapshot) {
@@ -462,6 +459,13 @@ const server = createServer(async (request, response) => {
       } catch (error) {
         return sendJson(response, error.code === 'ENOENT' ? 404 : 500, { message: error.code === 'ENOENT' ? 'Er is nog geen opgeslagen IBKR-synchronisatie.' : 'De opgeslagen IBKR-synchronisatie kon niet worden gelezen.' })
       }
+    }
+
+    if (request.method === 'POST' && request.url === '/api/ibkr/stop') {
+      if (!isAllowedPost(request)) return sendJson(response, 403, { message: 'Ongeldige aanvraag.' })
+      const result = await synchronize.stop()
+      if (result.reason === 'finishing') return sendJson(response, 409, { message: 'Deze sessie wordt al afgerond; wacht tot dit klaar is.' })
+      return sendJson(response, 200, { ...publicStatus(), stopped: result.stopped })
     }
 
     if (request.method === 'POST' && request.url === '/api/ibkr/refresh') {

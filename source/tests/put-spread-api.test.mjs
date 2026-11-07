@@ -18,7 +18,7 @@ test('spread API validates inputs, enforces origin and scan lock, supports stop 
   let child
   const start = async () => {
     child = spawn(process.execPath, ['server/ibkr-api.mjs'], { stdio: 'ignore', env: { ...process.env, SECTOR_LOOKUPS_DISABLED: '1', IBKR_API_PORT: String(port), IBKR_API_HOST: '127.0.0.1', IBKR_ALLOWED_ORIGINS: origin, IBKR_PORT: '1', IBKR_SNAPSHOT_PATH: join(directory, 'snapshot.json'), SCAN_RESULTS_PATH: join(directory, 'scans.json'), LEAPS_SHORTLIST_PATH: join(directory, 'shortlist.json') } })
-    for (let i = 0; i < 100; i++) { try { if ((await fetch(`${origin}/api/put-spreads`)).ok) return } catch {} await pause(30) }
+    for (let i = 0; i < 100; i++) { try { if ((await fetch(`${origin}/api/put-spreads`)).ok && !(await (await fetch(`${origin}/api/ibkr/status`)).json()).isBusy) return } catch {} await pause(30) }
     throw Error('Test API did not start')
   }
   const stop = async () => { const done = once(child, 'exit'); child.kill(); await done }

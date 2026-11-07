@@ -7,6 +7,8 @@ export const syncMessages = {
   started: 'Synchronisatiesessie gestart.',
   gateway_start: 'Start van IB Gateway aangevraagd; dit kan een IB Key-verzoek veroorzaken.',
   awaiting_mfa: 'Gateway-start geaccepteerd; wachten op verbinding en eventuele IB Key-bevestiging.',
+  stop_requested: 'Stop van de lopende synchronisatie aangevraagd.',
+  cancelled: 'Lopende synchronisatie door een stopverzoek onderbroken.',
   completed: 'IBKR-gegevens opgehaald en opgeslagen.',
   offline: 'Bestaande Gateway-verbinding niet beschikbaar; geen aanmelding gestart.',
   failed: 'Synchronisatie mislukt; controleer de lokale Gateway- en servicelogging.',
@@ -48,7 +50,7 @@ export async function createSyncLog({ path, limit = 5000, now = () => new Date()
   }
   const latest = new Map(entries.map(e => [e.sessionId, e]))
   for (const entry of latest.values()) {
-    if (['started', 'gateway_start', 'awaiting_mfa'].includes(entry.event)) await record(entry.sessionId, entry.source, 'interrupted')
+    if (['started', 'gateway_start', 'awaiting_mfa', 'stop_requested'].includes(entry.event)) await record(entry.sessionId, entry.source, 'interrupted')
   }
   return {
     begin(source) { const sessionId = randomUUID(); return { sessionId, saved: record(sessionId, source, 'started') } },

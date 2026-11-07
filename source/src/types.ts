@@ -149,13 +149,14 @@ export interface CoveredCallCoverage {
   status: CoveredCallCoverageStatus
 }
 
-export type IbkrConnectionState = 'offline' | 'refreshing' | 'awaiting_mfa' | 'connected' | 'error'
+export type IbkrConnectionState = 'offline' | 'refreshing' | 'awaiting_mfa' | 'connected' | 'error' | 'stopping' | 'stopped'
 
 export interface IbkrConnectionStatus {
   state: IbkrConnectionState
   message: string
   lastUpdatedAt: string | null
   isBusy: boolean
+  canStop?: boolean
 }
 
 export interface IbkrLivePosition extends StockHolding {
