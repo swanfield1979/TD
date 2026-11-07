@@ -21,3 +21,7 @@ Installeer versie **0.42.8** via **Updates → Controleren op updates → Versie
 Synchroniseer eenmaal succesvol en noteer het saldo en de datum. Open daarna de app opnieuw terwijl de gateway niet verbonden is: hetzelfde saldo en dezelfde synchronisatiedatum moeten zichtbaar zijn zonder op Verbinden te klikken. Bestaande serverbestanden worden hergebruikt; er is geen datamigratie nodig.
 
 Ontwikkelcontroles vanuit `source/`: `node --test tests/saved-snapshot-api.test.mjs`, `npm run test:frontend` en `npm run build`. Browsercontrole met Vite op 5197: `node scripts/verify-saved-snapshot-browser.mjs`. De controles gebruiken synthetische gegevens en geen live brokerverbinding.
+
+## Synchronisatiepogingen terugzien
+
+Vanaf 0.43.2 toont het menu **Logboek** ook handmatige en automatische pogingen, Gateway-startverzoeken en resultaten, inclusief mislukte sessies. Zie [het synchronisatielogboek](synchronisatielogboek.md).

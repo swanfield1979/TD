@@ -59,3 +59,7 @@ Webroot-back-ups staan onder `/var/backups/trading-monitor/app-*`. De voorgaande
 ## Validatie
 
 Unit-/integratietests simuleren versiecontrole, begrensde opdrachten, dubbele acties, lokale wijzigingen, een gewijzigd GitHub-doel, testfouten, het bewaren van de dashboardbasis en de API-herstart. De HTTP-test controleert de origin/headervereiste. De browsercontrole gebruikt gesimuleerde updateantwoorden voor installatie, voortgang, herladen, verbindingsherstel, fouten en mobiel gebruik. Shellscripts zijn syntactisch gecontroleerd. De daadwerkelijke systemd-/sudo-installatie en productie-update moeten op de Linux-server nog worden uitgevoerd; deze zijn niet vanuit de Windows-ontwikkelomgeving bevestigd.
+
+## Synchronisatielogboek vanaf 0.43.2
+
+Na installatie via Updates verschijnt het menu **Logboek**. Werk frontend en API samen bij; geen Flex-herimport nodig. Zie [gebeurtenissen, opslag en beperkingen](synchronisatielogboek.md).

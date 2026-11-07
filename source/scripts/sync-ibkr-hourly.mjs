@@ -18,7 +18,7 @@ for (let attempt = 1; attempt <= 5; attempt += 1) {
   try {
     response = await fetch(url, {
       method: 'POST',
-      headers: { Origin: origin, 'X-Requested-With': 'trading-monitor' },
+      headers: { Origin: origin, 'X-Requested-With': 'trading-monitor', 'X-Sync-Source': 'scheduled' },
       signal: AbortSignal.timeout(10_000),
     })
     break

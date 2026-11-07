@@ -1,5 +1,10 @@
 # Versiehistorie
 
+## 0.43.2 — 7 november 2026
+
+Nieuw menu Logboek: tijdstip, bron, sessie-ID en resultaat van handmatige en automatische IBKR-synchronisaties. Gateway-startverzoeken en wachten op verbinding/IB Key zijn zichtbaar. Private, begrensde opslag overleeft API-herstarts; onderbroken sessies en opslagfouten worden gemeld. Achtergrondcontroles blijven zonder Gateway-aanmelding. Snapshot-opslagfouten starten geen extra aanmelding. Zie [gebruik en installatie](synchronisatielogboek.md). Serverinstallatie nog niet uitgevoerd.
+
+
 ## 0.43.1 — 4 november 2026
 
 Handelsdetails toont dit en vorig kalenderjaar met nettoresultaat, short/long opties, aandelen en jaarlijkse premiedetails. Gemiddeld per maand en overige jaarstatistieken blijven behouden. Flex-import bevat beide jaren; Gateway-resultaten worden per kalenderjaar toegevoegd zonder dubbeltelling. Inclusief driebenige groepering van SYNT long met passende short call. Zie [jaaroverzicht](jaaroverzicht.md) en [optiecombinaties](optiecombinaties.md). Serverinstallatie nog niet uitgevoerd.

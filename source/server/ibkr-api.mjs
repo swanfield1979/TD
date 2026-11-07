@@ -1,4 +1,6 @@
 import { createServer } from 'node:http'
+import { createSyncLog } from './sync-log.mjs'
+import { createIbkrSynchronizer } from './ibkr-sync.mjs'
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { spawnSync } from 'node:child_process'
@@ -89,10 +91,6 @@ function setStatus(state, message, extra = {}) {
   Object.assign(runtime, { state, message, ...extra })
 }
 
-function delay(milliseconds) {
-  return new Promise((resolveDelay) => setTimeout(resolveDelay, milliseconds))
-}
-
 function startGatewayService() {
   const result = spawnSync('/usr/bin/sudo', [
     '-n',
@@ -119,61 +117,6 @@ async function saveSnapshot(snapshot) {
   const temporaryPath = `${config.snapshotPath}.tmp`
   await writeFile(temporaryPath, `${JSON.stringify(snapshot, null, 2)}\n`, { mode: 0o600 })
   await rename(temporaryPath, config.snapshotPath)
-}
-
-// Capture executions while Gateway is running, also when no browser is open.
-// Background checks never start Gateway or initiate an MFA login.
-async function refreshConnectedGateway() {
-  if (runtime.isBusy || appUpdater.isBusy()) return
-  runtime.isBusy = true
-  try {
-    const snapshot = await collectSnapshot(config)
-    await saveSnapshot(snapshot)
-    setStatus('connected', 'Alle actuele IBKR-gegevens zijn bijgewerkt.', {
-      lastUpdatedAt: snapshot.generatedAt, isBusy: false,
-    })
-  } catch (error) {
-    setStatus('offline', error instanceof Error ? error.message : 'IBKR Gateway is niet verbonden.', { isBusy: false })
-  }
-}
-
-async function refreshInBackground() {
-  if (runtime.isBusy) return
-  setStatus('refreshing', 'Alle actuele gegevens worden bij IBKR opgehaald.', { isBusy: true })
-
-  try {
-    try {
-      const snapshot = await collectSnapshot(config)
-      await saveSnapshot(snapshot)
-      return setStatus('connected', 'Alle actuele IBKR-gegevens zijn bijgewerkt.', {
-        lastUpdatedAt: snapshot.generatedAt,
-        isBusy: false,
-      })
-    } catch {
-      startGatewayService()
-    }
-
-    setStatus('awaiting_mfa', 'Bevestig de aanmelding in IBKR Mobile.', { isBusy: true })
-    const deadline = Date.now() + config.mfaTimeoutMs
-
-    while (Date.now() < deadline) {
-      await delay(5_000)
-      try {
-        const snapshot = await collectSnapshot(config, 10_000)
-        await saveSnapshot(snapshot)
-        return setStatus('connected', 'Alle actuele IBKR-gegevens zijn bijgewerkt.', {
-          lastUpdatedAt: snapshot.generatedAt,
-          isBusy: false,
-        })
-      } catch {
-        // Tijdens MFA is een nog gesloten API-socket de verwachte toestand.
-      }
-    }
-
-    throw new Error('De IBKR Mobile-bevestiging is verlopen. Klik op Opnieuw proberen.')
-  } catch (error) {
-    setStatus('error', error instanceof Error ? error.message : 'De IBKR-koppeling is mislukt.', { isBusy: false })
-  }
 }
 
 const shortlistPath = resolve(process.env.LEAPS_SHORTLIST_PATH || dirname(config.snapshotPath) + '/leaps-shortlist.json')
@@ -276,6 +219,10 @@ const appUpdater = createAppUpdater({ path: resolve(dirname(config.snapshotPath)
   busy: () => workBusy() || weeklySchedule?.isRunning(),
 })
 await appUpdater.snapshot()
+const syncLog = await createSyncLog({ path: resolve(process.env.IBKR_SYNC_LOG_PATH || dirname(config.snapshotPath) + '/ibkr-sync-log.json') })
+const synchronize = createIbkrSynchronizer({ log: syncLog, config, runtime, collectSnapshot, saveSnapshot,
+  startGatewayService, setStatus, updateBusy: () => appUpdater.isBusy(),
+})
 setInterval(() => { void appUpdater.snapshot().catch(() => {}) }, 2000).unref()
 const scansBusy = () => appUpdater.isBusy() || workBusy()
 function startFilteredIv(selection, filters, resume = false) {
@@ -497,6 +444,10 @@ const server = createServer(async (request, response) => {
       }
       return sendJson(response, 202, scanState)
     }
+    if (request.method === 'GET' && request.url === '/api/ibkr/logs') {
+      return sendJson(response, 200, await syncLog.snapshot())
+    }
+
     if (request.method === 'GET' && request.url === '/api/ibkr/status') {
       return sendJson(response, 200, publicStatus())
     }
@@ -515,7 +466,7 @@ const server = createServer(async (request, response) => {
 
     if (request.method === 'POST' && request.url === '/api/ibkr/refresh') {
       if (!isAllowedPost(request)) return sendJson(response, 403, { message: 'Ongeldige aanvraag.' })
-      if (!runtime.isBusy) void refreshInBackground()
+      void synchronize(request.headers['x-sync-source'] === 'scheduled' ? 'scheduled' : 'manual')
       return sendJson(response, 202, publicStatus())
     }
 
@@ -527,6 +478,6 @@ const server = createServer(async (request, response) => {
 
 server.listen(config.listenPort, config.listenHost, () => {
   console.log(`Trading Monitor IBKR API luistert op http://${config.listenHost}:${config.listenPort}`)
-  void refreshConnectedGateway()
-  setInterval(() => void refreshConnectedGateway(), 60_000).unref()
+  void synchronize('startup')
+  setInterval(() => void synchronize('background'), 60_000).unref()
 })

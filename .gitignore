@@ -21,3 +21,7 @@ source/backend/*.egg-info/
 source/backend/.ruff_cache/
 source/.ruff_cache/
 source/data/*.sqlite*
+
+# Private synchronization activity log
+**/ibkr-sync-log.json
+**/ibkr-sync-log.json.tmp
